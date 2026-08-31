@@ -1,6 +1,7 @@
 api_platform:
     title: Hello API Platform
     version: 1.0.0
+    name_converter: 'serializer.name_converter.camel_case_to_snake_case'
     defaults:
         stateless: true
         cache_headers:
