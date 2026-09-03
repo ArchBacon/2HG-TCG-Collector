@@ -92,6 +92,7 @@
     "require-dev": {
         "phpstan/extension-installer": "^1.4.3",
         "phpstan/phpstan": "^2.2.9",
+        "phpstan/phpstan-doctrine": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "symfony/maker-bundle": "^1.67"
     }

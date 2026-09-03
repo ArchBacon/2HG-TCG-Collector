@@ -74,7 +74,6 @@ class ProcessImagesCommand extends Command
         assert($handler instanceof ImageJobHandlerInterface);
 
         // Set configuration
-        /** @var int $workerLimit */
         $workerLimit = max(1, $this->workerLimit);
         $batchSizeOption = $input->getOption('batch-size');
         assert(is_string($batchSizeOption));
@@ -99,7 +98,6 @@ class ProcessImagesCommand extends Command
     private function drain(string $game, int $workerLimit, int $batchSize, SymfonyStyle $io): void
     {
         $phpBinary = new PhpExecutableFinder()->find();
-        /** @var string $php */
         $php = $phpBinary ?: 'php';
         $console = $this->projectDir . '/bin/console';
 
@@ -142,7 +140,7 @@ class ProcessImagesCommand extends Command
             $bar->setMessage((string)$progress['failed'], 'failed');
             $bar->setProgress($progress['completed']);
 
-            if (empty($running) && $this->queue->countPending($game) === 0) {
+            if ($running === [] && $this->queue->countPending($game) === 0) {
                 break;
             }
 

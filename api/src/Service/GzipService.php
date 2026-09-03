@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use UnexpectedValueException;
+
 /**
  * Small service class for extracting Gzip files.
  */
@@ -17,11 +19,23 @@ final class GzipService
 
         // Open files
         $file = gzopen($filePath, 'rb');
+        if ($file === false) {
+            throw new UnexpectedValueException(sprintf('Could not open gzip file "%s".', $filePath));
+        }
+
         $output = fopen($outputPath, 'wb');
+        if ($output === false) {
+            gzclose($file);
+            throw new UnexpectedValueException(sprintf('Could not open output file "%s".', $outputPath));
+        }
 
         // Write unpacked file
         while (!gzeof($file)) {
-            fwrite($output, gzread($file, $bufferSize));
+            $chunk = gzread($file, $bufferSize);
+            if ($chunk === false) {
+                throw new UnexpectedValueException(sprintf('Could not read gzip file "%s".', $filePath));
+            }
+            fwrite($output, $chunk);
         }
 
         fclose($output);

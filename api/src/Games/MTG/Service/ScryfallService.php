@@ -17,9 +17,12 @@ use App\Service\LargeFileDownloadService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Indykoning\Jsonl\Jsonl;
+use JsonException;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -46,7 +49,7 @@ final class ScryfallService implements GameServiceInterface
         private readonly LargeFileDownloadService $downloadService,
         private readonly SetRepository $setRepository,
         private readonly CardRepository $cardRepository,
-        private readonly SerializerInterface $serializer,
+        private readonly SerializerInterface&DenormalizerInterface $serializer,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
     ) {}
@@ -59,6 +62,7 @@ final class ScryfallService implements GameServiceInterface
      * @throws TransportExceptionInterface
      * @throws ServerExceptionInterface
      * @throws HttpResponseException
+     * @throws JsonException
      */
     public function syncCardInfo(ImageImportType $importType, ?callable $onProgress = null): int
     {
@@ -101,7 +105,7 @@ final class ScryfallService implements GameServiceInterface
             }
 
             // Import remainder
-            if (!empty($cards)) {
+            if (count($cards) > 0) {
                 $imported += $this->importCardBatch($cards, $sets, $importType);
                 if ($onProgress !== null) {
                     $onProgress($imported, 1.0);
@@ -221,6 +225,8 @@ final class ScryfallService implements GameServiceInterface
     }
 
     /**
+     * @param list<array<string, mixed>> $cardData
+     * @param array<string, Uuid> $sets
      * @throws ORMException
      */
     private function importCardBatch(array $cardData, array $sets, ImageImportType $importType): int
@@ -281,6 +287,10 @@ final class ScryfallService implements GameServiceInterface
         return $count;
     }
 
+    /**
+     * @param array<string, mixed> $cardData
+     * @throws ExceptionInterface
+     */
     private function upsertCard(array $cardData, Set $set, int $faceIndex, Card|null $card): Card
     {
         // Ensure the Set is set as an argument to properly construct a new Card, if an existing one is not found
@@ -293,7 +303,7 @@ final class ScryfallService implements GameServiceInterface
         if ($card) {
             $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $card;
         }
-
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $card = $this->serializer->denormalize($cardData, Card::class, 'json', $context);
         $card->faceIndex = $faceIndex;
         $this->entityManager->persist($card);

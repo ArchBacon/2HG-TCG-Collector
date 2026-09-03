@@ -4,3 +4,8 @@ parameters:
         - src/
     excludePaths:
         - src/Kernel.php
+    strictRules:
+        disallowedShortTernary: false
+        booleansInConditions: false
+    doctrine:
+        objectManagerLoader: phpstan-bootstrap.php

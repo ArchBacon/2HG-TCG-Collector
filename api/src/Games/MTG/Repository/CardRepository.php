@@ -17,9 +17,13 @@ final class CardRepository extends ServiceEntityRepository
         parent::__construct($registry, Card::class);
     }
 
+    /**
+     * @param list<string> $scryfallIds
+     * @return list<Card>
+     */
     public function findByScryfallIds(array $scryfallIds): array
     {
-        if (empty($scryfallIds)) {
+        if ($scryfallIds === []) {
             return [];
         }
 
