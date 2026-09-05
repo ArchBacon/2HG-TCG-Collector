@@ -8,8 +8,8 @@ namespace App\Enum;
 enum Game: string
 {
     case MagicTheGathering = 'mtg';
-    case Pokemon = 'pkm';
-    case Lorcana = 'lor';
-    case DraganBallSuper = 'dbs';
-    case OnePiece = 'op';
+    case Pokemon = 'pokemon';
+    case Lorcana = 'lorcana';
+    case DragonBall = 'dragonball';
+    case OnePiece = 'onepiece';
 }

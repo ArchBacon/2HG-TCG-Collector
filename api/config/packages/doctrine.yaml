@@ -33,6 +33,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Games/MTG/Entity'
                 prefix: 'App\Games\MTG\Entity'
                 alias: MTG
+            Pokemon:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Games/Pokemon/Entity'
+                prefix: 'App\Games\Pokemon\Entity'
+                alias: Pokemon
 
 when@test:
     doctrine:

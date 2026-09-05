@@ -5,6 +5,20 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    # Games' import pipelines (Scryfall, TCGDex, ...) make hundreds to tens of thousands of
+    # sequential/concurrent requests per sync run; without this, one dropped connection
+    # anywhere in that run kills the whole thing. GenericRetryStrategy always retries transport
+    # -level failures (connection lost, timeouts) regardless of http_codes, which only govern
+    # retrying "bad" HTTP responses (default: 423/425/429/502/503/504).
+    http_client:
+        default_options:
+            retry_failed:
+                max_retries: 3
+                delay: 1000
+                multiplier: 2
+                max_delay: 10000
+                jitter: 0.3
+
     #esi: true
     #fragments: true
 

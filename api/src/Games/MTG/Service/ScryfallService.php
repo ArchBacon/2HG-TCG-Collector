@@ -43,6 +43,13 @@ final class ScryfallService implements GameServiceInterface
     private const string URL = 'https://api.scryfall.com';
     private const int BATCH_SIZE = 500;
 
+    private readonly array $supportedLanguages;
+
+    /**
+     * @param list<string> $supportedLanguages Scryfall `lang` codes to import; others are skipped.
+     *        An empty list (including `SUPPORTED_LANGUAGES=""`, which the `csv` env processor
+     *        turns into `[null]` rather than `[]`) means every language is supported.
+     */
     public function __construct(
         private readonly string $publicDir,
         private readonly HttpClientInterface $http,
@@ -52,7 +59,13 @@ final class ScryfallService implements GameServiceInterface
         private readonly SerializerInterface&DenormalizerInterface $serializer,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
-    ) {}
+        array $supportedLanguages,
+    ) {
+        $this->supportedLanguages = array_values(array_filter(
+            $supportedLanguages,
+            static fn (?string $lang): bool => $lang !== null && $lang !== '',
+        ));
+    }
 
     /**
      * @throws ORMException
@@ -92,6 +105,10 @@ final class ScryfallService implements GameServiceInterface
 
         try {
             foreach (Jsonl::decodeFromResource($resource, true) as $card) {
+                if ($this->supportedLanguages !== [] && !in_array($card['lang'], $this->supportedLanguages, true)) {
+                    continue;
+                }
+
                 $cards[] = $card;
 
                 // Import full batch

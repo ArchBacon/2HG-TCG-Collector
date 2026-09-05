@@ -53,7 +53,8 @@ class SyncCommand extends Command
     {
         $this
             ->addArgument('game', InputArgument::REQUIRED, 'Game code to process.')
-            ->addOption('skip-images', null, InputOption::VALUE_NONE, 'Skip all image imports (default: new images only)')
+            ->addOption('skip-images', null, InputOption::VALUE_NONE, 'Skip all image imports entirely, queuing nothing (default: new images only)')
+            ->addOption('postpone-images', null, InputOption::VALUE_NONE, 'Queue new images but don\'t download them now; run api:process-images later (default: new images only)')
             ->addOption('all-images', null, InputOption::VALUE_NONE, '(Re)import all images (default: new images only), including set icons')
             ->addOption('all-icons', null, InputOption::VALUE_NONE, '(Re)import all set icons (default: new icons only); set icons can\'t be skipped entirely')
             ->addOption('batch-size', null, InputOption::VALUE_REQUIRED, 'Batch size each images worker processes (default:100)')
@@ -84,12 +85,13 @@ class SyncCommand extends Command
 
         // Validate there's only one or none image arguments
         $skipImages = $input->getOption('skip-images');
+        $postponeImages = $input->getOption('postpone-images');
         $allImages = $input->getOption('all-images');
         $allIcons = $input->getOption('all-icons');
-        assert(is_bool($skipImages) && is_bool($allImages) && is_bool($allIcons));
+        assert(is_bool($skipImages) && is_bool($postponeImages) && is_bool($allImages) && is_bool($allIcons));
 
-        if ($skipImages && $allImages) {
-            $io->error('Options "--skip-images" and "--all-images" cannot be used together.');
+        if (($skipImages ? 1 : 0) + ($postponeImages ? 1 : 0) + ($allImages ? 1 : 0) > 1) {
+            $io->error('Options "--skip-images", "--postpone-images" and "--all-images" cannot be used together.');
 
             return Command::FAILURE;
         }
@@ -97,6 +99,8 @@ class SyncCommand extends Command
         $imageImportType = match (true) {
             $skipImages => ImageImportType::SkipAll,
             $allImages => ImageImportType::All,
+            // --postpone-images still queues new images (just like the default) — it only
+            // affects whether this command processes that queue immediately, below.
             default => ImageImportType::NewOnly,
         };
         // Set icons can't be skipped entirely, only limited to new ones. --all-images implies a
@@ -147,36 +151,46 @@ class SyncCommand extends Command
         $cardsIndicator->finish(sprintf('%d card(s) imported.', $syncedCards));
         $io->writeln(sprintf('Synced %d card(s) in %s.', $syncedCards, $this->formatDuration(microtime(true) - $start)));
 
-        // Always run the image worker: even with --skip-images, this drains any jobs left
-        // pending/failed from a previous run.
-        $io->section('Importing card images');
-        $start = microtime(true);
-        $before = $this->imageJobQueue->progress($game)['completed'];
+        if ($skipImages) {
+            $io->section('Skipping card images');
+            $io->writeln('Skipped card image import entirely; nothing was queued (--skip-images).');
+        } elseif ($postponeImages) {
+            $io->section('Postponing card images');
+            $io->writeln(sprintf(
+                'New card images were queued but not downloaded. Run "api:process-images %s" to process them later (--postpone-images).',
+                $game,
+            ));
+        } else {
+            // Also drains any jobs left pending/failed from a previous run.
+            $io->section('Importing card images');
+            $start = microtime(true);
+            $before = $this->imageJobQueue->progress($game)['completed'];
 
-        $attempts = 0;
-        do {
-            $attempts++;
-            $exitCode = $application->find('api:process-images')->run(
-                new ArrayInput(['game' => $game, '--batch-size' => (string) $batchSize]),
-                $output,
-            );
-            if ($exitCode !== Command::SUCCESS) {
-                $io->error('Card image import failed.');
+            $attempts = 0;
+            do {
+                $attempts++;
+                $exitCode = $application->find('api:process-images')->run(
+                    new ArrayInput(['game' => $game, '--batch-size' => (string) $batchSize]),
+                    $output,
+                );
+                if ($exitCode !== Command::SUCCESS) {
+                    $io->error('Card image import failed.');
 
-                return Command::FAILURE;
+                    return Command::FAILURE;
+                }
+
+                $imageProgress = $this->imageJobQueue->progress($game);
+            } while ($imageProgress['failed'] > 0 && $attempts < self::MAX_IMAGE_ATTEMPTS);
+
+            if ($imageProgress['failed'] > 0) {
+                $io->warning(sprintf('%d card image(s) still failed after %d attempt(s).', $imageProgress['failed'], $attempts));
             }
-
-            $imageProgress = $this->imageJobQueue->progress($game);
-        } while ($imageProgress['failed'] > 0 && $attempts < self::MAX_IMAGE_ATTEMPTS);
-
-        if ($imageProgress['failed'] > 0) {
-            $io->warning(sprintf('%d card image(s) still failed after %d attempt(s).', $imageProgress['failed'], $attempts));
+            $io->writeln(sprintf(
+                'Imported %d card image(s) in %s.',
+                $imageProgress['completed'] - $before,
+                $this->formatDuration(microtime(true) - $start),
+            ));
         }
-        $io->writeln(sprintf(
-            'Imported %d card image(s) in %s.',
-            $imageProgress['completed'] - $before,
-            $this->formatDuration(microtime(true) - $start),
-        ));
 
         $io->success(sprintf('%s sync completed.', $game));
         $this->reportDuration($io);
