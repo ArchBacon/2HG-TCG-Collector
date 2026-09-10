@@ -2,9 +2,11 @@
 
 namespace App\Games\OnePiece\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Traits\TimestampableTrait;
 use App\Games\OnePiece\Enum\Rarity;
 use App\Games\OnePiece\Repository\CardRepository;
@@ -15,7 +17,12 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
 
 #[ApiResource(
-    operations: [new GetCollection(), new Get()],
+    operations: [
+        new GetCollection(parameters: [
+            'name' => new QueryParameter(filter: new PartialSearchFilter(), property: 'name'),
+        ]),
+        new Get(),
+    ],
     routePrefix: '/onepiece',
     normalizationContext: ['groups' => ['card:read']],
 )]

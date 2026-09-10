@@ -1,0 +1,108 @@
+:root {
+    color-scheme: light dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #f7f7f7;
+    color: #222;
+}
+
+.home {
+    max-width: 640px;
+    margin: 18vh auto 0;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.home h1 {
+    font-size: 2.5rem;
+    margin-bottom: .25rem;
+}
+
+.tagline {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.search-form {
+    display: flex;
+    gap: .5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.search-form select,
+.search-form input,
+.search-form button {
+    font-size: 1rem;
+    padding: .6rem .8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.search-form input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-form button {
+    background: #2b2b52;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.search-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #2b2b52;
+    flex-wrap: wrap;
+}
+
+.search-header .logo {
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.2rem;
+    white-space: nowrap;
+}
+
+.search-header .search-form {
+    flex: 1;
+}
+
+#status {
+    text-align: center;
+    margin: 1rem;
+    color: #555;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    padding: 1rem 1.5rem 3rem;
+}
+
+.card {
+    text-align: center;
+}
+
+.card img {
+    width: 100%;
+    border-radius: 6px;
+    background: #eee;
+}
+
+.card-name {
+    margin-top: .4rem;
+    font-size: .85rem;
+}

@@ -2,9 +2,11 @@
 
 namespace App\Games\MTG\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Traits\TimestampableTrait;
 use App\Games\MTG\Entity\Embeddable\ImageUris;
 use App\Games\MTG\Entity\Embeddable\Preview;
@@ -25,7 +27,12 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Uid\Uuid;
 
 #[ApiResource(
-    operations: [new GetCollection(), new Get()],
+    operations: [
+        new GetCollection(parameters: [
+            'name' => new QueryParameter(filter: new PartialSearchFilter(), property: 'name'),
+        ]),
+        new Get(),
+    ],
     routePrefix: '/mtg',
     normalizationContext: ['groups' => ['card:read']],
 )]
