@@ -56,3 +56,11 @@ services:
             $urlResolver: '@App\Games\Lorcana\Service\CardImageUrlResolver'
         tags:
             - { name: 'api.image_job_handler', game: 'lorcana' }
+
+    game.onepiece.image_job_handler:
+        parent: App\Service\ImageJobHandler
+        arguments:
+            $game: !php/enum App\Enum\Game::OnePiece
+            $urlResolver: '@App\Games\OnePiece\Service\CardImageUrlResolver'
+        tags:
+            - { name: 'api.image_job_handler', game: 'onepiece' }

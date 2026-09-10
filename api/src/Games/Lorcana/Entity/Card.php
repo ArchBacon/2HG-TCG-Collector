@@ -230,7 +230,7 @@ class Card
      * {@see \App\Games\Pokemon\Entity\Card::$images} / {@see \App\Games\MTG\Entity\Card::$images}),
      * not lorcana-api's URL.
      *
-     * @var array{small: string, normal: string, large: string}
+     * @var array{small: string, medium: string, large: string}
      */
     #[Groups(['card:read'])]
     public array $images {
@@ -239,7 +239,7 @@ class Card
 
             return [
                 'small' => '/lorcana/small/' . $filename,
-                'normal' => '/lorcana/normal/' . $filename,
+                'medium' => '/lorcana/medium/' . $filename,
                 'large' => '/lorcana/large/' . $filename,
             ];
         }

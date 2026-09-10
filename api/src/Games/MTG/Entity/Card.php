@@ -324,7 +324,7 @@ class Card
      * Our own served copies of this card's image (see {@see \App\Games\MTG\Service\ImageJobHandler}
      * and {@see \App\Service\CardImageService}), not Scryfall's URLs.
      *
-     * @var array{small: string, normal: string, large: string}
+     * @var array{small: string, medium: string, large: string}
      */
     #[Groups(['card:read'])]
     public array $images {
@@ -333,7 +333,7 @@ class Card
 
             return [
                 'small' => '/mtg/small/' . $filename,
-                'normal' => '/mtg/normal/' . $filename,
+                'medium' => '/mtg/medium/' . $filename,
                 'large' => '/mtg/large/' . $filename,
             ];
         }

@@ -52,7 +52,7 @@ final readonly class HttpService
     private function validateResponse(ResponseInterface $response): void
     {
         if ($response->getStatusCode() === 404) {
-            throw new HttpResponseException('Not found.');
+            throw new HttpResponseException("Resource not found. ({$response->getInfo()['url']})");
         }
 
         if ($response->getStatusCode() !== 200) {

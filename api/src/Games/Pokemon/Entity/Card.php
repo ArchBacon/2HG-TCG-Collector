@@ -123,7 +123,7 @@ class Card
      * Our own served copies of this card's image (see {@see \App\Games\Pokemon\Service\ImageJobHandler}
      * and {@see \App\Service\CardImageService}), not TCGdex's URL.
      *
-     * @var array{small: string, normal: string, large: string}
+     * @var array{small: string, medium: string, large: string}
      */
     #[Groups(['card:read'])]
     public array $images {
@@ -132,7 +132,7 @@ class Card
 
             return [
                 'small' => '/pokemon/small/' . $filename,
-                'normal' => '/pokemon/normal/' . $filename,
+                'medium' => '/pokemon/medium/' . $filename,
                 'large' => '/pokemon/large/' . $filename,
             ];
         }

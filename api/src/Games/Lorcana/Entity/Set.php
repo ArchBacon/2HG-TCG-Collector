@@ -37,7 +37,7 @@ class Set
     /**
      * lorcana-api's own set code, e.g. "TFC" for "The First Chapter". Unlike Scryfall/TCGdex,
      * lorcana-api has no separate short code — this doubles as one, and also prefixes every
-     * card's {@see Card::$uniqueId} within the set.
+     * card's {@see Card::$cardId} within the set.
      */
     #[Groups(['set:read'])]
     #[SerializedName('Set_ID')]

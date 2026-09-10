@@ -14,7 +14,7 @@ final readonly class CardImageService
     private const int WEBP_QUALITY = 80;
     private const array SIZES = [
         'small' => [146, 204],
-        'normal' => [488, 680],
+        'medium' => [488, 680],
         'large' => [745, 1040],
     ];
 
