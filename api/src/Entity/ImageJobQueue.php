@@ -16,7 +16,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * One row per (game, card) image that needs downloading/converting. Deliberately not
  * game-specific and not FK-linked to any game's card table: {@see self::$cardId} is a loose
- * reference, resolved per {@see self::$game} by that game's {@see \App\Contract\ImageJobHandlerInterface}.
+ * reference, resolved per {@see self::$game} by that game's tagged {@see \App\Service\ImageJobHandler}.
  *
  * Rows are claimed and mutated almost entirely through raw SQL in {@see ImageJobQueueRepository}
  * rather than the ORM's unit of work — this table is worked by many concurrent worker

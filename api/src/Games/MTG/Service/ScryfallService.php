@@ -13,6 +13,7 @@ use App\Games\MTG\Repository\CardRepository;
 use App\Games\MTG\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
 use App\Service\GzipService;
+use App\Service\LanguageService;
 use App\Service\LargeFileDownloadService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -20,6 +21,7 @@ use Indykoning\Jsonl\Jsonl;
 use JsonException;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -43,29 +45,18 @@ final class ScryfallService implements GameServiceInterface
     private const string URL = 'https://api.scryfall.com';
     private const int BATCH_SIZE = 500;
 
-    private readonly array $supportedLanguages;
-
-    /**
-     * @param list<string> $supportedLanguages Scryfall `lang` codes to import; others are skipped.
-     *        An empty list (including `SUPPORTED_LANGUAGES=""`, which the `csv` env processor
-     *        turns into `[null]` rather than `[]`) means every language is supported.
-     */
     public function __construct(
+        #[Autowire('%public_dir%')]
         private readonly string $publicDir,
         private readonly HttpClientInterface $http,
-        private readonly LargeFileDownloadService $downloadService,
         private readonly SetRepository $setRepository,
         private readonly CardRepository $cardRepository,
         private readonly SerializerInterface&DenormalizerInterface $serializer,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
-        array $supportedLanguages,
-    ) {
-        $this->supportedLanguages = array_values(array_filter(
-            $supportedLanguages,
-            static fn (?string $lang): bool => $lang !== null && $lang !== '',
-        ));
-    }
+        private readonly LanguageService $languageService,
+        private readonly GzipService $gzip,
+    ) {}
 
     /**
      * @throws ORMException
@@ -86,11 +77,10 @@ final class ScryfallService implements GameServiceInterface
         }
 
         // Download and unpack .gz bulk data file
-        $file = $this->downloadService->download(
+        $file = $this->gzip->downloadAndUnpack(
             $response->toArray()['jsonl_download_uri'],
-            "{$response->toArray()['id']}.jsonl.gz"
+            "{$response->toArray()['id']}.jsonl"
         );
-        $file = GzipService::unpack($file);
         $fileSize = filesize($file);
         $totalBytes = $fileSize === false ? 0 : $fileSize;
 
@@ -105,7 +95,7 @@ final class ScryfallService implements GameServiceInterface
 
         try {
             foreach (Jsonl::decodeFromResource($resource, true) as $card) {
-                if ($this->supportedLanguages !== [] && !in_array($card['lang'], $this->supportedLanguages, true)) {
+                if (!$this->languageService->isSupported($card['lang'])) {
                     continue;
                 }
 
@@ -244,7 +234,7 @@ final class ScryfallService implements GameServiceInterface
     /**
      * @param list<array<string, mixed>> $cardData
      * @param array<string, Uuid> $sets
-     * @throws ORMException
+     * @throws ORMException|ExceptionInterface
      */
     private function importCardBatch(array $cardData, array $sets, ImageImportType $importType): int
     {

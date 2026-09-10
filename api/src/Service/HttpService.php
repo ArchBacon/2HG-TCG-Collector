@@ -1,0 +1,62 @@
+<?php declare(strict_types=1);
+
+namespace App\Service;
+
+use App\Exception\HttpResponseException;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
+
+final readonly class HttpService
+{
+    public function __construct(
+        private HttpClientInterface $http,
+    ) {}
+
+    /**
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
+     */
+    public function json(string $url): array
+    {
+        $response = $this->http->request('GET', $url);
+        $this->validateResponse($response);
+
+        return $response->toArray();
+    }
+
+    /**
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ClientExceptionInterface
+     */
+    public function image(string $url): string
+    {
+        $response = $this->http->request('GET', $url);
+        $this->validateResponse($response);
+
+        return $response->getContent();
+    }
+
+    /**
+     * @throws TransportExceptionInterface
+     */
+    private function validateResponse(ResponseInterface $response): void
+    {
+        if ($response->getStatusCode() === 404) {
+            throw new HttpResponseException('Not found.');
+        }
+
+        if ($response->getStatusCode() !== 200) {
+            throw new HttpResponseException("Could not connect to {$response->getInfo()['url']}.");
+        }
+    }
+}

@@ -7,12 +7,16 @@ use UnexpectedValueException;
 /**
  * Small service class for extracting Gzip files.
  */
-final class GzipService
+final readonly class GzipService
 {
+    public function __construct(
+        private LargeFileDownloadService $downloadService,
+    ) {}
+
     /**
      * @see https://stackoverflow.com/a/3293251
      */
-    public static function unpack(string $filePath): string
+    public function unpack(string $filePath): string
     {
         $bufferSize = 1048576; // Read 1MiB at a time
         $outputPath = str_replace('.gz', '', $filePath);
@@ -43,5 +47,11 @@ final class GzipService
         unlink($filePath);
 
         return $outputPath;
+    }
+
+    public function downloadAndUnpack(string $url, string $filename): string
+    {
+        $file = $this->downloadService->download($url, "$filename.gz");
+        return $this->unpack($file);
     }
 }

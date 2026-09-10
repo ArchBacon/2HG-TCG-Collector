@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Process;
 
 /**
@@ -11,6 +13,7 @@ use Symfony\Component\Process\Process;
 final readonly class LargeFileDownloadService
 {
     public function __construct(
+        #[Autowire('%storage_dir%')]
         private string $storageDir,
     ) {}
 
@@ -27,7 +30,7 @@ final readonly class LargeFileDownloadService
         $process->run();
 
         if (!$process->isSuccessful()) {
-            throw new \RuntimeException('curl failed: ' . $process->getErrorOutput());
+            throw new RuntimeException('curl failed: ' . $process->getErrorOutput());
         }
 
         return $outputPath;

@@ -3,8 +3,8 @@
 namespace App\Command;
 
 use App\Command\Concern\ReportsDuration;
-use App\Contract\ImageJobHandlerInterface;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\ImageJobHandler;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -25,7 +25,7 @@ use function sprintf;
 #[AsCommand(
     name: 'api:process-images',
     description: 'Reset stuck image jobs and run a worker pool to drain the queue',
-    usages: ['mtg']
+    usages: ['mtg', 'pokemon', 'lorcana']
 )]
 class ProcessImagesCommand extends Command
 {
@@ -71,7 +71,7 @@ class ProcessImagesCommand extends Command
             return Command::FAILURE;
         }
         $handler = $this->handlers->get($game);
-        assert($handler instanceof ImageJobHandlerInterface);
+        assert($handler instanceof ImageJobHandler);
 
         // Set configuration
         $workerLimit = max(1, $this->workerLimit);

@@ -10,7 +10,7 @@ use App\Enum\ImageImportType;
  * defining the standard set of import operations every game package must provide: sets,
  * symbology, set icons, card data, and card images.
  *
- * Unlike {@see ImageJobHandlerInterface}, there's no tagged locator resolving implementations
+ * Unlike {@see \App\Service\ImageJobHandler}, there's no tagged locator resolving implementations
  * by game yet — each game's own console commands (e.g.
  * {@see \App\Games\MTG\Command\ImportScryfallCardsCommand}) depend on their concrete service
  * directly rather than on this interface. This contract exists to keep that shape consistent

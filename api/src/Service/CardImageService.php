@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Enum\Game;
 use GdImage;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use function array_keys;
 use function sprintf;
 
@@ -18,6 +19,7 @@ final readonly class CardImageService
     ];
 
     public function __construct(
+        #[Autowire('%public_dir%')]
         private string $publicDir,
     ) {}
 

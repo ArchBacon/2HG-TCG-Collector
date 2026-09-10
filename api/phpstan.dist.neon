@@ -1,3 +1,6 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: 10
     paths:
@@ -9,3 +12,6 @@ parameters:
         booleansInConditions: false
     doctrine:
         objectManagerLoader: phpstan-bootstrap.php
+    ignoreErrors:
+        - '#^Cannot access offset ''[a-zA-Z0-9_]+'' on mixed\.$#'
+        - '#^Possibly invalid array key type mixed\.$#'

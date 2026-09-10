@@ -2,10 +2,8 @@
 
 namespace App\Service;
 
-use App\Enum\Game;
 use GdImage;
 use RuntimeException;
-use function array_keys;
 use function sprintf;
 
 final readonly class ImageService

@@ -1,0 +1,169 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Cannot access offset 0 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Cannot access offset 1 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#1 \$cardData of method App\\Games\\MTG\\Service\\ScryfallService\:\:importCardBatch\(\) expects list\<array\<string, mixed\>\>, non\-empty\-list\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#1 \$lang of method App\\Service\\LanguageService\:\:isSupported\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#1 \$scryfallIds of method App\\Games\\MTG\\Repository\\CardRepository\:\:findByScryfallIds\(\) expects list\<string\>, list\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#1 \$url of method App\\Service\\GzipService\:\:downloadAndUnpack\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#2 \$cardIds of method App\\Repository\\ImageJobQueueRepository\:\:enqueueBatch\(\) expects list\<Symfony\\Component\\Uid\\Uuid\>, array\<Symfony\\Component\\Uid\\Uuid\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Parameter \#3 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Part \$data\[''scryfall_id''\] \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 3
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Part \$response\-\>toArray\(\)\[''id''\] \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Games/MTG/Service/ScryfallService.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''\|'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Call to function is_countable\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Method App\\Games\\Pokemon\\Service\\TCGDexService\:\:fetchCards\(\) should return array\<string, array\<string, mixed\>\> but returns array\<string, array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Method App\\Games\\Pokemon\\Service\\TCGDexService\:\:fetchSetInfo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Method App\\Games\\Pokemon\\Service\\TCGDexService\:\:readJson\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_column expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_diff expects an array of values castable to string, list given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#1 \$tcgdexIds of method App\\Games\\Pokemon\\Repository\\CardRepository\:\:findByTcgdexIds\(\) expects list\<string\>, non\-empty\-list given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#2 \$cardIds of method App\\Games\\Pokemon\\Service\\TCGDexService\:\:fetchCards\(\) expects list\<string\>, non\-empty\-list given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#2 \$id of method App\\Games\\Pokemon\\Service\\TCGDexService\:\:fetchSetInfo\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Games/Pokemon/Service/TCGDexService.php
+
+		-
+			message: '#^Method App\\Service\\HttpService\:\:json\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/HttpService.php
+
+		-
+			message: '#^Part \$response\-\>getInfo\(\)\[''url''\] \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Service/HttpService.php

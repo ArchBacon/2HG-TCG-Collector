@@ -3,8 +3,8 @@
 namespace App\Command;
 
 use App\Command\Concern\ReportsDuration;
-use App\Contract\ImageJobHandlerInterface;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\ImageJobHandler;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -61,7 +61,7 @@ class ProcessImageBatchCommand extends Command
             return Command::FAILURE;
         }
         $handler = $this->handlers->get($game);
-        assert($handler instanceof ImageJobHandlerInterface);
+        assert($handler instanceof ImageJobHandler);
 
         // Validate argument 'size'
         $batchSize = $input->getArgument('size');

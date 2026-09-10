@@ -14,9 +14,11 @@ use App\Games\Pokemon\Repository\CardRepository;
 use App\Games\Pokemon\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
 use App\Service\ImageService;
+use App\Service\LanguageService;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -32,14 +34,13 @@ use function sprintf;
  * TCGDex API client and Pokémon data import pipeline, in one place.
  */
 #[AutoconfigureTag('api.game_service', ['game' => Game::Pokemon->value])]
-class TCGDex implements GameServiceInterface
+class TCGDexService implements GameServiceInterface
 {
     private const Game GAME = Game::Pokemon;
     private const string URL = 'https://api.tcgdex.net/v2';
-    private readonly array $supportedLanguages;
 
-    /** @param list<string> $supportedLanguages */
     public function __construct(
+        #[Autowire('%public_dir%')]
         private readonly string $publicDir,
         private readonly HttpClientInterface $http,
         private readonly SetRepository $setRepository,
@@ -48,13 +49,8 @@ class TCGDex implements GameServiceInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
         private readonly ImageService $imageService,
-        array $supportedLanguages,
-    ) {
-        $this->supportedLanguages = array_values(array_filter(
-            $supportedLanguages,
-            static fn (?string $lang): bool => $lang !== null && $lang !== '',
-        ));
-    }
+        private readonly LanguageService $languageService,
+    ) {}
 
     /**
      * @throws HttpResponseException
@@ -65,7 +61,7 @@ class TCGDex implements GameServiceInterface
         // "list every card" endpoint), and lets progress be reported against a combined total
         // across all languages instead of restarting at 0% for each one.
         $listByLang = [];
-        foreach ($this->supportedLanguages as $lang) {
+        foreach ($this->languageService->getSupportedLanguages() as $lang) {
             $response = $this->http->request('GET', self::URL . '/' . $lang . '/sets');
             $listByLang[$lang] = $this->readJson($response, sprintf('set list (%s)', $lang));
         }
@@ -297,7 +293,7 @@ class TCGDex implements GameServiceInterface
         // instead of resetting to 0% at the start of each language.
         $listByLang = [];
         $total = 0;
-        foreach ($this->supportedLanguages as $lang) {
+        foreach ($this->languageService->getSupportedLanguages() as $lang) {
             $response = $this->http->request('GET', self::URL . '/' . $lang . '/sets');
             $list = $this->readJson($response, sprintf('set list (%s)', $lang));
             $listByLang[$lang] = $list;
