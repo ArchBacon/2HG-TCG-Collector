@@ -10,6 +10,6 @@ enum Game: string
     case MagicTheGathering = 'mtg';
     case Pokemon = 'pokemon';
     case Lorcana = 'lorcana';
-    case DragonBall = 'dragonball';
+    case DragonBallFusion = 'dragonballfusion';
     case OnePiece = 'onepiece';
 }

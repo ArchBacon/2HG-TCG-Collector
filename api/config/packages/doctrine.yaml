@@ -51,6 +51,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Games/OnePiece/Entity'
                 prefix: 'App\Games\OnePiece\Entity'
                 alias: OnePiece
+            DragonBallFusion:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Games/DragonBallFusion/Entity'
+                prefix: 'App\Games\DragonBallFusion\Entity'
+                alias: DragonBallFusion
 
 when@test:
     doctrine:

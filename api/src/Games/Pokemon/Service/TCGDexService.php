@@ -343,6 +343,7 @@ class TCGDexService implements GameServiceInterface
 
     /**
      * @throws HttpResponseException
+     * @throws TransportExceptionInterface
      */
     public function syncSetIcons(IconImportType $importType, ?callable $onProgress = null): int
     {
@@ -366,9 +367,14 @@ class TCGDexService implements GameServiceInterface
                 $path = "$this->publicDir/$game/sets/{$set->tcgdexId}_{$set->lang->value}_$type";
                 if ($importType !== IconImportType::NewOnly || !is_file($path . '.webp')) {
                     if (!$uri) continue;
-
                     $response = $this->http->request('GET', $uri . '.png');
-                    $data = $this->readContent($response, sprintf('%s icon for set "%s"', $type, $set->tcgdexId));
+
+                    try {
+                        $data = $this->readContent($response, sprintf('%s icon for set "%s"', $type, $set->tcgdexId));
+                    } catch (\Exception $e) {
+                        print $e->getMessage();
+                        continue;
+                    }
                     $this->imageService->convertAndSave($data, $path);
                     $downloaded++;
                 }

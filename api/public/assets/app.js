@@ -3,6 +3,7 @@ const GAMES = [
     { code: 'pokemon', label: 'Pokémon' },
     { code: 'lorcana', label: 'Disney Lorcana' },
     { code: 'onepiece', label: 'One Piece' },
+    { code: 'dragonballfusion', label: 'Dragon Ball Fusion World' },
 ];
 
 function populateGameSelect(select, selected) {
@@ -11,7 +12,7 @@ function populateGameSelect(select, selected) {
         option.value = game.code;
         option.textContent = game.label;
         if (game.code === selected) {
-            option.selected = true;
+            option.selected = true;0
         }
         select.appendChild(option);
     }

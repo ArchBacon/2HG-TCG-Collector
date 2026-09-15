@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}TCG Collector{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/style.css') }}">
+{% endblock %}
+
+{% block body %}
+    <main class="home">
+        <h1>TCG Collector</h1>
+        <p class="tagline">Search cards across every game in the collection.</p>
+        <form class="search-form" action="{{ path('app_search') }}" method="get">
+            <select name="game" id="game" required></select>
+            <input type="text" name="q" placeholder="Card name…" autocomplete="off" required>
+            <button type="submit">Search</button>
+        </form>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('assets/app.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateGameSelect(document.getElementById('game'));
+        });
+    </script>
+{% endblock %}

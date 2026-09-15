@@ -1,5 +1,7 @@
+
+
 :root {
-    color-scheme: light dark;
+    color-scheme: dark;
 }
 
 * {
@@ -9,8 +11,8 @@
 body {
     margin: 0;
     font-family: system-ui, sans-serif;
-    background: #f7f7f7;
-    color: #222;
+    background: #14141c;
+    color: #e6e6ea;
 }
 
 .home {
@@ -26,7 +28,7 @@ body {
 }
 
 .tagline {
-    color: #666;
+    color: #9a9aa8;
     margin-bottom: 2rem;
 }
 
@@ -42,8 +44,14 @@ body {
 .search-form button {
     font-size: 1rem;
     padding: .6rem .8rem;
-    border: 1px solid #ccc;
+    border: 1px solid #3a3a4d;
     border-radius: 4px;
+    background: #232334;
+    color: #e6e6ea;
+}
+
+.search-form input::placeholder {
+    color: #8a8a98;
 }
 
 .search-form input {
@@ -52,7 +60,7 @@ body {
 }
 
 .search-form button {
-    background: #2b2b52;
+    background: #4a47a3;
     color: #fff;
     border: none;
     cursor: pointer;
@@ -63,7 +71,7 @@ body {
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.5rem;
-    background: #2b2b52;
+    background: #1c1c2c;
     flex-wrap: wrap;
 }
 
@@ -82,14 +90,14 @@ body {
 #status {
     text-align: center;
     margin: 1rem;
-    color: #555;
+    color: #9a9aa8;
 }
 
 .results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
-    padding: 1rem 1.5rem 3rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+    padding: 1rem 1.5rem 2rem;
 }
 
 .card {
@@ -99,10 +107,38 @@ body {
 .card img {
     width: 100%;
     border-radius: 6px;
-    background: #eee;
+    background: #232334;
 }
 
 .card-name {
     margin-top: .4rem;
     font-size: .85rem;
+    color: #e6e6ea;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0 1.5rem 3rem;
+}
+
+.pagination button {
+    font-size: 1rem;
+    padding: .5rem 1rem;
+    border: 1px solid #3a3a4d;
+    border-radius: 4px;
+    background: #232334;
+    color: #e6e6ea;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+#page-info {
+    color: #9a9aa8;
 }

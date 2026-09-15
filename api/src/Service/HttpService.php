@@ -3,6 +3,9 @@
 namespace App\Service;
 
 use App\Exception\HttpResponseException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV4;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -15,6 +18,8 @@ final readonly class HttpService
 {
     public function __construct(
         private HttpClientInterface $http,
+        #[Autowire('%storage_dir%')]
+        private string $storageDir,
     ) {}
 
     /**
@@ -44,6 +49,24 @@ final readonly class HttpService
         $this->validateResponse($response);
 
         return $response->getContent();
+    }
+
+    /**
+     * @throws TransportExceptionInterface
+     */
+    public function zip(string $url): string
+    {
+        $response = $this->http->request('GET', $url);
+        $this->validateResponse($response);
+        $path = $this->storageDir . '/' . Uuid::v4() . '.zip';
+
+        $fileHandler = fopen($path, 'wb');
+        foreach ($this->http->stream($response) as $chunk) {
+            fwrite($fileHandler, $chunk->getContent());
+        }
+        fclose($fileHandler);
+
+        return $path;
     }
 
     /**
