@@ -6,10 +6,11 @@
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
-        "ext-iconv": "*",
-        "ext-zlib": "*",
         "ext-gd": "*",
         "ext-http": "*",
+        "ext-iconv": "*",
+        "ext-zip": "*",
+        "ext-zlib": "*",
         "api-platform/doctrine-orm": "^4.3.17",
         "api-platform/symfony": "^4.3.17",
         "doctrine/doctrine-bundle": "^3.3.1",
@@ -20,6 +21,7 @@
         "phpdocumentor/reflection-docblock": "^6.0.3",
         "phpstan/phpdoc-parser": "^2.3.3",
         "symfony/asset": "8.1.*",
+        "symfony/asset-mapper": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
         "symfony/expression-language": "8.1.*",
@@ -31,11 +33,13 @@
         "symfony/runtime": "8.1.*",
         "symfony/security-bundle": "8.1.*",
         "symfony/serializer": "8.1.*",
+        "symfony/stimulus-bundle": "^3.4",
         "symfony/twig-bundle": "8.1.*",
         "symfony/uid": "8.1.*",
+        "symfony/ux-icons": "^3.4",
         "symfony/validator": "8.1.*",
         "symfony/yaml": "8.1.*",
-        "ext-zip": "*"
+        "symfonycasts/tailwind-bundle": "^1.0"
     },
     "config": {
         "allow-plugins": {
@@ -72,7 +76,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
         },
         "post-install-cmd": [
             "@auto-scripts"

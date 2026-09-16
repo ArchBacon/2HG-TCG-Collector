@@ -2,27 +2,27 @@
 
 {% block title %}TCG Collector{% endblock %}
 
-{% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('assets/style.css') }}">
-{% endblock %}
-
 {% block body %}
-    <main class="home">
-        <h1>TCG Collector</h1>
-        <p class="tagline">Search cards across every game in the collection.</p>
-        <form class="search-form" action="{{ path('app_search') }}" method="get">
-            <select name="game" id="game" required></select>
-            <input type="text" name="q" placeholder="Card name…" autocomplete="off" required>
-            <button type="submit">Search</button>
+    <main class="flex min-h-full flex-col items-center justify-center gap-6 px-4 py-24 text-center">
+        {{ ux_icon('lucide:layers', { class: 'h-10 w-10 text-slate-400' }) }}
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900">TCG Collector</h1>
+        <p class="text-slate-500">Search cards across every game in the collection.</p>
+
+        <form class="flex w-full max-w-xl flex-col gap-3 sm:flex-row" action="{{ path('app_search') }}" method="get">
+            <select name="game" required data-controller="game-select"
+                    class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 sm:w-56"></select>
+
+            <div class="relative flex-1">
+                {{ ux_icon('lucide:search', { class: 'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' }) }}
+                <input type="text" name="q" placeholder="Card name…" autocomplete="off" required
+                       class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+            </div>
+
+            <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700">
+                {{ ux_icon('lucide:search', { class: 'h-4 w-4' }) }}
+                Search
+            </button>
         </form>
     </main>
-{% endblock %}
-
-{% block javascripts %}
-    <script src="{{ asset('assets/app.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            populateGameSelect(document.getElementById('game'));
-        });
-    </script>
 {% endblock %}
