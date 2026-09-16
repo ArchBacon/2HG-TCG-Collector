@@ -18,9 +18,6 @@ readonly class CardImageUrlResolver implements CardImageUrlResolverInterface
             throw new NotFoundHttpException(sprintf('Card "%s" no longer exists.', $cardId));
         }
 
-        // Card::$imageUri is TCGdex's asset URL with no quality/format suffix — the API 200s on
-        // the bare URL too, but with an HTML stub page instead of image bytes, which is exactly
-        // what was silently breaking every real (non-cached) image download.
         return $card->imageUri ? $card->imageUri . '/high.webp' : null;
     }
 }
