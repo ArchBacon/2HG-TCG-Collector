@@ -49,6 +49,7 @@ class ProcessImagesCommand extends Command
         $this
             ->addArgument('game', InputArgument::REQUIRED, 'Game code to process.')
             ->addOption('batch-size', null, InputOption::VALUE_REQUIRED, 'Batch size each worker processes', (string) self::BATCH_SIZE)
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Redownload every claimed image even if it already exists on disk.')
         ;
     }
 
@@ -79,6 +80,8 @@ class ProcessImagesCommand extends Command
         assert(is_string($batchSizeOption));
         $batchSize = max(1, (int) $batchSizeOption);
 
+        $force = (bool) $input->getOption('force');
+
         // Dispatch workers and log progress
         $io->section(sprintf('%s (worker limit: %d)', $game, $workerLimit));
         $reset = $this->queue->resetStuck([$game]);
@@ -87,7 +90,7 @@ class ProcessImagesCommand extends Command
         }
 
         $start = microtime(true);
-        $this->drain($game, $workerLimit, $batchSize, $io);
+        $this->drain($game, $workerLimit, $batchSize, $force, $io);
         $io->comment(sprintf('%d finished in %s', $game, $this->formatDuration(microtime(true) - $start)));
 
         $this->reportDuration($io);
@@ -95,7 +98,7 @@ class ProcessImagesCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function drain(string $game, int $workerLimit, int $batchSize, SymfonyStyle $io): void
+    private function drain(string $game, int $workerLimit, int $batchSize, bool $force, SymfonyStyle $io): void
     {
         $phpBinary = new PhpExecutableFinder()->find();
         $php = $phpBinary ?: 'php';
@@ -130,7 +133,11 @@ class ProcessImagesCommand extends Command
             $running = array_values($running);
 
             while (count($running) < $workerLimit && $this->queue->countPending($game) > 0) {
-                $process = new Process([$php, $console, 'api:process-image-batch', $game, (string) $batchSize], $this->projectDir);
+                $args = [$php, $console, 'api:process-image-batch', $game, (string) $batchSize];
+                if ($force) {
+                    $args[] = '--force';
+                }
+                $process = new Process($args, $this->projectDir);
                 $process->setTimeout(0);
                 $process->start();
                 $running[] = $process;

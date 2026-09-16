@@ -93,7 +93,7 @@ class OPTCGAPIService implements GameServiceInterface
             gc_collect_cycles();
         }
 
-        return $progress->report();
+        return $progress->count();
     }
 
     /**
@@ -122,7 +122,7 @@ class OPTCGAPIService implements GameServiceInterface
         $this->entityManager->flush();
         $this->entityManager->clear();
 
-        return $progress->report();
+        return $progress->count();
     }
 
     public function syncSetIcons(IconImportType $importType, ?callable $onProgress = null): int

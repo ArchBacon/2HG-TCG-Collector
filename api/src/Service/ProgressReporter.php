@@ -22,15 +22,25 @@ final class ProgressReporter
         }
     }
 
+    public function count(): int
+    {
+        return $this->progress;
+    }
+
     /**
      * @param (callable(int $progress, float $fractionComplete): void)|null $onProgress
+     * @param (callable(): float)|null $fraction Overrides the default progress/total fraction —
+     *        for callers tracking completion against something other than this reporter's own
+     *        $total (e.g. bytes read instead of items processed), where progress/total wouldn't
+     *        mean anything.
      * @return int Number of items processed so far
      */
-    public function report(?callable $onProgress = null): int
+    public function report(?callable $onProgress = null, ?callable $fraction = null): int
     {
         if ($onProgress !== null) {
-            $fraction = $this->total > 0 ? $this->progress / $this->total : 0.0;
-            $onProgress($this->progress, $fraction);
+            $internalFraction = $this->total > 0 ? $this->progress / $this->total : 0.0;
+            $fractionComplete = $fraction !== null ? $fraction() : $internalFraction;
+            $onProgress($this->progress, $fractionComplete);
         }
 
         return $this->progress;

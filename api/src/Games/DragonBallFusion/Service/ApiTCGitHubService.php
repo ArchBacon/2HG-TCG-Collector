@@ -13,6 +13,7 @@ use App\Games\DragonBallFusion\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
 use App\Service\HttpService;
 use App\Service\ProgressReporter;
+use App\Service\ZipService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -23,7 +24,6 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
-use ZipArchive;
 
 /**
  * ApiTCG GitHub API client and Dragon Ball Fusion data import pipeline, in one place.
@@ -47,22 +47,10 @@ class ApiTCGitHubService implements GameServiceInterface
         private readonly SerializerInterface&DenormalizerInterface $serializer,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
+        private readonly ZipService $zip,
     ) {
         $path = $this->http->zip(self::URL . '/archive/refs/heads/main.zip');
-        $zip = new ZipArchive();
-
-        if (!$zip->open($path)) {
-            throw new \RuntimeException(sprintf('Could not open zip file "%s"', $path));
-        }
-        $extractPath = str_replace('.zip', '', $path);
-        if (!mkdir($extractPath, 0755, true) && !is_dir($extractPath)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $extractPath));
-        }
-
-        $zip->extractTo($extractPath);
-        $zip->close();
-        unlink($path);
-        $this->dataPath = $extractPath;
+        $this->dataPath = $this->zip->unpack($path);
     }
 
     public function __destruct()
@@ -114,7 +102,7 @@ class ApiTCGitHubService implements GameServiceInterface
             gc_collect_cycles();
         }
 
-        return $progress->report();
+        return $progress->count();
     }
 
     /**
@@ -150,7 +138,7 @@ class ApiTCGitHubService implements GameServiceInterface
         $this->entityManager->clear();
 
 
-        return $progress->report();
+        return $progress->count();
     }
 
     public function syncSetIcons(IconImportType $importType, ?callable $onProgress = null): int

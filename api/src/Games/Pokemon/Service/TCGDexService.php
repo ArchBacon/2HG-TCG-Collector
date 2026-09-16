@@ -13,8 +13,10 @@ use App\Games\Pokemon\Enum\Language;
 use App\Games\Pokemon\Repository\CardRepository;
 use App\Games\Pokemon\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\HttpService;
 use App\Service\ImageService;
 use App\Service\LanguageService;
+use App\Service\ProgressReporter;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -24,10 +26,11 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 use function sprintf;
 
 /**
@@ -38,11 +41,12 @@ class TCGDexService implements GameServiceInterface
 {
     private const Game GAME = Game::Pokemon;
     private const string URL = 'https://api.tcgdex.net/v2';
+    private const int CARD_BATCH_SIZE = 300;
 
     public function __construct(
         #[Autowire('%public_dir%')]
         private readonly string $publicDir,
-        private readonly HttpClientInterface $http,
+        private readonly HttpService $http,
         private readonly SetRepository $setRepository,
         private readonly CardRepository $cardRepository,
         private readonly SerializerInterface&DenormalizerInterface $serializer,
@@ -54,16 +58,17 @@ class TCGDexService implements GameServiceInterface
 
     /**
      * @throws HttpResponseException
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
      */
     public function syncCardInfo(ImageImportType $importType, ?callable $onProgress = null): int
     {
-        // Fetch each language's set list up front: which sets exist per locale (TCGdex has no
-        // "list every card" endpoint), and lets progress be reported against a combined total
-        // across all languages instead of restarting at 0% for each one.
         $listByLang = [];
         foreach ($this->languageService->getSupportedLanguages() as $lang) {
-            $response = $this->http->request('GET', self::URL . '/' . $lang . '/sets');
-            $listByLang[$lang] = $this->readJson($response, sprintf('set list (%s)', $lang));
+            $listByLang[$lang] = $this->http->json(self::URL . '/' . $lang . '/sets');
         }
 
         // Keyed "tcgdexId|lang": TCGdex reuses the same set id across languages for some eras
@@ -76,7 +81,7 @@ class TCGDexService implements GameServiceInterface
             $total += $set->cardCount->total;
         }
 
-        $considered = 0;
+        $progress = new ProgressReporter($total);
         $newlyImported = 0;
         foreach ($listByLang as $langCode => $list) {
             $lang = Language::from($langCode);
@@ -88,17 +93,23 @@ class TCGDexService implements GameServiceInterface
                 // DB diff entirely rather than re-paying both on every resync for a set that
                 // can no longer turn up anything new.
                 if ($set->cardsFullyImported) {
-                    $considered += $set->cardCount->total;
-                    if ($onProgress !== null) {
-                        $onProgress($considered, $total > 0 ? $considered / $total : 1.0);
+                    $progress->advance($set->cardCount->total);
+                    $progress->report($onProgress);
+
+                    // Skipping the fetch/diff above also means importSetCards() (the only place
+                    // that enqueues image jobs) never runs for this set. That's fine for the
+                    // default NewOnly behavior — every card here already has a job — but
+                    // --all-images explicitly wants existing jobs reset to pending regardless of
+                    // whether card data changed, so that still has to happen here.
+                    if ($importType === ImageImportType::All) {
+                        $cardIds = $this->cardRepository->findIdsBySetAndLang($set, $lang);
+                        $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardIds, false);
                     }
 
                     continue;
                 }
 
-                [$setConsidered, $setImported] = $this->importSetCards($set->tcgdexId, $set->id, $lang, $importType, $onProgress, $considered, $total);
-                $considered += $setConsidered;
-                $newlyImported += $setImported;
+                $newlyImported += $this->importSetCards($set->tcgdexId, $set->id, $lang, $importType, $progress, $onProgress);
             }
         }
 
@@ -107,29 +118,35 @@ class TCGDexService implements GameServiceInterface
 
     /**
      * Imports every not-yet-imported card of one set, in one language. Card ids come from the
-     * brief `cards` list already returned by {@see self::fetchSetInfo()} — TCGdex only gives
-     * full card details (attacks, hp, rarity, ...) one card at a time, so each new id still
-     * needs its own request, fetched one at a time via {@see self::fetchCards()}. Cards already
-     * in the database are skipped entirely — not just the write, the fetch too — so re-running
-     * an interrupted sync doesn't re-pay the network cost for cards it already has.
+     * brief `cards` list already returned by fetching the set itself — TCGdex only gives full
+     * card details (attacks, hp, rarity, ...) one card at a time, so each new id still needs its
+     * own request, fetched one at a time via {@see self::fetchCards()}. Cards already in the
+     * database are skipped entirely — not just the write, the fetch too — so re-running an
+     * interrupted sync doesn't re-pay the network cost for cards it already has.
      *
      * @param (callable(int $consideredSoFar, float $fractionComplete): void)|null $onProgress
-     * @return array{0: int, 1: int} [cards considered this set (imported + already present),
-     *         cards newly imported this set] — the caller needs both: the first to keep
-     *         progress accurate against $total even when most cards get skipped, the second is
-     *         the actual "cards imported" count the interface promises.
+     * @return int Cards newly imported this set — the actual "cards imported" count the
+     *         interface promises. $progress is advanced (and $onProgress reported) for every
+     *         card considered, including already-present ones, so the caller doesn't need to
+     *         track that separately to keep progress accurate against its total.
      * @throws HttpResponseException
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
      */
     private function importSetCards(
         string $tcgdexId,
         Uuid $setId,
         Language $lang,
         ImageImportType $importType,
+        ProgressReporter $progress,
         ?callable $onProgress,
-        int $consideredSoFar,
-        int $total,
-    ): array {
-        $briefList = $this->fetchSetInfo($lang->value, $tcgdexId)['cards'] ?? [];
+    ): int {
+        // Raw concatenation would send ids like "SM1+" unencoded — TCGdex 404s on a literal
+        // "+" in the path, only accepting it percent-encoded ("%2B").
+        $briefList = $this->http->json(self::URL . '/' . $lang->value . '/sets/' . rawurlencode($tcgdexId))['cards'] ?? [];
         $allCardIds = array_column($briefList, 'id');
         if ($allCardIds === []) {
             // TCGdex reports a non-zero cardCount for a handful of sets (mostly promo/jumbo
@@ -138,7 +155,7 @@ class TCGDexService implements GameServiceInterface
             // by syncSetInfo()'s cardCount-based invalidation if TCGdex ever backfills it.
             $this->markSetFullyImported($setId);
 
-            return [0, 0];
+            return 0;
         }
 
         /** @var array<string, Card> $existingCards */
@@ -150,13 +167,12 @@ class TCGDexService implements GameServiceInterface
         }
 
         $newCardIds = array_values(array_diff($allCardIds, array_keys($existingCards)));
+        unset($existingCards); // not needed past this point — freed now rather than held for the rest of the method
 
         // Already-present cards are "considered" immediately, in one jump — there's no fetch to
         // report incremental progress against for them.
-        $consideredSoFar += count($allCardIds) - count($newCardIds);
-        if ($onProgress !== null) {
-            $onProgress($consideredSoFar, $total > 0 ? $consideredSoFar / $total : 1.0);
-        }
+        $progress->advance(count($allCardIds) - count($newCardIds));
+        $progress->report($onProgress);
 
         if ($newCardIds === []) {
             // Every card TCGdex lists for this set is already in the DB — safe to flag the set
@@ -171,7 +187,7 @@ class TCGDexService implements GameServiceInterface
             $this->entityManager->clear();
             gc_collect_cycles();
 
-            return [count($allCardIds), 0];
+            return 0;
         }
 
         $cardData = $this->fetchCards($lang->value, $newCardIds);
@@ -210,10 +226,25 @@ class TCGDexService implements GameServiceInterface
             $this->entityManager->persist($card);
             $cardEntityIds[] = $card->id;
             $count++;
-            $consideredSoFar++;
+            $progress->advance();
+            $progress->report($onProgress);
 
-            if ($onProgress !== null) {
-                $onProgress($consideredSoFar, $total > 0 ? $consideredSoFar / $total : 1.0);
+            // Flushed/cleared every CARD_BATCH_SIZE cards, not just once at the end of the set —
+            // mirrors ScryfallService::importCardBatch(). A handful of Pokemon sets run into the
+            // hundreds of new cards (e.g. a first-ever full sync, or a big promo/reprint set),
+            // and each one carries substantial JSON columns (attacks, abilities, ...); without
+            // this, every card in such a set — plus every $existingCards entity hydrated above
+            // across all languages — stays resident in the UnitOfWork simultaneously until the
+            // whole set finishes, which is an unbounded peak, not the bounded-per-batch memory
+            // the final clear() below assumes.
+            if ($count % self::CARD_BATCH_SIZE === 0) {
+                $this->entityManager->flush();
+                $this->entityManager->clear();
+                gc_collect_cycles();
+
+                // A fresh reference: clear() just detached the $set proxy used above too.
+                $set = $this->entityManager->getReference(Set::class, $setId);
+                assert($set instanceof Set);
             }
         }
 
@@ -236,7 +267,7 @@ class TCGDexService implements GameServiceInterface
             $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardEntityIds, $importType === ImageImportType::NewOnly);
         }
 
-        return [count($allCardIds), $count];
+        return $count;
     }
 
     /**
@@ -262,6 +293,11 @@ class TCGDexService implements GameServiceInterface
      * @param list<string> $cardIds
      * @return array<string, array<string, mixed>>
      * @throws HttpResponseException
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
      */
     private function fetchCards(string $lang, array $cardIds): array
     {
@@ -269,8 +305,7 @@ class TCGDexService implements GameServiceInterface
         foreach ($cardIds as $id) {
             // Raw concatenation would send ids like "SM1+" unencoded — TCGdex 404s on a literal
             // "+" in the path, only accepting it percent-encoded ("%2B").
-            $response = $this->http->request('GET', self::URL . '/' . $lang . '/cards/' . rawurlencode($id));
-            $data[$id] = $this->readJson($response, sprintf('card "%s" (%s)', $id, $lang));
+            $data[$id] = $this->http->json(self::URL . '/' . $lang . '/cards/' . rawurlencode($id));
         }
 
         return $data;
@@ -278,6 +313,11 @@ class TCGDexService implements GameServiceInterface
 
     /**
      * @throws HttpResponseException
+     * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
      */
     public function syncSetInfo(?callable $onProgress = null): int
     {
@@ -294,16 +334,17 @@ class TCGDexService implements GameServiceInterface
         $listByLang = [];
         $total = 0;
         foreach ($this->languageService->getSupportedLanguages() as $lang) {
-            $response = $this->http->request('GET', self::URL . '/' . $lang . '/sets');
-            $list = $this->readJson($response, sprintf('set list (%s)', $lang));
+            $list = $this->http->json(self::URL . '/' . $lang . '/sets');
             $listByLang[$lang] = $list;
             $total += is_countable($list) ? count($list) : 0;
         }
 
-        $syncedSetCount = 0;
+        $progress = new ProgressReporter($total);
         foreach ($listByLang as $lang => $list) {
             foreach ($list as $item) {
-                $info = $this->fetchSetInfo($lang, $item['id']);
+                // Raw concatenation would send ids like "SM1+" unencoded — TCGdex 404s on a
+                // literal "+" in the path, only accepting it percent-encoded ("%2B").
+                $info = $this->http->json(self::URL . '/' . $lang . '/sets/' . rawurlencode($item['id']));
                 $key = $info['id'] . '|' . $lang;
 
                 $context = [
@@ -329,28 +370,27 @@ class TCGDexService implements GameServiceInterface
                 // the current language.
                 $this->entityManager->flush();
                 $sets[$key] = $set;
-                $syncedSetCount++;
-                if ($onProgress !== null) {
-                    $onProgress($syncedSetCount, $total > 0 ? $syncedSetCount / $total : 1.0);
-                }
+                $progress->advance();
+                $progress->report($onProgress);
             }
         }
 
         $this->entityManager->clear();
 
-        return $syncedSetCount;
+        return $progress->report();
     }
 
     /**
      * @throws HttpResponseException
      * @throws TransportExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ClientExceptionInterface
      */
     public function syncSetIcons(IconImportType $importType, ?callable $onProgress = null): int
     {
-        $downloaded = 0;
         $sets = $this->setRepository->findAll();
-        $total = count($sets);
-        $processed = 0;
+        $progress = new ProgressReporter(count($sets));
         $game = self::GAME->value;
 
         foreach ($sets as $set) {
@@ -359,7 +399,6 @@ class TCGDexService implements GameServiceInterface
                 'symbol' => $set->symbolUri,
             ];
 
-            $processed++;
             foreach ($images as $type => $uri) {
                 // tcgdexId alone isn't unique across languages (see Set::$tcgdexId) — and on
                 // case-insensitive filesystems, e.g. en's "xy2" and ja's "XY2" would even
@@ -367,73 +406,21 @@ class TCGDexService implements GameServiceInterface
                 $path = "$this->publicDir/$game/sets/{$set->tcgdexId}_{$set->lang->value}_$type";
                 if ($importType !== IconImportType::NewOnly || !is_file($path . '.webp')) {
                     if (!$uri) continue;
-                    $response = $this->http->request('GET', $uri . '.png');
 
                     try {
-                        $data = $this->readContent($response, sprintf('%s icon for set "%s"', $type, $set->tcgdexId));
+                        $data = $this->http->image($uri . '.png');
                     } catch (\Exception $e) {
                         print $e->getMessage();
                         continue;
                     }
                     $this->imageService->convertAndSave($data, $path);
-                    $downloaded++;
                 }
             }
 
-            if ($onProgress !== null) {
-                $onProgress($processed, $total > 0 ? $processed / $total : 1.0);
-            }
+            $progress->advance();
+            $progress->report($onProgress);
         }
 
-        return $downloaded;
-    }
-
-    /**
-     * @throws HttpResponseException
-     */
-    public function fetchSetInfo(string $lang, string $id): array
-    {
-        // Raw concatenation would send ids like "SM1+" unencoded — TCGdex 404s on a literal
-        // "+" in the path, only accepting it percent-encoded ("%2B").
-        $response = $this->http->request('GET', self::URL . '/' . $lang . '/sets/' . rawurlencode($id));
-
-        return $this->readJson($response, sprintf('set "%s" (%s)', $id, $lang));
-    }
-
-    /**
-     * Reads and JSON-decodes a response, wrapping any failure — a dropped connection, a
-     * timeout, a bad status code, malformed JSON — with $context (e.g. `card "SVLS-019" (ja)`)
-     * so the error says *what* was being fetched. A stack trace alone (even at -v) only shows
-     * where in the code the failure happened, never which runtime id/language was in flight.
-     *
-     * @throws HttpResponseException
-     */
-    private function readJson(ResponseInterface $response, string $context): array
-    {
-        try {
-            $status = $response->getStatusCode();
-            if ($status !== 200) {
-                throw new HttpResponseException(sprintf('Could not fetch %s: HTTP %d.', $context, $status));
-            }
-
-            return $response->toArray();
-        } catch (TransportExceptionInterface|DecodingExceptionInterface $e) {
-            throw new HttpResponseException(sprintf('Could not fetch %s: %s', $context, $e->getMessage()), 0, $e);
-        }
-    }
-
-    /** @see self::readJson() — same, but for raw (non-JSON) content like set icon images. */
-    private function readContent(ResponseInterface $response, string $context): string
-    {
-        try {
-            $status = $response->getStatusCode();
-            if ($status !== 200) {
-                throw new HttpResponseException(sprintf('Could not fetch %s: HTTP %d.', $context, $status));
-            }
-
-            return $response->getContent();
-        } catch (TransportExceptionInterface $e) {
-            throw new HttpResponseException(sprintf('Could not fetch %s: %s', $context, $e->getMessage()), 0, $e);
-        }
+        return $progress->report();
     }
 }

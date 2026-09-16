@@ -13,6 +13,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
@@ -38,6 +39,7 @@ class ProcessImageBatchCommand extends Command
         $this
             ->addArgument('game', InputArgument::REQUIRED, 'Game code to process.')
             ->addArgument('size', InputArgument::REQUIRED, 'Batch size to process.')
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Redownload every claimed image even if it already exists on disk.')
         ;
     }
 
@@ -68,6 +70,8 @@ class ProcessImageBatchCommand extends Command
         assert(is_string($batchSize));
         $batchSize = (int) $batchSize;
 
+        $force = (bool) $input->getOption('force');
+
         $host = gethostname();
         $token = sprintf('%s-%d-%s', $host ?: 'worker', getmypid(), bin2hex(random_bytes(4)));
 
@@ -77,7 +81,7 @@ class ProcessImageBatchCommand extends Command
         $failed = 0;
         foreach ($jobs as $job) {
             try {
-                $handler->process($job['cardId']);
+                $handler->process($job['cardId'], $force);
                 $this->queue->markCompleted($job['id']);
                 $completed++;
             } catch (\Throwable $e) {

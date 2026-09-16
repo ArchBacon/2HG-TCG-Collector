@@ -4,7 +4,7 @@ namespace App\Games\Pokemon\Service;
 
 use App\Contract\CardImageUrlResolverInterface;
 use App\Games\Pokemon\Repository\CardRepository;
-use http\Exception\RuntimeException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Uid\Uuid;
 
 readonly class CardImageUrlResolver implements CardImageUrlResolverInterface
@@ -15,9 +15,12 @@ readonly class CardImageUrlResolver implements CardImageUrlResolverInterface
     {
         $card = $this->cardRepository->find(Uuid::fromString($cardId));
         if (!$card) {
-            throw new RuntimeException(sprintf('Card "%s" no longer exists.', $cardId));
+            throw new NotFoundHttpException(sprintf('Card "%s" no longer exists.', $cardId));
         }
 
-        return $card->imageUri;
+        // Card::$imageUri is TCGdex's asset URL with no quality/format suffix — the API 200s on
+        // the bare URL too, but with an HTML stub page instead of image bytes, which is exactly
+        // what was silently breaking every real (non-cached) image download.
+        return $card->imageUri ? $card->imageUri . '/high.webp' : null;
     }
 }

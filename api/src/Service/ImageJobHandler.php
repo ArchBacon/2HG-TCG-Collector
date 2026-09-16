@@ -20,14 +20,19 @@ final readonly class ImageJobHandler
     ) {}
 
     /**
+     * @param bool $force Redownload even if every size already exists on disk — needed because
+     *        a job being 'pending' doesn't by itself distinguish "never downloaded" from "an
+     *        --all-images resync wants this redownloaded regardless of what's already there";
+     *        without this, hasAllSizes() would always win and --all-images would silently do
+     *        nothing for any card whose files (however stale or corrupt) already exist.
      * @throws TransportExceptionInterface
      * @throws ServerExceptionInterface
      * @throws RedirectionExceptionInterface
      * @throws ClientExceptionInterface
      */
-    public function process(string $cardId): void
+    public function process(string $cardId, bool $force = false): void
     {
-        if ($this->imageService->hasAllSizes($this->game, $cardId)) {
+        if (!$force && $this->imageService->hasAllSizes($this->game, $cardId)) {
             return;
         }
 

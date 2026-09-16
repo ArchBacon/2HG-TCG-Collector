@@ -43,7 +43,9 @@ interface GameServiceInterface
      *
      * @param (callable(int $processedSoFar, float $fractionComplete): void)|null $onProgress
      *        called after each set icon is checked/downloaded; $fractionComplete is 0.0-1.0
-     * @return int Amount of set icons imported
+     * @return int Amount of set icons processed (checked or downloaded) — not just newly
+     *         downloaded ones, matching {@see self::syncCardInfo()}/{@see self::syncSetInfo()}'s
+     *         processed-count convention.
      */
     public function syncSetIcons(IconImportType $importType, ?callable $onProgress = null): int;
 }

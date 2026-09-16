@@ -139,9 +139,9 @@ class SyncCommand extends Command
         $start = microtime(true);
         $iconsIndicator = new ProgressIndicator($output);
         $iconsIndicator->start('Checking set icons...');
-        $importedIcons = $handler->syncSetIcons($iconImportType, $this->progressCallback($iconsIndicator, $start, 'set icon(s) checked'));
-        $iconsIndicator->finish(sprintf('%d set icon(s) imported.', $importedIcons));
-        $io->writeln(sprintf('Imported %d set icon(s) in %s.', $importedIcons, $this->formatDuration(microtime(true) - $start)));
+        $syncedIcons = $handler->syncSetIcons($iconImportType, $this->progressCallback($iconsIndicator, $start, 'set icon(s) checked'));
+        $iconsIndicator->finish(sprintf('%d set icon(s) synced.', $syncedIcons));
+        $io->writeln(sprintf('Synced %d set icon(s) in %s.', $syncedIcons, $this->formatDuration(microtime(true) - $start)));
 
         $io->section('Syncing cards');
         $start = microtime(true);
@@ -166,11 +166,21 @@ class SyncCommand extends Command
             $start = microtime(true);
             $before = $this->imageJobQueue->progress($game)['completed'];
 
+            $processImagesArgs = ['game' => $game, '--batch-size' => (string) $batchSize];
+            if ($allImages) {
+                // --all-images re-enqueues existing jobs (see syncCardInfo()'s enqueueBatch()
+                // call above), but a claimed job alone can't tell ImageJobHandler *why* it's
+                // pending — without --force here too, hasAllSizes() would still skip
+                // redownloading any card whose files already exist, silently defeating
+                // --all-images for exactly the cards it's meant to fix.
+                $processImagesArgs['--force'] = true;
+            }
+
             $attempts = 0;
             do {
                 $attempts++;
                 $exitCode = $application->find('api:process-images')->run(
-                    new ArrayInput(['game' => $game, '--batch-size' => (string) $batchSize]),
+                    new ArrayInput($processImagesArgs),
                     $output,
                 );
                 if ($exitCode !== Command::SUCCESS) {
