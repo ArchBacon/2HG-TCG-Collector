@@ -7,7 +7,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
 use App\Games\Pokemon\Entity\Embeddable\Legality;
 use App\Games\Pokemon\Entity\Embeddable\Variants;
 use App\Games\Pokemon\Enum\Category;

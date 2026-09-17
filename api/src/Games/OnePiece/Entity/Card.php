@@ -7,10 +7,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
+use App\Games\OnePiece\Enum\Language;
 use App\Games\OnePiece\Enum\Rarity;
 use App\Games\OnePiece\Repository\CardRepository;
-use App\Games\OnePiece\Enum\Language;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
@@ -193,7 +193,7 @@ class Card
 
     /**
      * Our own served copies of this card's image (mirroring
-     * {@see \App\Games\Pokemon\Entity\Card::$images} / {@see \App\Games\MTG\Entity\Card::$images}),
+     * {@see \App\Games\Pokemon\Entity\Card::$images} / {@see \App\Games\MTG\Entity\CardV1::$images}),
      * not optcgapi's URL.
      *
      * @var array{small: string, medium: string, large: string}

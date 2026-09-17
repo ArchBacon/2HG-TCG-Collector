@@ -5,7 +5,7 @@ namespace App\Games\OnePiece\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
 use App\Games\OnePiece\Repository\SetRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;

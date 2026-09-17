@@ -2,7 +2,7 @@
 
 namespace App\Games\MTG\Service;
 
-use App\Contract\GameServiceInterface;
+use App\Contract\ImportServiceInterfaceV1;
 use App\Enum\Game;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
@@ -36,11 +36,8 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use function sprintf;
 
-/**
- * Scryfall API client and MTG data import pipeline, in one place.
- */
 #[AutoconfigureTag('api.game_service', ['game' => Game::MagicTheGathering->value])]
-final class ScryfallService implements GameServiceInterface
+final class ScryfallImportServiceV1 implements ImportServiceInterfaceV1
 {
     private const Game GAME = Game::MagicTheGathering;
     private const string URL = 'https://api.scryfall.com';
@@ -58,6 +55,7 @@ final class ScryfallService implements GameServiceInterface
         private readonly LanguageService                           $languageService,
         private readonly ZipService                                $zip,
         private readonly LargeFileDownloadService                  $downloadService,
+        private readonly ScryfallDataTransformer                   $transformer,
     ) {}
 
     /**
@@ -133,8 +131,7 @@ final class ScryfallService implements GameServiceInterface
         $result = $this->http->json(self::URL . '/sets')['data'];
         $progress = new ProgressReporter(count($result));
         foreach ($result as $item) {
-            // transform id to scryfall_id so that it won't conflict with internal ids
-            $item['scryfall_id'] = $item['id']; unset($item['id']);
+            $item = $this->transformer->transformSet($item);
 
             $context = [];
             if (isset($sets[$item['code']])) {
@@ -185,43 +182,48 @@ final class ScryfallService implements GameServiceInterface
      */
     private function importCardBatch(array $cardData, array $sets, ImageImportType $importType): int
     {
-        /** @var Card[] $indexedCards */
+        /** @var array<string, list<Card>> $indexedCards existing cards for a scryfallId, in no particular order */
         $indexedCards = [];
         /** @var Card[] $cards */
         $cards = $this->cardRepository->findByScryfallIds(array_column($cardData, 'id'));
         foreach ($cards as $card) {
-            $indexedCards["$card->scryfallId|$card->faceIndex"] = $card;
+            $indexedCards[$card->details->scryfallId][] = $card;
         }
 
-        /** @var Uuid[] $cardIds */
-        $cardIds = [];
+        /** @var array<string, ?string> $cardImageUris card id (RFC 4122 string) => Scryfall image URL */
+        $cardImageUris = [];
         $count = 0;
         foreach ($cardData as $data) {
             $setId = $sets[$data['set']] ?? throw new RuntimeException(sprintf('Unknown set code "%s" for card "%s".', $data['set'], $data['id']));
             $set = $this->entityManager->getReference(Set::class, $setId);
             assert($set instanceof Set);
 
-            // Transform id to scryfall_id to prevent internal id conflict and
-            // unset set code as well to prevent internal set reference conflict
-            $data['scryfall_id'] = $data['id'];
-            unset($data['id'], $data['set']);
+            [$data, $faces] = $this->transformer->transformCard($data);
 
-            // Get card faces, if any, then unset as there's no entity field for it
-            $faces = $data['card_faces'] ?? [];
-            unset($data['card_faces']);
+            if ($data['related'] !== []) {
+                $data['related'] = array_map(
+                    static fn(Card $related): string => $related->id->toRfc4122(),
+                    $this->cardRepository->findByScryfallIds($data['related']),
+                );
+            }
+
+            $existing = $indexedCards[$data['scryfall_id']] ?? [];
 
             // Upsert card(s) into DB. Cards with multiple faces are separate rows
             if (!isset($data['image_uris']) && count($faces) === 2) {
-                $front = $this->upsertCard(array_merge($data, $faces[0]), $set, 0, $indexedCards["{$data['scryfall_id']}|0"] ?? null);
-                $back = $this->upsertCard(array_merge($data, $faces[1]), $set, 1, $indexedCards["{$data['scryfall_id']}|1"] ?? null);
-                $front->otherFace = $back;
-                $back->otherFace = $front;
-                $cardIds[] = $front->id;
-                $cardIds[] = $back->id;
+                $frontData = array_merge($data, $faces[0]);
+                $backData = array_merge($data, $faces[1]);
+                $front = $this->upsertCard($frontData, $set, $existing[0] ?? null);
+                $back = $this->upsertCard($backData, $set, $existing[1] ?? null);
+                $front->faces = [$front->id->toRfc4122(), $back->id->toRfc4122()];
+                $back->faces = [$back->id->toRfc4122(), $front->id->toRfc4122()];
+                $cardImageUris[$front->id->toRfc4122()] = $frontData['image_uris']['large'] ?? null;
+                $cardImageUris[$back->id->toRfc4122()] = $backData['image_uris']['large'] ?? null;
                 $count += 2;
             } else {
-                $card = $this->upsertCard($data, $set, 0, $indexedCards["{$data['scryfall_id']}|0"] ?? null);
-                $cardIds[] = $card->id;
+                $card = $this->upsertCard($data, $set, $existing[0] ?? null);
+                $card->faces = [$card->id->toRfc4122()];
+                $cardImageUris[$card->id->toRfc4122()] = $data['image_uris']['large'] ?? null;
                 $count++;
             }
         }
@@ -232,7 +234,7 @@ final class ScryfallService implements GameServiceInterface
 
         // Queue image jobs for downloading images
         if ($importType !== ImageImportType::SkipAll) {
-            $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardIds, $importType === ImageImportType::NewOnly);
+            $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, $importType === ImageImportType::NewOnly);
         }
 
         // Force garbage collection to prevent memory flooding
@@ -265,8 +267,10 @@ final class ScryfallService implements GameServiceInterface
      * @param array<string, mixed> $cardData
      * @throws ExceptionInterface
      */
-    private function upsertCard(array $cardData, Set $set, int $faceIndex, Card|null $card): Card
+    private function upsertCard(array $cardData, Set $set, Card|null $card): Card
     {
+        $cardData = $this->transformer->withDetails($cardData);
+
         // Ensure the Set is set as an argument to properly construct a new Card, if an existing one is not found
         $context = [
             AbstractNormalizer::DEFAULT_CONSTRUCTOR_ARGUMENTS => [
@@ -279,7 +283,6 @@ final class ScryfallService implements GameServiceInterface
         }
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $card = $this->serializer->denormalize($cardData, Card::class, 'json', $context);
-        $card->faceIndex = $faceIndex;
         $this->entityManager->persist($card);
 
         return $card;

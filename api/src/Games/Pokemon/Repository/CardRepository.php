@@ -20,30 +20,37 @@ final class CardRepository extends ServiceEntityRepository
     }
 
     /**
-     * Ids only, not full entities — for callers that just need to enqueue image jobs for every
-     * card of a set without paying to hydrate (and never detach — see the caller) each one.
+     * Ids and image URIs only, not full entities — for callers that just need to enqueue image
+     * jobs for every card of a set without paying to hydrate (and never detach — see the caller)
+     * each one.
      *
      * Binds $set->id with an explicit 'uuid' type rather than the Set entity itself:
      * setParameter('set', $set) doesn't run the uuid column type's convertToDatabaseValue() for
      * an association comparison the way Criteria-based findBy() does, and silently matches zero
      * rows instead of erroring — binding the scalar id directly with an explicit type sidesteps
-     * that entirely. Scalar hydration doesn't run the column type's convertToPHPValue() on the
-     * way out either, so each row comes back as a raw 16-byte binary string, not a Uuid.
+     * that entirely. Unlike scalar hydration, array hydration (used here) does run each column's
+     * convertToPHPValue(), so `id` comes back as a real Uuid, not a raw binary string.
      *
-     * @return list<Uuid>
+     * @return array<string, ?string> card id (RFC 4122 string) => imageUri
      */
-    public function findIdsBySetAndLang(Set $set, Language $lang): array
+    public function findImageUrisBySetAndLang(Set $set, Language $lang): array
     {
         $rows = $this->createQueryBuilder('c')
-            ->select('c.id')
+            ->select('c.id', 'c.imageUri')
             ->where('c.set = :setId')
             ->andWhere('c.lang = :lang')
             ->setParameter('setId', $set->id, 'uuid')
             ->setParameter('lang', $lang)
             ->getQuery()
-            ->getSingleColumnResult();
+            ->getArrayResult();
 
-        return array_map(static fn (string $id): Uuid => Uuid::fromBinary($id), $rows);
+        $imageUris = [];
+        foreach ($rows as $row) {
+            \assert($row['id'] instanceof Uuid);
+            $imageUris[$row['id']->toRfc4122()] = $row['imageUri'];
+        }
+
+        return $imageUris;
     }
 
     /**

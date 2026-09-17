@@ -2,7 +2,7 @@
 
 namespace App\Games\DragonBallFusion\Service;
 
-use App\Contract\GameServiceInterface;
+use App\Contract\ImportServiceInterfaceV1;
 use App\Enum\Game;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
@@ -29,7 +29,7 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
  * ApiTCG GitHub API client and Dragon Ball Fusion data import pipeline, in one place.
  */
 #[AutoconfigureTag('api.game_service', ['game' => Game::DragonBallFusion->value])]
-class ApiTCGitHubService implements GameServiceInterface
+class ApiTCGitHubServiceV1 implements ImportServiceInterfaceV1
 {
     private const Game GAME = Game::DragonBallFusion;
     private const string URL = 'https://github.com/apitcg/dragon-ball-fusion-tcg-data';
@@ -75,7 +75,8 @@ class ApiTCGitHubService implements GameServiceInterface
             $result = json_decode(file_get_contents($this->dataPath . '/dragon-ball-fusion-tcg-data-main/cards/en/' . $set->setId . '.json'), true, 512, JSON_THROW_ON_ERROR);
             $setRef = $this->entityManager->getReference(Set::class, $set->id);
 
-            $cardIds = [];
+            /** @var array<string, ?string> $cardImageUris card id (RFC 4122 string) => image URL */
+            $cardImageUris = [];
             foreach ($result as $item) {
                 unset($item['set']);
                 $card = $this->serializer->denormalize($this->sanitizeCardData($item), Card::class, 'json', [
@@ -85,7 +86,7 @@ class ApiTCGitHubService implements GameServiceInterface
                     ]],
                 ]);
                 $this->entityManager->persist($card);
-                $cardIds[] = $card->id;
+                $cardImageUris[$card->id->toRfc4122()] = $card->imageUri;
                 $progress->advance();
                 $progress->report($onProgress);
             }
@@ -95,7 +96,7 @@ class ApiTCGitHubService implements GameServiceInterface
 
             // Queue image jobs for downloading images
             if ($importType !== ImageImportType::SkipAll) {
-                $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardIds, $importType === ImageImportType::NewOnly);
+                $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, $importType === ImageImportType::NewOnly);
             }
 
             // Force garbage collection to prevent memory flooding

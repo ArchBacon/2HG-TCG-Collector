@@ -37,38 +37,33 @@ services:
         parent: App\Service\ImageJobHandler
         arguments:
             $game: !php/enum App\Enum\Game::MagicTheGathering
-            $urlResolver: '@App\Games\MTG\Service\CardImageUrlResolver'
         tags:
             - { name: 'api.image_job_handler', game: 'mtg' }
 
-    game.pokemon.image_job_handler:
-        parent: App\Service\ImageJobHandler
-        arguments:
-            $game: !php/enum App\Enum\Game::Pokemon
-            $urlResolver: '@App\Games\Pokemon\Service\CardImageUrlResolver'
-        tags:
-            - { name: 'api.image_job_handler', game: 'pokemon' }
-
-    game.lorcana.image_job_handler:
-        parent: App\Service\ImageJobHandler
-        arguments:
-            $game: !php/enum App\Enum\Game::Lorcana
-            $urlResolver: '@App\Games\Lorcana\Service\CardImageUrlResolver'
-        tags:
-            - { name: 'api.image_job_handler', game: 'lorcana' }
-
-    game.onepiece.image_job_handler:
-        parent: App\Service\ImageJobHandler
-        arguments:
-            $game: !php/enum App\Enum\Game::OnePiece
-            $urlResolver: '@App\Games\OnePiece\Service\CardImageUrlResolver'
-        tags:
-            - { name: 'api.image_job_handler', game: 'onepiece' }
-
-    game.dragonballfusion.image_job_handler:
-        parent: App\Service\ImageJobHandler
-        arguments:
-            $game: !php/enum App\Enum\Game::DragonBallFusion
-            $urlResolver: '@App\Games\DragonBallFusion\Service\CardImageUrlResolver'
-        tags:
-            - { name: 'api.image_job_handler', game: 'dragonballfusion' }
+#    game.pokemon.image_job_handler:
+#        parent: App\Service\ImageJobHandler
+#        arguments:
+#            $game: !php/enum App\Enum\Game::Pokemon
+#        tags:
+#            - { name: 'api.image_job_handler', game: 'pokemon' }
+#
+#    game.lorcana.image_job_handler:
+#        parent: App\Service\ImageJobHandler
+#        arguments:
+#            $game: !php/enum App\Enum\Game::Lorcana
+#        tags:
+#            - { name: 'api.image_job_handler', game: 'lorcana' }
+#
+#    game.onepiece.image_job_handler:
+#        parent: App\Service\ImageJobHandler
+#        arguments:
+#            $game: !php/enum App\Enum\Game::OnePiece
+#        tags:
+#            - { name: 'api.image_job_handler', game: 'onepiece' }
+#
+#    game.dragonballfusion.image_job_handler:
+#        parent: App\Service\ImageJobHandler
+#        arguments:
+#            $game: !php/enum App\Enum\Game::DragonBallFusion
+#        tags:
+#            - { name: 'api.image_job_handler', game: 'dragonballfusion' }

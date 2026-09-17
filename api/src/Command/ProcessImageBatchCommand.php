@@ -81,7 +81,7 @@ class ProcessImageBatchCommand extends Command
         $failed = 0;
         foreach ($jobs as $job) {
             try {
-                $handler->process($job['cardId'], $force);
+                $handler->process($job['cardId'], $job['imageUri'], $force);
                 $this->queue->markCompleted($job['id']);
                 $completed++;
             } catch (\Throwable $e) {

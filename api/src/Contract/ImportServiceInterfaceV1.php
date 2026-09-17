@@ -6,7 +6,7 @@ use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
 
 /**
- * One implementation per game (e.g. MTG's {@see \App\Games\MTG\Service\ScryfallService}),
+ * One implementation per game (e.g. MTG's {@see \App\Games\MTG\Service\ScryfallImportServiceV1}),
  * defining the standard set of import operations every game package must provide: sets,
  * symbology, set icons, card data, and card images.
  *
@@ -17,7 +17,7 @@ use App\Enum\ImageImportType;
  * across games, and is the seam a future cross-game dispatcher would resolve against.
  */
 
-interface GameServiceInterface
+interface ImportServiceInterfaceV1
 {
     /**
      * Imports all card data into the database

@@ -27,7 +27,7 @@ final class CardRepository extends ServiceEntityRepository
         }
 
         return $this->createQueryBuilder('c')
-            ->where('c.scryfallId IN (:ids)')
+            ->where('c.details.scryfallId IN (:ids)')
             ->setParameter('ids', array_unique($scryfallIds))
             ->getQuery()
             ->getResult();

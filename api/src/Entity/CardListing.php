@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
 use App\Repository\CardListingRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;

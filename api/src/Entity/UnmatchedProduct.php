@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
 use App\Repository\UnmatchedProductRepository;
 use Doctrine\ORM\Mapping as ORM;
 

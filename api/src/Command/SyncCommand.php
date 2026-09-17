@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Command\Concern\ReportsDuration;
-use App\Contract\GameServiceInterface;
+use App\Contract\ImportServiceInterfaceV1;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
 use App\Repository\ImageJobQueueRepository;
@@ -81,7 +81,7 @@ class SyncCommand extends Command
             return Command::FAILURE;
         }
         $handler = $this->handlers->get($game);
-        assert($handler instanceof GameServiceInterface);
+        assert($handler instanceof ImportServiceInterfaceV1);
 
         // Validate there's only one or none image arguments
         $skipImages = $input->getOption('skip-images');

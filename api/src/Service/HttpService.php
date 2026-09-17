@@ -3,7 +3,9 @@
 namespace App\Service;
 
 use App\Exception\HttpResponseException;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -67,6 +69,25 @@ final readonly class HttpService
         fclose($fileHandler);
 
         return $path;
+    }
+
+    public function download(string $downloadLink, string $filename): string
+    {
+        $outputPath = $this->storageDir . DIRECTORY_SEPARATOR . $filename;
+        $process = new Process([
+            'curl',
+            '-f',
+            '-o', $outputPath,
+            $downloadLink
+        ]);
+        $process->setTimeout(600);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new RuntimeException('curl failed: ' . $process->getErrorOutput());
+        }
+
+        return $outputPath;
     }
 
     /**

@@ -1,14 +1,16 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace App\Games\OnePiece\Service;
-use App\Contract\GameServiceInterface;
+namespace App\Games\Lorcana\Service;
+
+use App\Contract\ImportServiceInterfaceV1;
 use App\Enum\Game;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
-use App\Games\OnePiece\Entity\Card;
-use App\Games\OnePiece\Entity\Set;
-use App\Games\OnePiece\Repository\CardRepository;
-use App\Games\OnePiece\Repository\SetRepository;
+use App\Exception\HttpResponseException;
+use App\Games\Lorcana\Entity\Card;
+use App\Games\Lorcana\Entity\Set;
+use App\Games\Lorcana\Repository\CardRepository;
+use App\Games\Lorcana\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
 use App\Service\HttpService;
 use App\Service\ProgressReporter;
@@ -26,13 +28,13 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
- * optcgapi API client and One Piece data import pipeline, in one place.
+ * lorcana-api API client and Lorcana data import pipeline, in one place.
  */
-#[AutoconfigureTag('api.game_service', ['game' => Game::OnePiece->value])]
-class OPTCGAPIService implements GameServiceInterface
+#[AutoconfigureTag('api.game_service', ['game' => Game::Lorcana->value])]
+class LorcanaApiServiceV1 implements ImportServiceInterfaceV1
 {
-    private const Game GAME = Game::OnePiece;
-    private const string URL = 'https://www.optcgapi.com/api';
+    private const Game GAME = Game::Lorcana;
+    private const string URL = 'https://api.lorcana-api.com';
 
     public function __construct(
         private readonly HttpService $http,
@@ -44,41 +46,36 @@ class OPTCGAPIService implements GameServiceInterface
     ) {}
 
     /**
-     * @throws ORMException
-     * @throws RedirectionExceptionInterface
-     * @throws DecodingExceptionInterface
-     * @throws ClientExceptionInterface
      * @throws TransportExceptionInterface
      * @throws ServerExceptionInterface
+     * @throws RedirectionExceptionInterface
      * @throws ExceptionInterface
+     * @throws DecodingExceptionInterface
+     * @throws ClientExceptionInterface
+     * @throws ORMException
+     * @throws HttpResponseException
      */
     public function syncCardInfo(ImageImportType $importType, ?callable $onProgress = null): int
     {
         /** @var list<Set> $sets */
         $sets = $this->setRepository->findAll();
-        $total = count($this->http->json(self::URL . '/allSetCards/'));
+        $total = array_sum(array_column($sets, 'cardCount'));
         $progress = new ProgressReporter($total);
 
         foreach ($sets as $set) {
-            // optcgapi doesn't always suffix a genuinely distinct print (parallel, alt art, ...)
-            // with its own card_image_id, so card_image (the asset URL) is needed alongside it
-            // to reliably tell such prints apart; see Card::$printId.
-            $cards = [];
-            foreach ($this->cardRepository->findBy(['set' => $set]) as $existingCard) {
-                $cards[$existingCard->printId . '|' . $existingCard->imageUri] = $existingCard;
-            }
-            $result = $this->http->json(self::URL . '/sets/' . $set->setId . '/?format=json');
+            $cards = array_column($this->cardRepository->findBy(['set' => $set]), null, 'uniqueId');
+            $result = $this->http->json(self::URL . '/cards/fetch?search=Set_ID=' . $set->setId);
             $setRef = $this->entityManager->getReference(Set::class, $set->id);
 
-            $cardIds = [];
+            /** @var array<string, ?string> $cardImageUris card id (RFC 4122 string) => image URL */
+            $cardImageUris = [];
             foreach ($result as $item) {
-                $lookupKey = ($item['card_image_id'] ?? '') . '|' . ($item['card_image'] ?? '');
-                $card = $this->serializer->denormalize($this->sanitizeCardData($item), Card::class, 'json', [
-                    AbstractNormalizer::OBJECT_TO_POPULATE => $cards[$lookupKey] ?? null,
+                $card = $this->serializer->denormalize($item, Card::class, 'json', [
+                    AbstractNormalizer::OBJECT_TO_POPULATE => $cards[$item['Unique_ID']] ?? null,
                     AbstractNormalizer::DEFAULT_CONSTRUCTOR_ARGUMENTS => [Card::class => ['set' => $setRef]],
                 ]);
                 $this->entityManager->persist($card);
-                $cardIds[] = $card->id;
+                $cardImageUris[$card->id->toRfc4122()] = $card->imageUri;
                 $progress->advance();
                 $progress->report($onProgress);
             }
@@ -86,10 +83,12 @@ class OPTCGAPIService implements GameServiceInterface
             $this->entityManager->flush();
             $this->entityManager->clear();
 
+            // Queue image jobs for downloading images
             if ($importType !== ImageImportType::SkipAll) {
-                $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardIds, $importType === ImageImportType::NewOnly);
+                $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, $importType === ImageImportType::NewOnly);
             }
 
+            // Force garbage collection to prevent memory flooding
             gc_collect_cycles();
         }
 
@@ -103,16 +102,17 @@ class OPTCGAPIService implements GameServiceInterface
      * @throws RedirectionExceptionInterface
      * @throws DecodingExceptionInterface
      * @throws ClientExceptionInterface
+     * @throws HttpResponseException
      */
     public function syncSetInfo(?callable $onProgress = null): int
     {
-        $result = $this->http->json(self::URL . '/allSets/?format=json');
+        $result = $this->http->json(self::URL . '/sets/all');
         $sets = array_column($this->setRepository->findAll(), null, 'setId');
         $progress = new ProgressReporter(count($result));
 
         foreach ($result as $item) {
             $set = $this->serializer->denormalize($item, Set::class, 'json', [
-                AbstractNormalizer::OBJECT_TO_POPULATE => $sets[$item['set_id']] ?? null,
+                AbstractNormalizer::OBJECT_TO_POPULATE => $sets[$item['Set_ID']] ?? null
             ]);
             $this->entityManager->persist($set);
             $progress->advance();
@@ -131,20 +131,5 @@ class OPTCGAPIService implements GameServiceInterface
         // named <setId>.webp
 
         return 0;
-    }
-
-    /**
-     * @param array<string, mixed> $item
-     * @return array<string, mixed>
-     */
-    private function sanitizeCardData(array $item): array
-    {
-        foreach (['card_cost', 'card_power', 'life', 'counter_amount'] as $field) {
-            if (array_key_exists($field, $item)) {
-                $item[$field] = ($item[$field] === 'NULL' || $item[$field] === null) ? null : (int) $item[$field];
-            }
-        }
-
-        return $item;
     }
 }

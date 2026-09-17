@@ -10,6 +10,7 @@ namespace App\Entity;
 
 use App\Enum\ImageJobStatus;
 use App\Repository\ImageJobQueueRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -57,6 +58,12 @@ class ImageJobQueue
         set => $this->attempts = $value;
     }
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    public ?string $imageUri = null {
+        get => $this->imageUri;
+        set => $this->imageUri = $value;
+    }
+
     #[ORM\Column(type: 'text', nullable: true)]
     public ?string $lastError = null {
         get => $this->lastError;
@@ -70,23 +77,23 @@ class ImageJobQueue
     }
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $claimedAt = null {
+    public ?DateTimeImmutable $claimedAt = null {
         get => $this->claimedAt;
         set => $this->claimedAt = $value;
     }
 
     #[ORM\Column]
-    public private(set) \DateTimeImmutable $createdAt;
+    public private(set) DateTimeImmutable $createdAt;
 
     #[ORM\Column]
-    public private(set) \DateTimeImmutable $updatedAt;
+    public private(set) DateTimeImmutable $updatedAt;
 
     public function __construct(string $game, Uuid $cardId)
     {
         $this->game = $game;
         $this->cardId = $cardId;
         $this->status = ImageJobStatus::Pending;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
 }

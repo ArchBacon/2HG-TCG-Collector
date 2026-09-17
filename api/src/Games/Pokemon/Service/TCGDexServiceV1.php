@@ -2,7 +2,7 @@
 
 namespace App\Games\Pokemon\Service;
 
-use App\Contract\GameServiceInterface;
+use App\Contract\ImportServiceInterfaceV1;
 use App\Enum\Game;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
@@ -37,7 +37,7 @@ use function sprintf;
  * TCGDex API client and Pokémon data import pipeline, in one place.
  */
 #[AutoconfigureTag('api.game_service', ['game' => Game::Pokemon->value])]
-class TCGDexService implements GameServiceInterface
+class TCGDexServiceV1 implements ImportServiceInterfaceV1
 {
     private const Game GAME = Game::Pokemon;
     private const string URL = 'https://api.tcgdex.net/v2';
@@ -102,8 +102,11 @@ class TCGDexService implements GameServiceInterface
                     // --all-images explicitly wants existing jobs reset to pending regardless of
                     // whether card data changed, so that still has to happen here.
                     if ($importType === ImageImportType::All) {
-                        $cardIds = $this->cardRepository->findIdsBySetAndLang($set, $lang);
-                        $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardIds, false);
+                        $cardImageUris = array_map(
+                            static fn(?string $uri): ?string => $uri ? $uri . '/high.webp' : null,
+                            $this->cardRepository->findImageUrisBySetAndLang($set, $lang),
+                        );
+                        $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, false);
                     }
 
                     continue;
@@ -197,7 +200,8 @@ class TCGDexService implements GameServiceInterface
         $set = $this->entityManager->getReference(Set::class, $setId);
         assert($set instanceof Set);
 
-        $cardEntityIds = [];
+        /** @var array<string, ?string> $cardImageUris card id (RFC 4122 string) => TCGdex image URL */
+        $cardImageUris = [];
         $count = 0;
         foreach ($cardData as $id => $data) {
             // The brief nested "set" on each card can't build a full Set (missing serie,
@@ -224,7 +228,7 @@ class TCGDexService implements GameServiceInterface
                 throw new HttpResponseException(sprintf('Could not import card "%s" (%s): %s', $id, $lang->value, $e->getMessage()), 0, $e);
             }
             $this->entityManager->persist($card);
-            $cardEntityIds[] = $card->id;
+            $cardImageUris[$card->id->toRfc4122()] = $card->imageUri ? $card->imageUri . '/high.webp' : null;
             $count++;
             $progress->advance();
             $progress->report($onProgress);
@@ -264,7 +268,7 @@ class TCGDexService implements GameServiceInterface
         gc_collect_cycles();
 
         if ($importType !== ImageImportType::SkipAll) {
-            $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardEntityIds, $importType === ImageImportType::NewOnly);
+            $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, $importType === ImageImportType::NewOnly);
         }
 
         return $count;

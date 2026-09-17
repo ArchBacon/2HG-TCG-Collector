@@ -5,7 +5,7 @@ namespace App\Games\Pokemon\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use App\Entity\Traits\TimestampableTrait;
+use App\ApiResource\Traits\TimestampableTrait;
 use App\Games\Pokemon\Entity\Embeddable\CardCount;
 use App\Games\Pokemon\Entity\Embeddable\Legality;
 use App\Games\Pokemon\Enum\Language;
@@ -73,7 +73,7 @@ class Set
     /**
      * The series (`serie`) this set belongs to, e.g. "swsh" / "Sword & Shield". Flattened from
      * TCGdex's nested `serie` object rather than a relation, mirroring how MTG's Set stores its
-     * block ({@see \App\Games\MTG\Entity\Set::$blockCode}) as plain columns.
+     * block ({@see \App\Games\MTG\Entity\SetV1::$blockCode}) as plain columns.
      */
     #[Groups(['set:read'])]
     #[SerializedPath('[serie][id]')]

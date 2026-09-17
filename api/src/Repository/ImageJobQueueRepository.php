@@ -43,7 +43,7 @@ final class ImageJobQueueRepository extends ServiceEntityRepository
      * blocking on them — and the follow-up UPDATE targets exact ids (point lookups, record
      * locks only), so there's no range-scan lock contention left to deadlock on.
      *
-     * @return list<array{id: int, cardId: string}> cardId as an RFC 4122 string
+     * @return list<array{id: int, cardId: string, imageUri: ?string}> cardId as an RFC 4122 string
      */
     public function claimBatch(string $game, int $limit, string $token): array
     {
@@ -54,7 +54,7 @@ final class ImageJobQueueRepository extends ServiceEntityRepository
             $connection->beginTransaction();
             try {
                 $rows = $connection->fetchAllAssociative(
-                    'SELECT id, card_id FROM ' . self::TABLE . '
+                    'SELECT id, card_id, image_uri FROM ' . self::TABLE . '
                      WHERE game = :game AND status = :pending
                      ORDER BY id ASC
                      LIMIT ' . max(0, $limit) . '
@@ -94,11 +94,13 @@ final class ImageJobQueueRepository extends ServiceEntityRepository
                 static function (array $row): array {
                     $id = $row['id'];
                     $cardId = $row['card_id'];
-                    \assert((\is_int($id) || \is_string($id)) && \is_string($cardId));
+                    $imageUri = $row['image_uri'];
+                    \assert((\is_int($id) || \is_string($id)) && \is_string($cardId) && ($imageUri === null || \is_string($imageUri)));
 
                     return [
                         'id' => (int) $id,
                         'cardId' => Uuid::fromBinary($cardId)->toRfc4122(),
+                        'imageUri' => $imageUri,
                     ];
                 },
                 $rows,
@@ -248,11 +250,12 @@ final class ImageJobQueueRepository extends ServiceEntityRepository
      * $onlyIfMissing, existing rows (whatever their status) are left untouched and only truly
      * new cards get a row — for fast incremental imports that shouldn't re-touch images.
      *
-     * @param list<Uuid> $cardIds
+     * @param array<string, ?string> $cardImageUris card id (RFC 4122 string) => source image URL
+     *        to download, or null if none is known
      */
-    public function enqueueBatch(string $game, array $cardIds, bool $onlyIfMissing): void
+    public function enqueueBatch(string $game, array $cardImageUris, bool $onlyIfMissing): void
     {
-        if ($cardIds === []) {
+        if ($cardImageUris === []) {
             return;
         }
 
@@ -261,16 +264,16 @@ final class ImageJobQueueRepository extends ServiceEntityRepository
 
         $placeholders = [];
         $params = [];
-        foreach ($cardIds as $cardId) {
-            $placeholders[] = '(?, ?, ?, 0, ?, ?)';
-            array_push($params, $game, $cardId->toBinary(), $status, $now, $now);
+        foreach ($cardImageUris as $cardId => $imageUri) {
+            $placeholders[] = '(?, ?, ?, ?, 0, ?, ?)';
+            array_push($params, $game, Uuid::fromString($cardId)->toBinary(), $imageUri, $status, $now, $now);
         }
 
         $verb = $onlyIfMissing ? 'INSERT IGNORE' : 'INSERT';
-        $sql = $verb . ' INTO ' . self::TABLE . ' (game, card_id, status, attempts, created_at, updated_at)
+        $sql = $verb . ' INTO ' . self::TABLE . ' (game, card_id, image_uri, status, attempts, created_at, updated_at)
                 VALUES ' . implode(', ', $placeholders);
         if (!$onlyIfMissing) {
-            $sql .= ' ON DUPLICATE KEY UPDATE status = VALUES(status), updated_at = VALUES(updated_at)';
+            $sql .= ' ON DUPLICATE KEY UPDATE image_uri = VALUES(image_uri), status = VALUES(status), updated_at = VALUES(updated_at)';
         }
 
         $this->getEntityManager()->getConnection()->executeStatement($sql, $params);
