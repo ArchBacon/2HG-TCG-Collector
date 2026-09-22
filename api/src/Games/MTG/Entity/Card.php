@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     normalizationContext: ['groups' => ['card:read']],
 )]
 #[ORM\Entity(repositoryClass: CardRepository::class)]
-#[ORM\Table(name: 'tcg_card_mtg')]
+#[ORM\Table(name: 'tcg_mtg_card')]
 #[SerializedOrder([
     'id', 'tcg', 'set', 'lang', 'name', 'number', 'rarity', 'typeLine',
     'oracleText', 'flavorText', 'artist', 'faces', 'variants', 'related',
@@ -34,9 +34,9 @@ final class Card extends \App\ApiResource\Card
     #[Groups(['card:read'])]
     public ?array $images {
         get => $this->hasImages ? [
-            'small' => '/mtg/small/' . $this->id->toRfc4122() . '.webp',
-            'medium' => '/mtg/medium/' . $this->id->toRfc4122() . '.webp',
-            'large' => '/mtg/large/' . $this->id->toRfc4122() . '.webp',
+            'small' => '/' . $this->tcg->value . '/small/' . $this->id->toRfc4122() . '.webp',
+            'medium' => '/' . $this->tcg->value . '/medium/' . $this->id->toRfc4122() . '.webp',
+            'large' => '/' . $this->tcg->value . '/large/' . $this->id->toRfc4122() . '.webp',
         ] : null;
     }
 

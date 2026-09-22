@@ -48,7 +48,6 @@ abstract class Set
         set => $this->type = $value;
     }
 
-    #[Groups(['set:read'])]
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     public ?string $block = null {
         get => $this->block;

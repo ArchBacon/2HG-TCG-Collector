@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     normalizationContext: ['groups' => ['set:read']],
 )]
 #[ORM\Entity(repositoryClass: SetRepository::class)]
-#[ORM\Table(name: 'tcg_set_mtg')]
+#[ORM\Table(name: 'tcg_mtg_set')]
 #[ORM\UniqueConstraint(name: 'uniq_mtg_set_code', columns: ['code'])]
 #[SerializedOrder(['id', 'tcg', 'code', 'name', 'type', 'block', 'cardCount', 'releasedAt', 'icon'])]
 class Set extends \App\ApiResource\Set
@@ -29,6 +29,6 @@ class Set extends \App\ApiResource\Set
 
     #[Groups(['set:read'])]
     public ?string $icon {
-        get => '/mtg/sets/' . $this->code . '.svg';
+        get => '/' . $this->tcg->value . '/sets/' . $this->code . '.svg';
     }
 }

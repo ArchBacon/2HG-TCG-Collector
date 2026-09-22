@@ -5,7 +5,6 @@ namespace App\ApiResource;
 use App\ApiResource\Traits\TimestampableTrait;
 use App\Enum\Game;
 use App\Enum\Language;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Uuid;
@@ -102,7 +101,7 @@ abstract class Card
         set => $this->flavorText = $value;
     }
 
-    // MUST Implement set in child class
+    // MUST Implement $set in child class
     // no way to enforce this with an abstract field,
     // as the target set is different per game
 
