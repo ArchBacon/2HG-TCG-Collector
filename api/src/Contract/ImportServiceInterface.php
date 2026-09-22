@@ -7,6 +7,9 @@ use App\Enum\ImageImportType;
 
 interface ImportServiceInterface
 {
+    /** Prepare any information for import */
+    public function prepare(): void;
+
     /**
      * Imports all set data and icons
      *
@@ -24,5 +27,6 @@ interface ImportServiceInterface
      */
     public function importCards(ImageImportType $importType, ?callable $onProgress = null): void;
 
-
+    /** Finalize data import */
+    public function finalize(): void;
 }

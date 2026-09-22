@@ -6,3 +6,11 @@ api_platform:
         stateless: true
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
+        # API Platform defaults this to true itself (SerializerContextBuilder::createFromRequest)
+        # whenever a resource's own normalizationContext doesn't set it — dropping every
+        # null-valued field from responses instead of serializing it as null. This merges into
+        # each resource's own normalizationContext (OperationDefaultsTrait::addGlobalDefaults:
+        # array_merge($default, $resourceOwn) when the resource's own context is non-empty), so
+        # it applies across every game without touching each entity's #[ApiResource] attribute.
+        normalization_context:
+            skip_null_values: false

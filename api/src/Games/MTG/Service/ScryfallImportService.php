@@ -51,6 +51,9 @@ final class ScryfallImportService implements ImportServiceInterface
         private readonly ScryfallCardFaceExtractor $faceExtractor,
     ) {}
 
+    public function prepare(): void {}
+    public function finalize(): void {}
+
     /**
      * @inheritDoc
      *

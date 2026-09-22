@@ -126,6 +126,9 @@ class SyncCommand extends Command
         }
 
         // Run sync process
+        $io->section(sprintf('Preparing %s data import', $game));
+        $handler->prepare();
+
         $io->section(sprintf('Importing %s data', $game));
         $start = microtime(true);
         $setsIndicator = new ProgressIndicator($output);
@@ -139,6 +142,8 @@ class SyncCommand extends Command
         $handler->importCards($imageImportType, $this->progressCallback($cardsIndicator, $start, 'card(s) imported'));
         $cardsIndicator->finish(sprintf('Synced card(s) in %s.', $this->formatDuration(microtime(true) - $start)));
 
+        $io->section(sprintf('Finalizing %s data import', $game));
+        $handler->finalize();
 
         if ($skipImages) {
             $io->section('Skipping card images');

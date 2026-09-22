@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Enum\Game;
 use App\Games\MTG\Repository\SetRepository;
+use App\Serializer\Attribute\SerializedOrder;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -18,6 +19,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Entity(repositoryClass: SetRepository::class)]
 #[ORM\Table(name: 'tcg_set_mtg')]
 #[ORM\UniqueConstraint(name: 'uniq_mtg_set_code', columns: ['code'])]
+#[SerializedOrder(['id', 'tcg', 'code', 'name', 'type', 'block', 'cardCount', 'releasedAt', 'icon'])]
 class Set extends \App\ApiResource\Set
 {
     #[Groups(['set:read'])]
