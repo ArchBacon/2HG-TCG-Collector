@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * {@see CardListing} for it and remove this row via {@see UnmatchedProductRepository::remove()}.
  */
 #[ORM\Entity(repositoryClass: UnmatchedProductRepository::class)]
-#[ORM\Table(name: 'unmatched_product')]
+#[ORM\Table(name: 'product_unmatched')]
 #[ORM\UniqueConstraint(name: 'uniq_unmatched_product_game_product', columns: ['game', 'product_id'])]
 #[ORM\HasLifecycleCallbacks]
 class UnmatchedProduct

@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Uuid;
  * per-game (MTG: nonfoil/foil/etched; other games will have their own).
  */
 #[ORM\Entity(repositoryClass: CardListingRepository::class)]
-#[ORM\Table(name: 'card_listing')]
+#[ORM\Table(name: 'product_listing')]
 #[ORM\UniqueConstraint(name: 'uniq_card_listing_game_card_finish', columns: ['game', 'card_id', 'finish'])]
 #[ORM\UniqueConstraint(name: 'uniq_card_listing_game_product', columns: ['game', 'product_id'])]
 #[ORM\HasLifecycleCallbacks]

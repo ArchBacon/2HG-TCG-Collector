@@ -16,7 +16,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     normalizationContext: ['groups' => ['set:read']],
 )]
 #[ORM\Entity(repositoryClass: SetRepository::class)]
-#[ORM\Table(name: 'mtg_set')]
+#[ORM\Table(name: 'tcg_set_mtg')]
 #[ORM\UniqueConstraint(name: 'uniq_mtg_set_code', columns: ['code'])]
 class Set extends \App\ApiResource\Set
 {

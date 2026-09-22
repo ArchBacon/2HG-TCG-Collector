@@ -1,10 +1,9 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace App\Command;
 
 use App\Command\Concern\ReportsDuration;
-use App\Contract\ImportServiceInterfaceV1;
+use App\Contract\ImportServiceInterface;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
 use App\Repository\ImageJobQueueRepository;
@@ -81,7 +80,7 @@ class SyncCommand extends Command
             return Command::FAILURE;
         }
         $handler = $this->handlers->get($game);
-        assert($handler instanceof ImportServiceInterfaceV1);
+        assert($handler instanceof ImportServiceInterface);
 
         // Validate there's only one or none image arguments
         $skipImages = $input->getOption('skip-images');
@@ -127,29 +126,19 @@ class SyncCommand extends Command
         }
 
         // Run sync process
-        $io->section('Syncing sets');
+        $io->section(sprintf('Importing %s data', $game));
         $start = microtime(true);
         $setsIndicator = new ProgressIndicator($output);
-        $setsIndicator->start('Syncing sets...');
-        $syncedSets = $handler->syncSetInfo($this->progressCallback($setsIndicator, $start, 'set(s) synced'));
-        $setsIndicator->finish(sprintf('%d set(s) synced.', $syncedSets));
-        $io->writeln(sprintf('Synced %d set(s) in %s.', $syncedSets, $this->formatDuration(microtime(true) - $start)));
+        $setsIndicator->start('Fetching set data...');
+        $handler->importSets($iconImportType, $this->progressCallback($setsIndicator, $start, 'set(s) synced'));
+        $setsIndicator->finish(sprintf('Synced set(s) in %s.', $this->formatDuration(microtime(true) - $start)));
 
-        $io->section('Importing set icons');
-        $start = microtime(true);
-        $iconsIndicator = new ProgressIndicator($output);
-        $iconsIndicator->start('Checking set icons...');
-        $syncedIcons = $handler->syncSetIcons($iconImportType, $this->progressCallback($iconsIndicator, $start, 'set icon(s) checked'));
-        $iconsIndicator->finish(sprintf('%d set icon(s) synced.', $syncedIcons));
-        $io->writeln(sprintf('Synced %d set icon(s) in %s.', $syncedIcons, $this->formatDuration(microtime(true) - $start)));
-
-        $io->section('Syncing cards');
         $start = microtime(true);
         $cardsIndicator = new ProgressIndicator($output);
-        $cardsIndicator->start('Importing cards...');
-        $syncedCards = $handler->syncCardInfo($imageImportType, $this->progressCallback($cardsIndicator, $start, 'card(s) imported'));
-        $cardsIndicator->finish(sprintf('%d card(s) imported.', $syncedCards));
-        $io->writeln(sprintf('Synced %d card(s) in %s.', $syncedCards, $this->formatDuration(microtime(true) - $start)));
+        $cardsIndicator->start('Fetching card data...');
+        $handler->importCards($imageImportType, $this->progressCallback($cardsIndicator, $start, 'card(s) imported'));
+        $cardsIndicator->finish(sprintf('Synced card(s) in %s.', $this->formatDuration(microtime(true) - $start)));
+
 
         if ($skipImages) {
             $io->section('Skipping card images');
@@ -225,13 +214,13 @@ class SyncCommand extends Command
             }
             $lastUpdate = $now;
 
-            $message = sprintf('%d %s so far... (%.0f%%', $count, $noun, $fractionComplete * 100);
+            $message = sprintf('%d %s [%.0f%%', $count, $noun, $fractionComplete * 100);
             if ($fractionComplete > 0.0) {
                 $elapsed = $now - $start;
                 $eta = $elapsed * (1 - $fractionComplete) / $fractionComplete;
                 $message .= sprintf(', ETA %s', $this->formatDuration($eta));
             }
-            $message .= ')';
+            $message .= ']';
 
             $indicator->setMessage($message);
             $indicator->advance();

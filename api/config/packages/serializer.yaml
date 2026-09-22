@@ -1,19 +1,3 @@
 framework:
     serializer:
         name_converter: 'serializer.name_converter.camel_case_to_snake_case'
-
-App\Games\MTG\Entity\Set:
-    attributes:
-        type:
-            serialized_name: 'set_type'
-            groups: ['external_api']
-        block:
-            serialized_name: 'block_code'
-            groups: ['external_api']
-
-
-App\Games\MTG\Entity\Card:
-    attributes:
-        number:
-            serialized_name: 'collector_number'
-            groups: [ 'external_api' ]
