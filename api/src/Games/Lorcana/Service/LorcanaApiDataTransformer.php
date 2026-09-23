@@ -2,42 +2,44 @@
 
 namespace App\Games\Lorcana\Service;
 
-class LorcanaApiDataTransformer
+use App\Contract\ImportDataTransformer;
+
+class LorcanaApiDataTransformer implements ImportDataTransformer
 {
-    public function transformSetData(array $data): array
+    public function transformSet(array $raw): array
     {
         return [
-            'code' => strtolower($data['Set_ID']),
-            'name' => $data['Name'],
+            'code' => strtolower($raw['Set_ID']),
+            'name' => $raw['Name'],
             'type' => 'expansion',
-            'card_count' => $data['Cards'],
-            'released_at' => $data['Release_Date'],
+            'card_count' => $raw['Cards'],
+            'released_at' => $raw['Release_Date'],
         ];
     }
 
-    public function transformCardData(array $data): array
+    public function transformCard(array $raw): array
     {
         return [
-            'name' => $data['Name'],
-            'number' => (string)$data['Card_Num'],
-            'rarity' => $data['Rarity'],
-            'artist' => $data['Artist'],
-            'type_line' => $data['Type'],
-            'oracle_text' => $data['Body_Text'] ?? null,
-            'flavor_text' => $data['Flavor_Text'] ?? null,
-            'set_code' => $data['Set_ID'],
-            'image_uri' => $data['Image'],
+            'name' => $raw['Name'],
+            'number' => (string)$raw['Card_Num'],
+            'rarity' => $raw['Rarity'],
+            'artist' => $raw['Artist'],
+            'type_line' => $raw['Type'],
+            'oracle_text' => $raw['Body_Text'] ?? null,
+            'flavor_text' => $raw['Flavor_Text'] ?? null,
+            'set_code' => $raw['Set_ID'],
+            'image_uri' => $raw['Image'],
             'details' => [
-                'unique_id' => $data['Unique_ID'],
-                'color' => $data['Color'],
-                'cost' => $data['Cost'],
-                'inkable' => $data['Inkable'],
-                'classifications' => $data['Classifications'] ?? null,
-                'abilities' => $data['Abilities'] ?? null,
-                'strength' => $data['Strength'] ?? null,
-                'willpower' => $data['Willpower'] ?? null,
-                'lore' => $data['Lore'] ?? null,
-                'franchise' => $data['Franchise'] === "" ? null : $data['Franchise'],
+                'unique_id' => $raw['Unique_ID'],
+                'color' => $raw['Color'],
+                'cost' => $raw['Cost'],
+                'inkable' => $raw['Inkable'],
+                'classifications' => $raw['Classifications'] ?? null,
+                'abilities' => $raw['Abilities'] ?? null,
+                'strength' => $raw['Strength'] ?? null,
+                'willpower' => $raw['Willpower'] ?? null,
+                'lore' => $raw['Lore'] ?? null,
+                'franchise' => $raw['Franchise'] === "" ? null : $raw['Franchise'],
             ],
         ];
     }

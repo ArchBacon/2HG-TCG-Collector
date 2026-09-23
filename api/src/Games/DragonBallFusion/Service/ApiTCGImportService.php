@@ -1,38 +1,40 @@
 <?php declare(strict_types=1);
 
-namespace App\Games\Lorcana\Service;
+namespace App\Games\DragonBallFusion\Service;
 
 use App\Contract\ImportServiceInterface;
 use App\Enum\Game;
 use App\Enum\IconImportType;
 use App\Enum\ImageImportType;
-use App\Games\Lorcana\Entity\Card;
-use App\Games\Lorcana\Entity\Set;
-use App\Games\Lorcana\Repository\CardRepository;
-use App\Games\Lorcana\Repository\SetRepository;
+use App\Games\DragonBallFusion\Entity\Card;
+use App\Games\DragonBallFusion\Entity\Set;
+use App\Games\DragonBallFusion\Repository\CardRepository;
+use App\Games\DragonBallFusion\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
 use App\Service\HttpService;
 use App\Service\ProgressReporter;
+use App\Service\ZipService;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
+use JsonException;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
-/** lorcana-api API client and Lorcana data import pipeline. */
-#[AutoconfigureTag('api.game_service', ['game' => Game::Lorcana->value])]
-class LorcanaApiImportService implements ImportServiceInterface
+/** ApiTCG GitHub API client and Dragon Ball Fusion data import pipeline. */
+#[AutoconfigureTag('api.game_service', ['game' => Game::DragonBallFusion->value])]
+class ApiTCGImportService implements ImportServiceInterface
 {
-    private const Game GAME = Game::Lorcana;
-    private const string URL = 'https://api.lorcana-api.com';
+    private const Game GAME = Game::DragonBallFusion;
+    private const string URL = 'https://github.com/apitcg/dragon-ball-fusion-tcg-data';
 
+    private string $dataPath;
     private int $totalCards = 0;
 
     public function __construct(
@@ -42,35 +44,46 @@ class LorcanaApiImportService implements ImportServiceInterface
         private readonly SerializerInterface&DenormalizerInterface $serializer,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
-        private readonly LorcanaApiDataTransformer $transformer,
-    ) {}
+        private readonly ZipService $zip,
+        private readonly ApiTCGDataTransformer $transformer,
 
-    public function prepare(): void {}
+    ) {}
 
     /**
      * @throws TransportExceptionInterface
-     * @throws ServerExceptionInterface
-     * @throws RedirectionExceptionInterface
+     */
+    public function prepare(): void
+    {
+        $path = $this->http->zip(self::URL . '/archive/refs/heads/main.zip');
+        $this->dataPath = $this->zip->unpack($path);
+    }
+
+    /**
      * @throws ExceptionInterface
-     * @throws DecodingExceptionInterface
-     * @throws ClientExceptionInterface
+     * @throws JsonException
      */
     public function importSets(IconImportType $importType, ?callable $onProgress = null): void
     {
-        $result = $this->http->json(self::URL . '/sets/all');
-        $sets = array_column($this->setRepository->findAll(), null, 'code');
-        $progress = new ProgressReporter(count($result));
+        $finder = new Finder();
+        $cardsDir = $this->dataPath . '/dragon-ball-fusion-tcg-data-main/cards/en';
+        $finder->files()->in($cardsDir)->name('*.json');
+        $total = $finder->count();
 
-        foreach ($result as $item) {
-            $data = $this->transformer->transformSet($item);
-            $set = $this->serializer->denormalize($data, Set::class, 'json', [
-                AbstractNormalizer::OBJECT_TO_POPULATE => $sets[$data['code']] ?? null
+        $sets = array_column($this->setRepository->findAll(), null, 'code');
+        $progress = new ProgressReporter($total);
+
+        foreach ($finder as $file) {
+            $data = json_decode($file->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            // We only need to check the set, so checking the first card in a file sorted by sets is enough.
+            $transformedData = $this->transformer->transformSet($data[0]);
+            $set = $this->serializer->denormalize($transformedData, Set::class, 'json', [
+                AbstractNormalizer::OBJECT_TO_POPULATE => $sets[$transformedData['code']] ?? null,
             ]);
+            $set->cardCount = count($data);
             $this->totalCards += $set->cardCount;
             $this->entityManager->persist($set);
 
-            // Set icons are hard to find and not included in the target API;
-            // so set icons are uploaded manually as <set_code>.webp
+            // There are no set icons, so there will ony be fallback.webp as a placeholder.
 
             $progress->advance();
             $progress->report($onProgress);
@@ -81,25 +94,19 @@ class LorcanaApiImportService implements ImportServiceInterface
     }
 
     /**
-     * @throws ORMException
-     * @throws RedirectionExceptionInterface
-     * @throws DecodingExceptionInterface
-     * @throws ClientExceptionInterface
-     * @throws TransportExceptionInterface
-     * @throws ServerExceptionInterface
      * @throws ExceptionInterface
+     * @throws ORMException
+     * @throws JsonException
      */
     public function importCards(ImageImportType $importType, ?callable $onProgress = null): void
     {
-        /** @var Set[] $sets */
+        /** @var list<Set> $sets */
         $sets = $this->setRepository->findAll();
         $progress = new ProgressReporter($this->totalCards);
 
         foreach ($sets as $set) {
-            /** @var list<Card> $items */
-            $items = $this->cardRepository->findBy(['set' => $set]);
-            $cards = array_combine(array_map(static fn(Card $item) => $item->details->uniqueId, $items), $items);
-            $result = $this->http->json(self::URL . '/cards/fetch?search=Set_ID=' . $set->code);
+            $cards = array_column($this->cardRepository->findBy(['set' => $set]), null, 'number');
+            $result = json_decode(file_get_contents($this->dataPath . '/dragon-ball-fusion-tcg-data-main/cards/en/' . $set->code . '.json'), true, 512, JSON_THROW_ON_ERROR);
             $setRef = $this->entityManager->getReference(Set::class, $set->id);
 
             /** @var array<string, ?string> $cardImageUris */
@@ -107,7 +114,7 @@ class LorcanaApiImportService implements ImportServiceInterface
             foreach ($result as $item) {
                 $data = $this->transformer->transformCard($item);
                 $card = $this->serializer->denormalize($data, Card::class, 'json', [
-                    AbstractNormalizer::OBJECT_TO_POPULATE => $cards[$data['details']['unique_id']] ?? null,
+                    AbstractNormalizer::OBJECT_TO_POPULATE => $cards[$data['number']] ?? null,
                     AbstractNormalizer::DEFAULT_CONSTRUCTOR_ARGUMENTS => [Card::class => [
                         'set' => $setRef,
                     ]],
@@ -131,5 +138,9 @@ class LorcanaApiImportService implements ImportServiceInterface
         }
     }
 
-    public function finalize(): void {}
+    public function finalize(): void
+    {
+        $filesystem = new Filesystem();
+        $filesystem->remove($this->dataPath);
+    }
 }
