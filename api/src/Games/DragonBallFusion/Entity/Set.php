@@ -9,6 +9,7 @@ use App\Enum\Game;
 use App\Games\DragonBallFusion\Repository\SetRepository;
 use App\Serializer\Attribute\SerializedOrder;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
     operations: [new GetCollection(), new Get()],
@@ -21,10 +22,12 @@ use Doctrine\ORM\Mapping as ORM;
 #[SerializedOrder(['id', 'tcg', 'code', 'name', 'type', 'block', 'cardCount', 'releasedAt', 'icon'])]
 class Set extends \App\ApiResource\Set
 {
+    #[Groups(['set:read'])]
     public Game $tcg {
         get => Game::DragonBallFusion;
     }
 
+    #[Groups(['set:read'])]
     public ?string $icon {
         get => '/' . $this->tcg->value . '/sets/fallback.webp';
     }

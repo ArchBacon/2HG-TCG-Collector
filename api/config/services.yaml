@@ -54,12 +54,12 @@ services:
         tags:
             - { name: 'api.image_job_handler', game: 'lorcana' }
 
-#    game.onepiece.image_job_handler:
-#        parent: App\Service\ImageJobHandler
-#        arguments:
-#            $game: !php/enum App\Enum\Game::OnePiece
-#        tags:
-#            - { name: 'api.image_job_handler', game: 'onepiece' }
+    game.onepiece.image_job_handler:
+        parent: App\Service\ImageJobHandler
+        arguments:
+            $game: !php/enum App\Enum\Game::OnePiece
+        tags:
+            - { name: 'api.image_job_handler', game: 'onepiece' }
 
     game.dragonballfusion.image_job_handler:
         parent: App\Service\ImageJobHandler
