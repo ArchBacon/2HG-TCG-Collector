@@ -72,7 +72,7 @@ final class ScryfallImportService implements ImportServiceInterface
 
         foreach ($result as $item) {
             $item['type'] = $item['set_type'];
-            $item['block'] = $item['block_code'] ?? $item['code'];
+            $item['block'] = $item['parent_set_code'] ?? $item['code'];
 
             $set = $this->serializer->denormalize($item, Set::class, 'json', [
                 AbstractNormalizer::OBJECT_TO_POPULATE => $sets[$item['code']] ?? null,
