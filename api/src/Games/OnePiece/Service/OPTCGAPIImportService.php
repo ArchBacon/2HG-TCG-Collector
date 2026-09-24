@@ -71,6 +71,9 @@ class OPTCGAPIImportService implements ImportServiceInterface
             $progress->advance();
             $progress->report($onProgress);
         }
+
+        $this->entityManager->flush();
+        $this->entityManager->clear();
     }
 
     /**
