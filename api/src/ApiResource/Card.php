@@ -69,9 +69,9 @@ abstract class Card
         set => $this->typeLine = $value;
     }
 
-    /** @var null|array{small: string; medium: string; large: string} */
+    /** @var array{small: ?string, medium: ?string, large: ?string} */
     #[Groups(['card:read'])]
-    abstract public ?array $images { get; }
+    abstract public array $images { get; }
 
     /** @var list<string> */
     #[Groups(['card:read'])]

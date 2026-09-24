@@ -4,7 +4,6 @@ namespace App\Games\Pokemon\Repository;
 
 use App\Games\Pokemon\Entity\Card;
 use App\Games\Pokemon\Entity\Set;
-use App\Games\Pokemon\Enum\Language;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
@@ -33,7 +32,7 @@ final class CardRepository extends ServiceEntityRepository
      *
      * @return array<string, ?string> card id (RFC 4122 string) => imageUri
      */
-    public function findImageUrisBySetAndLang(Set $set, Language $lang): array
+    public function findImageUrisBySetAndLang(Set $set, string $lang): array
     {
         $rows = $this->createQueryBuilder('c')
             ->select('c.id', 'c.imageUri')

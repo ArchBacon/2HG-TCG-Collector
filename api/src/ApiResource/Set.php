@@ -4,6 +4,7 @@ namespace App\ApiResource;
 
 use App\ApiResource\Traits\TimestampableTrait;
 use App\Enum\Game;
+use App\Enum\Language;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Context;
@@ -42,6 +43,12 @@ abstract class Set
     }
 
     #[Groups(['set:read'])]
+    #[ORM\Column(type: 'string', length: 4, nullable: true, enumType: Language::class)]
+    public ?Language $lang = null {
+        get => $this->lang;
+        set => $this->lang = $value;
+    }
+
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     public ?string $type = null {
         get => $this->type;
@@ -61,8 +68,32 @@ abstract class Set
         set => $this->cardCount = $value;
     }
 
+    /**
+     * Where each image lives under public/, whether or not it has been downloaded yet.
+     *
+     * @var array{icon: ?string, logo: ?string}
+     */
+    abstract public array $imagePaths { get; }
+
+    /**
+     * Which of the image paths exist on disk. Set by SetImageAvailabilityListener on load.
+     *
+     * @var array<string, bool>
+     */
+    public array $availableImages = [];
+
+    /** @var array{icon: ?string, logo: ?string} */
     #[Groups(['set:read'])]
-    abstract public ?string $icon { get; }
+    public array $images {
+        get {
+            $images = [];
+            foreach ($this->imagePaths as $type => $path) {
+                $images[$type] = ($this->availableImages[$type] ?? false) ? $path : null;
+            }
+
+            return $images;
+        }
+    }
 
     #[Groups(['set:read'])]
     #[ORM\Column(type: 'date_immutable', nullable: true)]

@@ -15,6 +15,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     operations: [new GetCollection(), new Get()],
     routePrefix: '/mtg',
     normalizationContext: ['groups' => ['card:read']],
+    cacheHeaders: ['public' => true, 'max_age' => 300, 'shared_max_age' => 3600],
 )]
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Table(name: 'tcg_mtg_card')]
@@ -30,14 +31,14 @@ final class Card extends \App\ApiResource\Card
         get => Game::MagicTheGathering;
     }
 
-    /** @var null|array{small: string; medium: string; large: string} */
+    /** @var array{small: ?string, medium: ?string, large: ?string} */
     #[Groups(['card:read'])]
-    public ?array $images {
-        get => $this->hasImages ? [
-            'small' => '/' . $this->tcg->value . '/small/' . $this->id->toRfc4122() . '.webp',
-            'medium' => '/' . $this->tcg->value . '/medium/' . $this->id->toRfc4122() . '.webp',
-            'large' => '/' . $this->tcg->value . '/large/' . $this->id->toRfc4122() . '.webp',
-        ] : null;
+    public array $images {
+        get => [
+            'small' => $this->hasImages ? '/' . $this->tcg->value . '/small/' . $this->id->toRfc4122() . '.webp' : null,
+            'medium' => $this->hasImages ? '/' . $this->tcg->value . '/medium/' . $this->id->toRfc4122() . '.webp' : null,
+            'large' => $this->hasImages ? '/' . $this->tcg->value . '/large/' . $this->id->toRfc4122() . '.webp' : null,
+        ];
     }
 
     #[Groups(['card:read'])]

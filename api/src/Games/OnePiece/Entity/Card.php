@@ -21,6 +21,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ],
     routePrefix: '/onepiece',
     normalizationContext: ['groups' => ['card:read']],
+    cacheHeaders: ['public' => true, 'max_age' => 300, 'shared_max_age' => 3600],
 )]
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Table(name: 'tcg_onepiece_card')]
@@ -31,14 +32,14 @@ class Card extends \App\ApiResource\Card
         get => Game::OnePiece;
     }
 
-    /** @var null|array{small: string; medium: string; large: string} */
+    /** @var array{small: ?string, medium: ?string, large: ?string} */
     #[Groups(['card:read'])]
-    public ?array $images {
-        get => $this->hasImages ? [
-            'small' => '/' . $this->tcg->value . '/small/' . $this->id->toRfc4122() . '.webp',
-            'medium' => '/' . $this->tcg->value . '/medium/' . $this->id->toRfc4122() . '.webp',
-            'large' => '/' . $this->tcg->value . '/large/' . $this->id->toRfc4122() . '.webp',
-        ] : null;
+    public array $images {
+        get => [
+            'small' => $this->hasImages ? '/' . $this->tcg->value . '/small/' . $this->id->toRfc4122() . '.webp' : null,
+            'medium' => $this->hasImages ? '/' . $this->tcg->value . '/medium/' . $this->id->toRfc4122() . '.webp' : null,
+            'large' => $this->hasImages ? '/' . $this->tcg->value . '/large/' . $this->id->toRfc4122() . '.webp' : null,
+        ];
     }
 
     #[Groups(['card:read'])]

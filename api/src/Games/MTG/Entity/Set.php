@@ -15,11 +15,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
     operations: [new GetCollection(), new Get()],
     routePrefix: '/mtg',
     normalizationContext: ['groups' => ['set:read']],
+    cacheHeaders: ['public' => true, 'max_age' => 300, 'shared_max_age' => 3600],
 )]
 #[ORM\Entity(repositoryClass: SetRepository::class)]
 #[ORM\Table(name: 'tcg_mtg_set')]
 #[ORM\UniqueConstraint(name: 'uniq_mtg_set_code', columns: ['code'])]
-#[SerializedOrder(['id', 'tcg', 'code', 'name', 'type', 'block', 'cardCount', 'releasedAt', 'icon'])]
+#[SerializedOrder(['id', 'tcg', 'lang', 'code', 'name', 'type', 'block', 'cardCount', 'releasedAt', 'images'])]
 class Set extends \App\ApiResource\Set
 {
     #[Groups(['set:read'])]
@@ -27,8 +28,10 @@ class Set extends \App\ApiResource\Set
         get => Game::MagicTheGathering;
     }
 
-    #[Groups(['set:read'])]
-    public ?string $icon {
-        get => '/' . $this->tcg->value . '/sets/' . $this->code . '.svg';
+    public array $imagePaths {
+        get => [
+            'icon' => '/' . $this->tcg->value . '/sets/' . $this->code . '.svg',
+            'logo' => null,
+        ];
     }
 }

@@ -22,6 +22,14 @@ framework:
     #esi: true
     #fragments: true
 
+when@prod:
+    framework:
+        # Symfony's PHP reverse proxy, wrapped around the kernel by symfony/runtime. It serves
+        # responses marked public (the game Card/Set resources, see their cacheHeaders) from its
+        # own store and answers conditional requests with 304s. Responses to
+        # requests carrying Authorization or cookies are never stored unless explicitly public.
+        http_cache: true
+
 when@test:
     framework:
         test: true

@@ -40,12 +40,12 @@ services:
         tags:
             - { name: 'api.image_job_handler', game: 'mtg' }
 
-#    game.pokemon.image_job_handler:
-#        parent: App\Service\ImageJobHandler
-#        arguments:
-#            $game: !php/enum App\Enum\Game::Pokemon
-#        tags:
-#            - { name: 'api.image_job_handler', game: 'pokemon' }
+    game.pokemon.image_job_handler:
+        parent: App\Service\ImageJobHandler
+        arguments:
+            $game: !php/enum App\Enum\Game::Pokemon
+        tags:
+            - { name: 'api.image_job_handler', game: 'pokemon' }
 
     game.lorcana.image_job_handler:
         parent: App\Service\ImageJobHandler

@@ -21,7 +21,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
+use Symfony\Component\Filesystem\Filesystem;
 use function assert;
 use function is_bool;
 use function is_string;
@@ -44,6 +46,9 @@ class SyncCommand extends Command
         #[AutowireLocator('api.game_service', indexAttribute: 'game')]
         private readonly ContainerInterface $handlers,
         private readonly ImageJobQueueRepository $imageJobQueue,
+        // Store directory of the prod HttpCache (framework's http_cache.store service)
+        #[Autowire('%kernel.share_dir%/http_cache')]
+        private readonly string $httpCacheDir,
     ) {
         parent::__construct();
     }
@@ -185,6 +190,8 @@ class SyncCommand extends Command
                     $output,
                 );
                 if ($exitCode !== Command::SUCCESS) {
+                    // Sets and cards did sync, so don't keep serving the old responses
+                    $this->clearHttpCache($io);
                     $io->error('Card image import failed.');
 
                     return Command::FAILURE;
@@ -203,10 +210,24 @@ class SyncCommand extends Command
             ));
         }
 
+        $this->clearHttpCache($io);
+
         $io->success(sprintf('%s sync completed.', $game));
         $this->reportDuration($io);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Drops every response HttpCache stored, so clients see the synced data right away instead
+     * of after s-maxage runs out. HttpCache's Store can only purge single URLs, and the cached
+     * collection URLs vary by page and filters, so the whole store directory goes. It's recreated
+     * on the next cached response. Without HttpCache enabled (dev) the directory doesn't exist.
+     */
+    private function clearHttpCache(SymfonyStyle $io): void
+    {
+        new Filesystem()->remove($this->httpCacheDir);
+        $io->writeln('Cleared HTTP cache.');
     }
 
     /**
