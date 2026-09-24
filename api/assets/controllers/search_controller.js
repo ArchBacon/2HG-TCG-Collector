@@ -13,7 +13,8 @@ export default class extends Controller {
         this.totalPages = 1;
         this.queryTarget.value = query;
 
-        if (query) {
+        // An empty query is a valid search (lists all cards), so run whenever a search was submitted.
+        if (params.has('game')) {
             this.runSearch(game, query, this.currentPage);
         }
     }
@@ -48,15 +49,15 @@ export default class extends Controller {
         this.resultsTarget.innerHTML = '';
         this.paginationTarget.hidden = true;
 
-        if (!q) {
-            this.statusTarget.textContent = '';
-            return;
-        }
-
         this.statusTarget.textContent = 'Searching…';
 
         try {
-            const response = await fetch(`/api/${game}/cards.jsonld?name=${encodeURIComponent(q)}&page=${page}`, {
+            const params = new URLSearchParams({ page: String(page) });
+            if (q) {
+                params.set('name', q);
+            }
+
+            const response = await fetch(`/api/${game}/cards.jsonld?${params}`, {
                 headers: { Accept: 'application/ld+json' },
             });
             if (!response.ok) {
@@ -67,7 +68,11 @@ export default class extends Controller {
             const cards = data.member || [];
 
             if (cards.length === 0) {
-                this.statusTarget.textContent = page > 1 ? 'No more results.' : `No cards found for "${q}".`;
+                if (page > 1) {
+                    this.statusTarget.textContent = 'No more results.';
+                } else {
+                    this.statusTarget.textContent = q ? `No cards found for "${q}".` : 'No cards found.';
+                }
                 return;
             }
 
