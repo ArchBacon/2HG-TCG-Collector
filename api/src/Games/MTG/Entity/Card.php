@@ -2,9 +2,11 @@
 
 namespace App\Games\MTG\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Enum\Game;
 use App\Games\MTG\Repository\CardRepository;
 use App\Serializer\Attribute\SerializedOrder;
@@ -12,10 +14,15 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
-    operations: [new GetCollection(), new Get()],
+    operations: [
+        new GetCollection(parameters: [
+            'name' => new QueryParameter(filter: new PartialSearchFilter(), property: 'name'),
+        ]),
+        new Get(),
+    ],
     routePrefix: '/mtg',
-    normalizationContext: ['groups' => ['card:read']],
     cacheHeaders: ['public' => true, 'max_age' => 300, 'shared_max_age' => 3600],
+    normalizationContext: ['groups' => ['card:read']],
 )]
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 #[ORM\Table(name: 'tcg_mtg_card')]
