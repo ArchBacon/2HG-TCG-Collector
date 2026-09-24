@@ -55,7 +55,7 @@ final readonly class CardImageService
     {
         $sourceWidth = imagesx($source);
         $sourceHeight = imagesy($source);
-        $scale = min($maxWidth / $sourceWidth, $maxHeight / $sourceHeight, 1.0);
+        $scale = min($maxWidth / $sourceWidth, $maxHeight / $sourceHeight);
         $width = max(1, (int) round($sourceWidth * $scale));
         $height = max(1, (int) round($sourceHeight * $scale));
 
