@@ -77,7 +77,7 @@ export default class extends Controller {
             this.statusTarget.textContent = `${data.totalItems} card(s) found.`;
 
             for (const card of cards) {
-                this.resultsTarget.insertAdjacentHTML('beforeend', this.cardTemplate(card));
+                this.resultsTarget.insertAdjacentHTML('beforeend', this.cardTemplate(card, game));
             }
 
             if (this.totalPages > 1) {
@@ -91,16 +91,34 @@ export default class extends Controller {
         }
     }
 
-    cardTemplate(card) {
-        const image = card.images?.medium ?? card.images?.small ?? '';
+    cardTemplate(card, game) {
+        const tcg = card.tcg ?? game;
+        const fallback = `/${tcg}/medium/fallback.webp`;
+        const image = card.images?.medium ?? card.images?.small ?? card.images?.large ?? fallback;
         const name = this.escapeHtml(card.name);
+        const meta = [card.number, card.rarity].filter(Boolean).map((v) => this.escapeHtml(v)).join(' · ');
 
         return `
             <div class="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
-                <img src="${image}" alt="${name}" loading="lazy" class="aspect-[5/7] w-full bg-slate-100 object-cover">
-                <div class="truncate p-2 text-sm font-medium text-slate-700">${name}</div>
+                <img src="${this.escapeHtml(image)}" alt="${name}" loading="lazy"
+                     data-fallback="${this.escapeHtml(fallback)}" data-action="error->search#imageFallback"
+                     class="aspect-[5/7] w-full bg-slate-100 object-cover">
+                <div class="p-2">
+                    <div class="truncate text-sm font-medium text-slate-700">${name}</div>
+                    ${meta ? `<div class="truncate text-xs text-slate-400">${meta}</div>` : ''}
+                </div>
             </div>
         `;
+    }
+
+    imageFallback(event) {
+        const img = event.currentTarget;
+        const fallback = img.dataset.fallback;
+
+        // Only swap once, so a missing fallback can't cause an error loop.
+        if (fallback && !img.src.endsWith(fallback)) {
+            img.src = fallback;
+        }
     }
 
     escapeHtml(value) {
