@@ -1,3 +1,5 @@
+// Copyright 2026 Christian Delicaat. All rights reserved.
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';

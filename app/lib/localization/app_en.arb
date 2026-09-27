@@ -1,0 +1,28 @@
+{
+  "@@locale": "en",
+
+  "collectionValue": "Collection value",
+  "@collectionValue": {
+    "description": "Label above the total value on the home screen collection card"
+  },
+
+  "collected": "Collected",
+  "@collected": {
+    "description": "Title of the tile showing how many cards the user owns"
+  },
+
+  "wishlisted": "Wishlisted",
+  "@wishlisted": {
+    "description": "Title of the tile showing how many cards are on the user's wishlist"
+  },
+
+  "cardCount": "{count, plural, =0{No cards} =1{1 card} other{{count} cards}}",
+  "@cardCount": {
+    "description": "A number of cards, e.g. in the collected and wishlisted tiles",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
