@@ -1,0 +1,385 @@
+{
+  "tcg": "mtg",
+  "value": 527.75,
+  "collected": 219,
+  "wishlisted": 41,
+  "latestSet": {
+    "id": "01a0d360-7c22-7b13-8a6d-3e9f4b2c7d15",
+    "lang": "en",
+    "code": "tla",
+    "name": "Avatar: The Last Airbender",
+    "cardCount": 286,
+    "releasedAt": "2025-11-21",
+    "images": {
+      "icon": "/mtg/sets/tla.svg",
+      "logo": null
+    }
+  },
+  "blocks": [
+    {
+      "block": "tla",
+      "sets": [
+        {
+          "id": "01a0d38f-fe97-791b-88eb-1debd6b23975",
+          "lang": "en",
+          "code": "ttla",
+          "name": "Avatar: The Last Airbender Tokens",
+          "cardCount": 18,
+          "releasedAt": "2025-11-21",
+          "images": {
+            "icon": "/mtg/sets/ttla.svg",
+            "logo": null
+          },
+          "collected": 2
+        },
+        {
+          "id": "01a0d358-2060-7a95-87e5-e78f138b4de6",
+          "lang": "en",
+          "code": "tle",
+          "name": "Avatar: The Last Airbender Eternal",
+          "cardCount": 316,
+          "releasedAt": "2025-11-21",
+          "images": {
+            "icon": "/mtg/sets/tle.svg",
+            "logo": null
+          },
+          "collected": 19
+        },
+        {
+          "id": "01a0d360-7c22-7b13-8a6d-3e9f4b2c7d15",
+          "lang": "en",
+          "code": "tla",
+          "name": "Avatar: The Last Airbender",
+          "cardCount": 286,
+          "releasedAt": "2025-11-21",
+          "images": {
+            "icon": "/mtg/sets/tla.svg",
+            "logo": null
+          },
+          "collected": 30
+        }
+      ]
+    },
+    {
+      "block": "spm",
+      "sets": [
+        {
+          "id": "01a0d388-e9ba-72ac-a6a9-1a81eb115db2",
+          "lang": "en",
+          "code": "tspm",
+          "name": "Marvel's Spider-Man Tokens",
+          "cardCount": 14,
+          "releasedAt": "2025-09-26",
+          "images": {
+            "icon": "/mtg/sets/tspm.svg",
+            "logo": null
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d3d0-4fde-7735-a061-a73f69ff4f91",
+          "lang": "en",
+          "code": "spm",
+          "name": "Marvel's Spider-Man",
+          "cardCount": 286,
+          "releasedAt": "2025-09-26",
+          "images": {
+            "icon": "/mtg/sets/spm.svg",
+            "logo": null
+          },
+          "collected": 10
+        },
+        {
+          "id": "01a0d396-8a87-7bb6-80f3-3dd76a65d351",
+          "lang": "en",
+          "code": "spe",
+          "name": "Marvel's Spider-Man Eternal",
+          "cardCount": 28,
+          "releasedAt": "2025-09-26",
+          "images": {
+            "icon": "/mtg/sets/spe.svg",
+            "logo": null
+          },
+          "collected": 0
+        }
+      ]
+    },
+    {
+      "block": "eoe",
+      "sets": [
+        {
+          "id": "01a0d3db-fc91-7544-a687-fe543b2c84f1",
+          "lang": "en",
+          "code": "teoe",
+          "name": "Edge of Eternities Tokens",
+          "cardCount": 18,
+          "releasedAt": "2025-08-01",
+          "images": {
+            "icon": "/mtg/sets/teoe.svg",
+            "logo": null
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d31c-c35a-75ae-96d0-1a66209d93d7",
+          "lang": "en",
+          "code": "eos",
+          "name": "Edge of Eternities: Stellar Sights",
+          "cardCount": 90,
+          "releasedAt": "2025-08-01",
+          "images": {
+            "icon": "/mtg/sets/eos.svg",
+            "logo": null
+          },
+          "collected": 7
+        },
+        {
+          "id": "01a0d322-a5bc-74a3-8c2f-d50011065ce0",
+          "lang": "en",
+          "code": "eoe",
+          "name": "Edge of Eternities",
+          "cardCount": 366,
+          "releasedAt": "2025-08-01",
+          "images": {
+            "icon": "/mtg/sets/eoe.svg",
+            "logo": null
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d38c-b528-799c-ae91-c840071308f1",
+          "lang": "en",
+          "code": "eoc",
+          "name": "Edge of Eternities Commander",
+          "cardCount": 169,
+          "releasedAt": "2025-08-01",
+          "images": {
+            "icon": "/mtg/sets/eoc.svg",
+            "logo": null
+          },
+          "collected": 0
+        }
+      ]
+    },
+    {
+      "block": "fin",
+      "sets": [
+        {
+          "id": "01a0d302-471c-7eba-ac00-b64552c2af84",
+          "lang": "en",
+          "code": "tfin",
+          "name": "Final Fantasy Tokens",
+          "cardCount": 31,
+          "releasedAt": "2025-06-13",
+          "images": {
+            "icon": "/mtg/sets/tfin.svg",
+            "logo": null
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d3cd-7d2d-702f-affe-623520553a5f",
+          "lang": "en",
+          "code": "fin",
+          "name": "Final Fantasy",
+          "cardCount": 586,
+          "releasedAt": "2025-06-13",
+          "images": {
+            "icon": "/mtg/sets/fin.svg",
+            "logo": null
+          },
+          "collected": 24
+        },
+        {
+          "id": "01a0d3ba-7994-7765-a060-cfd89ef858a0",
+          "lang": "en",
+          "code": "fic",
+          "name": "Final Fantasy Commander",
+          "cardCount": 482,
+          "releasedAt": "2025-06-13",
+          "images": {
+            "icon": "/mtg/sets/fic.svg",
+            "logo": null
+          },
+          "collected": 9
+        },
+        {
+          "id": "01a0d39a-30f3-7e42-9fce-a761152b95a1",
+          "lang": "en",
+          "code": "fca",
+          "name": "Final Fantasy: Through the Ages",
+          "cardCount": 64,
+          "releasedAt": "2025-06-13",
+          "images": {
+            "icon": "/mtg/sets/fca.svg",
+            "logo": null
+          },
+          "collected": 2
+        }
+      ]
+    },
+    {
+      "block": "tdm",
+      "sets": [
+        {
+          "id": "01a0d3e3-dbee-78a0-826f-ec50589ae74a",
+          "lang": "en",
+          "code": "ttdm",
+          "name": "Tarkir: Dragonstorm Tokens",
+          "cardCount": 22,
+          "releasedAt": "2025-04-11",
+          "images": {
+            "icon": "/mtg/sets/ttdm.svg",
+            "logo": null
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d3fb-6f50-7d32-a3b4-f4695423c8d7",
+          "lang": "en",
+          "code": "tdm",
+          "name": "Tarkir: Dragonstorm",
+          "cardCount": 432,
+          "releasedAt": "2025-04-11",
+          "images": {
+            "icon": "/mtg/sets/tdm.svg",
+            "logo": null
+          },
+          "collected": 17
+        },
+        {
+          "id": "01a0d338-23e0-71f9-8367-a6c2bc4b3d5e",
+          "lang": "en",
+          "code": "tdc",
+          "name": "Tarkir: Dragonstorm Commander",
+          "cardCount": 385,
+          "releasedAt": "2025-04-11",
+          "images": {
+            "icon": "/mtg/sets/tdc.svg",
+            "logo": null
+          },
+          "collected": 0
+        }
+      ]
+    },
+    {
+      "block": "dft",
+      "sets": [
+        {
+          "id": "01a0d326-de70-7254-8586-a8ed12de21fa",
+          "lang": "en",
+          "code": "tdft",
+          "name": "Aetherdrift Tokens",
+          "cardCount": 17,
+          "releasedAt": "2025-02-14",
+          "images": {
+            "icon": "/mtg/sets/tdft.svg",
+            "logo": null
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3a0-de33-767c-b159-9bec25eea638",
+          "lang": "en",
+          "code": "drc",
+          "name": "Aetherdrift Commander",
+          "cardCount": 132,
+          "releasedAt": "2025-02-14",
+          "images": {
+            "icon": "/mtg/sets/drc.svg",
+            "logo": null
+          },
+          "collected": 2
+        },
+        {
+          "id": "01a0d320-e26d-769c-9d7f-020ab7341359",
+          "lang": "en",
+          "code": "dft",
+          "name": "Aetherdrift",
+          "cardCount": 460,
+          "releasedAt": "2025-02-14",
+          "images": {
+            "icon": "/mtg/sets/dft.svg",
+            "logo": null
+          },
+          "collected": 13
+        }
+      ]
+    },
+    {
+      "block": "fdn",
+      "sets": [
+        {
+          "id": "01a0d3a4-1bd6-7355-83fd-30c118edcc52",
+          "lang": "en",
+          "code": "tfdn",
+          "name": "Foundations Tokens",
+          "cardCount": 40,
+          "releasedAt": "2024-11-15",
+          "images": {
+            "icon": "/mtg/sets/tfdn.svg",
+            "logo": null
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d3de-dcf4-776c-9821-59ffb24517bf",
+          "lang": "en",
+          "code": "fdn",
+          "name": "Foundations",
+          "cardCount": 730,
+          "releasedAt": "2024-11-15",
+          "images": {
+            "icon": "/mtg/sets/fdn.svg",
+            "logo": null
+          },
+          "collected": 11
+        }
+      ]
+    },
+    {
+      "block": "dsk",
+      "sets": [
+        {
+          "id": "01a0d326-573a-70cf-8f8e-24a5f8415182",
+          "lang": "en",
+          "code": "tdsk",
+          "name": "Duskmourn: House of Horror Tokens",
+          "cardCount": 20,
+          "releasedAt": "2024-09-27",
+          "images": {
+            "icon": "/mtg/sets/tdsk.svg",
+            "logo": null
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3a2-2f5d-7c73-b754-55300d119f3e",
+          "lang": "en",
+          "code": "dsk",
+          "name": "Duskmourn: House of Horror",
+          "cardCount": 407,
+          "releasedAt": "2024-09-27",
+          "images": {
+            "icon": "/mtg/sets/dsk.svg",
+            "logo": null
+          },
+          "collected": 9
+        },
+        {
+          "id": "01a0d3d3-5224-764a-9da0-bb86deaef43b",
+          "lang": "en",
+          "code": "dsc",
+          "name": "Duskmourn: House of Horror Commander",
+          "cardCount": 393,
+          "releasedAt": "2024-09-27",
+          "images": {
+            "icon": "/mtg/sets/dsc.svg",
+            "logo": null
+          },
+          "collected": 4
+        }
+      ]
+    }
+  ]
+}

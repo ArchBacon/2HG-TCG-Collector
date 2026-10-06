@@ -8,13 +8,13 @@ import '../../../tmp/shared/models/tcg.dart';
 import '../../../tmp/shared/theme/app_colors.dart';
 
 // The data shown on one game card.
-class TcgGameSummary {
+class WishlistGameSummary {
   final Tcg game; // Which game; also decides the name and background image
   final String latestSet; // Subtitle under the game name
   final double value; // Collection value in euros, shown in green
   final int cardCount; // Number of cataloged cards
 
-  const TcgGameSummary({
+  const WishlistGameSummary({
     required this.game,
     required this.latestSet,
     required this.value,
@@ -24,7 +24,7 @@ class TcgGameSummary {
 
 // The list of game cards on the home screen.
 class TcgGameList extends StatelessWidget {
-  final List<TcgGameSummary> games;
+  final List<WishlistGameSummary> games;
   final ValueChanged<Tcg>? onSelected; // Called with the tapped game; null = cards aren't tappable
 
   const TcgGameList({
@@ -57,7 +57,7 @@ class TcgGameList extends StatelessWidget {
 
 // One game card: text on the left, game artwork fading in on the right.
 class _TcgGameCard extends StatelessWidget {
-  final TcgGameSummary summary;
+  final WishlistGameSummary summary;
   final VoidCallback? onTap;
 
   const _TcgGameCard({

@@ -1,0 +1,321 @@
+{
+  "tcg": "pokemon",
+  "value": 856.2,
+  "collected": 402,
+  "wishlisted": 38,
+  "latestSet": {
+    "id": "01a0d360-7c21-7a4e-9f3b-5d8e2c1a4b90",
+    "lang": "en",
+    "code": "me02",
+    "name": "Phantasmal Flames",
+    "cardCount": 130,
+    "releasedAt": "2025-11-14",
+    "images": {
+      "icon": "/pokemon/sets/icons/me02.webp",
+      "logo": "/pokemon/sets/me02.webp"
+    }
+  },
+  "blocks": [
+    {
+      "block": "me",
+      "sets": [
+        {
+          "id": "01a0d360-7c21-7a4e-9f3b-5d8e2c1a4b90",
+          "lang": "en",
+          "code": "me02",
+          "name": "Phantasmal Flames",
+          "cardCount": 130,
+          "releasedAt": "2025-11-14",
+          "images": {
+            "icon": "/pokemon/sets/icons/me02.webp",
+            "logo": "/pokemon/sets/me02.webp"
+          },
+          "collected": 34
+        },
+        {
+          "id": "01a0d316-a8dd-74c3-85cc-26db09707f41",
+          "lang": "en",
+          "code": "me01",
+          "name": "Mega Evolution",
+          "cardCount": 188,
+          "releasedAt": "2025-09-26",
+          "images": {
+            "icon": "/pokemon/sets/icons/me01.webp",
+            "logo": "/pokemon/sets/me01.webp"
+          },
+          "collected": 49
+        }
+      ]
+    },
+    {
+      "block": "sv",
+      "sets": [
+        {
+          "id": "01a0d369-430c-7a94-9fd4-9fd669850f34",
+          "lang": "en",
+          "code": "sv10.5w",
+          "name": "White Flare",
+          "cardCount": 173,
+          "releasedAt": "2025-07-18",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv10.5w.webp",
+            "logo": "/pokemon/sets/sv10.5w.webp"
+          },
+          "collected": 39
+        },
+        {
+          "id": "01a0d359-8132-78f7-b960-d5a68fbbdcbe",
+          "lang": "en",
+          "code": "sv10.5b",
+          "name": "Black Bolt",
+          "cardCount": 172,
+          "releasedAt": "2025-07-18",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv10.5b.webp",
+            "logo": "/pokemon/sets/sv10.5b.webp"
+          },
+          "collected": 47
+        },
+        {
+          "id": "01a0d307-24d4-7412-a0eb-1ece0330c433",
+          "lang": "en",
+          "code": "sv10",
+          "name": "Destined Rivals",
+          "cardCount": 244,
+          "releasedAt": "2025-05-30",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv10.webp",
+            "logo": "/pokemon/sets/sv10.webp"
+          },
+          "collected": 29
+        },
+        {
+          "id": "01a0d395-75e7-7970-9515-bd12d6153383",
+          "lang": "en",
+          "code": "sv09",
+          "name": "Journey Together",
+          "cardCount": 190,
+          "releasedAt": "2025-03-28",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv09.webp",
+            "logo": "/pokemon/sets/sv09.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3ef-46c6-7206-9c0c-f8096b914fa1",
+          "lang": "en",
+          "code": "sv08.5",
+          "name": "Prismatic Evolutions",
+          "cardCount": 180,
+          "releasedAt": "2025-01-17",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv08.5.webp",
+            "logo": "/pokemon/sets/sv08.5.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d34a-f6ce-73ba-b707-080ab75b0d26",
+          "lang": "en",
+          "code": "sv08",
+          "name": "Surging Sparks",
+          "cardCount": 252,
+          "releasedAt": "2024-11-08",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv08.webp",
+            "logo": "/pokemon/sets/sv08.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3a8-9c00-7f17-a1de-4fc3d5434291",
+          "lang": "en",
+          "code": "sv07",
+          "name": "Stellar Crown",
+          "cardCount": 175,
+          "releasedAt": "2024-09-13",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv07.webp",
+            "logo": "/pokemon/sets/sv07.webp"
+          },
+          "collected": 21
+        },
+        {
+          "id": "01a0d39c-d0b8-7443-ae1f-18fbd63e6c69",
+          "lang": "en",
+          "code": "sv06.5",
+          "name": "Shrouded Fable",
+          "cardCount": 99,
+          "releasedAt": "2024-08-02",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv06.5.webp",
+            "logo": "/pokemon/sets/sv06.5.webp"
+          },
+          "collected": 14
+        },
+        {
+          "id": "01a0d38d-644d-73b2-b99f-249b60edd170",
+          "lang": "en",
+          "code": "sv06",
+          "name": "Twilight Masquerade",
+          "cardCount": 226,
+          "releasedAt": "2024-05-24",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv06.webp",
+            "logo": "/pokemon/sets/sv06.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d3ed-8f74-7047-a87b-e6e85933e8e2",
+          "lang": "en",
+          "code": "sv05",
+          "name": "Temporal Forces",
+          "cardCount": 218,
+          "releasedAt": "2024-03-22",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv05.webp",
+            "logo": "/pokemon/sets/sv05.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d394-cd51-77f0-b34b-d3dde2a3926d",
+          "lang": "en",
+          "code": "sv04.5",
+          "name": "Paldean Fates",
+          "cardCount": 245,
+          "releasedAt": "2024-01-26",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv04.5.webp",
+            "logo": "/pokemon/sets/sv04.5.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3fb-9917-766e-a4a4-5c571054ab9a",
+          "lang": "en",
+          "code": "sv04",
+          "name": "Paradox Rift",
+          "cardCount": 266,
+          "releasedAt": "2023-11-03",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv04.webp",
+            "logo": "/pokemon/sets/sv04.webp"
+          },
+          "collected": 20
+        },
+        {
+          "id": "01a0d317-ed05-79cb-b30e-8e03f848a2a4",
+          "lang": "en",
+          "code": "sv03.5",
+          "name": "151",
+          "cardCount": 207,
+          "releasedAt": "2023-09-22",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv03.5.webp",
+            "logo": "/pokemon/sets/sv03.5.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d38b-dede-76e1-9b28-dd2a1d52c60b",
+          "lang": "en",
+          "code": "sv03",
+          "name": "Obsidian Flames",
+          "cardCount": 230,
+          "releasedAt": "2023-08-11",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv03.webp",
+            "logo": "/pokemon/sets/sv03.webp"
+          },
+          "collected": 20
+        },
+        {
+          "id": "01a0d3a9-cae1-7ee3-9538-a7a16da18b96",
+          "lang": "en",
+          "code": "sv02",
+          "name": "Paldea Evolved",
+          "cardCount": 279,
+          "releasedAt": "2023-06-09",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv02.webp",
+            "logo": "/pokemon/sets/sv02.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3f8-4b35-74e7-8a98-5a51a3700b30",
+          "lang": "en",
+          "code": "sv01",
+          "name": "Scarlet & Violet",
+          "cardCount": 258,
+          "releasedAt": "2023-03-31",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv01.webp",
+            "logo": "/pokemon/sets/sv01.webp"
+          },
+          "collected": 9
+        }
+      ]
+    },
+    {
+      "block": "swsh",
+      "sets": [
+        {
+          "id": "01a0d32b-41a5-7050-9abc-f870c36c644f",
+          "lang": "en",
+          "code": "swsh12.5",
+          "name": "Crown Zenith",
+          "cardCount": 230,
+          "releasedAt": "2023-01-20",
+          "images": {
+            "icon": "/pokemon/sets/icons/swsh12.5.webp",
+            "logo": "/pokemon/sets/swsh12.5.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d388-318d-7377-829e-954ffaacf08d",
+          "lang": "en",
+          "code": "swsh12",
+          "name": "Silver Tempest",
+          "cardCount": 245,
+          "releasedAt": "2022-11-11",
+          "images": {
+            "icon": "/pokemon/sets/icons/swsh12.webp",
+            "logo": "/pokemon/sets/swsh12.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d3fc-8d62-784a-b53d-d36836dcb1af",
+          "lang": "en",
+          "code": "swsh11",
+          "name": "Lost Origin",
+          "cardCount": 247,
+          "releasedAt": "2022-09-09",
+          "images": {
+            "icon": "/pokemon/sets/icons/swsh11.webp",
+            "logo": "/pokemon/sets/swsh11.webp"
+          },
+          "collected": 8
+        },
+        {
+          "id": "01a0d38e-9e93-708a-b624-01245047cc75",
+          "lang": "en",
+          "code": "swsh10",
+          "name": "Astral Radiance",
+          "cardCount": 246,
+          "releasedAt": "2022-05-27",
+          "images": {
+            "icon": "/pokemon/sets/icons/swsh10.webp",
+            "logo": "/pokemon/sets/swsh10.webp"
+          },
+          "collected": 18
+        }
+      ]
+    }
+  ]
+}

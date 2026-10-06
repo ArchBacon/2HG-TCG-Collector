@@ -12,8 +12,8 @@ abstract class TcgSet with _$TcgSet {
     required String? lang,
     required String code,
     required String name,
-    required int cardCount,
-    required DateTime releasedAt,
+    required int? cardCount,
+    required DateTime? releasedAt,
     required Map<String, String?> images,
   }) = _TcgSet;
 

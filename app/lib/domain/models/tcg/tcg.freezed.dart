@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TcgSet {
 
- String get id; String? get lang; String get code; String get name; int get cardCount; DateTime get releasedAt; Map<String, String?> get images;
+ String get id; String? get lang; String get code; String get name; int? get cardCount; DateTime? get releasedAt; Map<String, String?> get images;
 /// Create a copy of TcgSet
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +54,7 @@ abstract mixin class $TcgSetCopyWith<$Res>  {
   factory $TcgSetCopyWith(TcgSet value, $Res Function(TcgSet) _then) = _$TcgSetCopyWithImpl;
 @useResult
 $Res call({
- String id, String? lang, String code, String name, int cardCount, DateTime releasedAt, Map<String, String?> images
+ String id, String? lang, String code, String name, int? cardCount, DateTime? releasedAt, Map<String, String?> images
 });
 
 
@@ -71,15 +71,15 @@ class _$TcgSetCopyWithImpl<$Res>
 
 /// Create a copy of TcgSet
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? lang = freezed,Object? code = null,Object? name = null,Object? cardCount = null,Object? releasedAt = null,Object? images = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? lang = freezed,Object? code = null,Object? name = null,Object? cardCount = freezed,Object? releasedAt = freezed,Object? images = null,}) {
   return _then(TcgSet(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,lang: freezed == lang ? _self.lang : lang // ignore: cast_nullable_to_non_nullable
 as String?,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,cardCount: null == cardCount ? _self.cardCount : cardCount // ignore: cast_nullable_to_non_nullable
-as int,releasedAt: null == releasedAt ? _self.releasedAt : releasedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
+as String,cardCount: freezed == cardCount ? _self.cardCount : cardCount // ignore: cast_nullable_to_non_nullable
+as int?,releasedAt: freezed == releasedAt ? _self.releasedAt : releasedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
 as Map<String, String?>,
   ));
 }
@@ -165,7 +165,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? lang,  String code,  String name,  int cardCount,  DateTime releasedAt,  Map<String, String?> images)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? lang,  String code,  String name,  int? cardCount,  DateTime? releasedAt,  Map<String, String?> images)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TcgSet() when $default != null:
 return $default(_that.id,_that.lang,_that.code,_that.name,_that.cardCount,_that.releasedAt,_that.images);case _:
@@ -186,7 +186,7 @@ return $default(_that.id,_that.lang,_that.code,_that.name,_that.cardCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? lang,  String code,  String name,  int cardCount,  DateTime releasedAt,  Map<String, String?> images)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? lang,  String code,  String name,  int? cardCount,  DateTime? releasedAt,  Map<String, String?> images)  $default,) {final _that = this;
 switch (_that) {
 case _TcgSet():
 return $default(_that.id,_that.lang,_that.code,_that.name,_that.cardCount,_that.releasedAt,_that.images);case _:
@@ -206,7 +206,7 @@ return $default(_that.id,_that.lang,_that.code,_that.name,_that.cardCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? lang,  String code,  String name,  int cardCount,  DateTime releasedAt,  Map<String, String?> images)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? lang,  String code,  String name,  int? cardCount,  DateTime? releasedAt,  Map<String, String?> images)?  $default,) {final _that = this;
 switch (_that) {
 case _TcgSet() when $default != null:
 return $default(_that.id,_that.lang,_that.code,_that.name,_that.cardCount,_that.releasedAt,_that.images);case _:
@@ -228,8 +228,8 @@ class _TcgSet implements TcgSet {
 @override final  String? lang;
 @override final  String code;
 @override final  String name;
-@override final  int cardCount;
-@override final  DateTime releasedAt;
+@override final  int? cardCount;
+@override final  DateTime? releasedAt;
  final  Map<String, String?> _images;
 @override Map<String, String?> get images {
   if (_images is EqualUnmodifiableMapView) return _images;
@@ -273,7 +273,7 @@ abstract mixin class _$TcgSetCopyWith<$Res> implements $TcgSetCopyWith<$Res> {
   factory _$TcgSetCopyWith(_TcgSet value, $Res Function(_TcgSet) _then) = __$TcgSetCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? lang, String code, String name, int cardCount, DateTime releasedAt, Map<String, String?> images
+ String id, String? lang, String code, String name, int? cardCount, DateTime? releasedAt, Map<String, String?> images
 });
 
 
@@ -290,15 +290,15 @@ class __$TcgSetCopyWithImpl<$Res>
 
 /// Create a copy of TcgSet
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? lang = freezed,Object? code = null,Object? name = null,Object? cardCount = null,Object? releasedAt = null,Object? images = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? lang = freezed,Object? code = null,Object? name = null,Object? cardCount = freezed,Object? releasedAt = freezed,Object? images = null,}) {
   return _then(_TcgSet(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,lang: freezed == lang ? _self.lang : lang // ignore: cast_nullable_to_non_nullable
 as String?,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,cardCount: null == cardCount ? _self.cardCount : cardCount // ignore: cast_nullable_to_non_nullable
-as int,releasedAt: null == releasedAt ? _self.releasedAt : releasedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
+as String,cardCount: freezed == cardCount ? _self.cardCount : cardCount // ignore: cast_nullable_to_non_nullable
+as int?,releasedAt: freezed == releasedAt ? _self.releasedAt : releasedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
 as Map<String, String?>,
   ));
 }

@@ -39,7 +39,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: TextStyle(
-          color: colors.onSurfaceVariant,
+          color: Colors.deepOrange,
           fontSize: 18.0,
           fontWeight: FontWeight.w400,
         ),

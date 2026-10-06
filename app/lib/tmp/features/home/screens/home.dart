@@ -2,7 +2,7 @@
 
 // import 'package:app/features/home/providers/collection_summary_card.dart';
 // import 'package:app/features/home/widgets/collection_value.dart';
-// import 'package:app/features/home/widgets/tcg_game_list.dart';
+// import 'package:app/features/home/widgets/wishlist_game_list.dart';
 // import 'package:app/shared/models/tcg.dart';
 // import 'package:app/shared/widgets/glass_app_bar.dart';
 // import 'package:flutter/material.dart';

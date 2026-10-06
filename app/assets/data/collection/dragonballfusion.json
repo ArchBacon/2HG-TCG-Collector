@@ -1,0 +1,259 @@
+{
+  "tcg": "dragonballfusion",
+  "value": 96.4,
+  "collected": 88,
+  "wishlisted": 12,
+  "latestSet": {
+    "id": "01a0d355-a53e-7926-b18c-24f1fdd936cd",
+    "lang": null,
+    "code": "fb06",
+    "name": "BOOSTER PACK -RIVALS CLASH-[FB06]",
+    "cardCount": 143,
+    "releasedAt": null,
+    "images": {
+      "icon": null,
+      "logo": "/dragonballfusion/sets/fallback.webp"
+    }
+  },
+  "blocks": [
+    {
+      "block": null,
+      "sets": [
+        {
+          "id": "01a0d355-a543-7bf9-9c0f-06fa92516cbe",
+          "lang": null,
+          "code": "sb01",
+          "name": "MANGA BOOSTER 01[SB01]",
+          "cardCount": 177,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 5
+        },
+        {
+          "id": "01a0d355-a542-7d89-af24-d8d003dc1eff",
+          "lang": null,
+          "code": "promotion",
+          "name": "Promotion",
+          "cardCount": 560,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 36
+        },
+        {
+          "id": "01a0d355-a541-72eb-bf0f-d1e381681baa",
+          "lang": null,
+          "code": "fs10",
+          "name": "STARTER DECK EX GIBLET [FS10]",
+          "cardCount": 18,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a540-7ea5-a198-410106aade69",
+          "lang": null,
+          "code": "fs09",
+          "name": "STARTER DECK EX SHALLOT [FS09]",
+          "cardCount": 18,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d355-a540-7ac1-a198-410105c6d8a3",
+          "lang": null,
+          "code": "fs08",
+          "name": "STARTER DECK -VEGETA(MINI) SUPER SAIYAN 3- [FS08]",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d355-a540-76d5-a198-410104ecbd41",
+          "lang": null,
+          "code": "fs07",
+          "name": "STARTER DECK -VEGETA(MINI)- [FS07]",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a540-72f5-a198-41010404259f",
+          "lang": null,
+          "code": "fs06",
+          "name": "STARTER DECK -SON GOKU(MINI)- [FS06]",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a53f-7e51-807d-3928b234817d",
+          "lang": null,
+          "code": "fs05",
+          "name": "STARTER DECK -BARDOCK- [FS05]",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 1
+        },
+        {
+          "id": "01a0d355-a53f-7a79-807d-3928b21744e6",
+          "lang": null,
+          "code": "fs04",
+          "name": "Starter Deck -Frieza-",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a53f-7691-807d-3928b11e1a90",
+          "lang": null,
+          "code": "fs03",
+          "name": "Starter Deck -Broly-",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a53f-7221-807d-3928b0629742",
+          "lang": null,
+          "code": "fs02",
+          "name": "Starter Deck -Vegeta-",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a53e-7dd6-b18c-24f1fe4abf21",
+          "lang": null,
+          "code": "fs01",
+          "name": "Starter Deck -Son Goku-",
+          "cardCount": 16,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d355-a53e-7926-b18c-24f1fdd936cd",
+          "lang": null,
+          "code": "fb06",
+          "name": "BOOSTER PACK -RIVALS CLASH-[FB06]",
+          "cardCount": 143,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 5
+        },
+        {
+          "id": "01a0d355-a53d-7eaa-b9bf-725b110d2d73",
+          "lang": null,
+          "code": "fb05",
+          "name": "BOOSTER PACK -NEW ADVENTURE- [FB05]",
+          "cardCount": 154,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 2
+        },
+        {
+          "id": "01a0d355-a53d-746a-b9bf-725b11006fef",
+          "lang": null,
+          "code": "fb04",
+          "name": "BOOSTER PACK -ULTRA LIMIT- [FB04]",
+          "cardCount": 158,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 3
+        },
+        {
+          "id": "01a0d355-a53c-795a-8a85-cef1b1fcd5c9",
+          "lang": null,
+          "code": "fb03",
+          "name": "RAGING ROAR",
+          "cardCount": 163,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 5
+        },
+        {
+          "id": "01a0d355-a53b-7d04-b2d7-011913c6720b",
+          "lang": null,
+          "code": "fb02",
+          "name": "Blazing aura",
+          "cardCount": 163,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 4
+        },
+        {
+          "id": "01a0d355-a538-7ef4-92e5-11eb505aecfe",
+          "lang": null,
+          "code": "fb01",
+          "name": "Awakened pulse",
+          "cardCount": 163,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          },
+          "collected": 4
+        }
+      ]
+    }
+  ]
+}

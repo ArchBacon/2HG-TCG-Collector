@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:app/config/assets.dart';
-import 'package:app/domain/models/collection/collection.dart';
+import 'package:app/domain/models/collection/collection_summary.dart';
 import 'package:flutter/services.dart';
 
 // TODO: replace implementations with API results

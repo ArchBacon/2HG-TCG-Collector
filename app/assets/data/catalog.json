@@ -1,0 +1,351 @@
+{
+  "games": [
+    {
+      "tcg": "pokemon",
+      "setCount": 172,
+      "cardCount": 19842,
+      "latestSet": {
+        "id": "01a0d360-7c21-7a4e-9f3b-5d8e2c1a4b90",
+        "lang": "en",
+        "code": "me02",
+        "name": "Phantasmal Flames",
+        "cardCount": 130,
+        "releasedAt": "2025-11-14",
+        "images": {
+          "icon": "/pokemon/sets/icons/me02.webp",
+          "logo": "/pokemon/sets/me02.webp"
+        }
+      }
+    },
+    {
+      "tcg": "mtg",
+      "setCount": 812,
+      "cardCount": 102377,
+      "latestSet": {
+        "id": "01a0d360-7c22-7b13-8a6d-3e9f4b2c7d15",
+        "lang": "en",
+        "code": "tla",
+        "name": "Avatar: The Last Airbender",
+        "cardCount": 286,
+        "releasedAt": "2025-11-21",
+        "images": {
+          "icon": "/mtg/sets/tla.svg",
+          "logo": null
+        }
+      }
+    },
+    {
+      "tcg": "onepiece",
+      "setCount": 48,
+      "cardCount": 4916,
+      "latestSet": {
+        "id": "01a0d354-35d1-7996-8e82-fbbf9e70e515",
+        "lang": null,
+        "code": "OP-17",
+        "name": "The World's Strongest Warriors",
+        "cardCount": 169,
+        "releasedAt": "2026-08-29",
+        "images": {
+          "icon": null,
+          "logo": "/onepiece/sets/fallback.webp"
+        }
+      }
+    },
+    {
+      "tcg": "lorcana",
+      "setCount": 14,
+      "cardCount": 2873,
+      "latestSet": {
+        "id": "01a0d346-3bac-73dc-a6ba-68ad2ad0b387",
+        "lang": null,
+        "code": "aov",
+        "name": "Attack of the Vine!",
+        "cardCount": 207,
+        "releasedAt": "2026-07-24",
+        "images": {
+          "icon": null,
+          "logo": "/lorcana/sets/aov.webp"
+        }
+      }
+    },
+    {
+      "tcg": "dragonballfusion",
+      "setCount": 21,
+      "cardCount": 1958,
+      "latestSet": {
+        "id": "01a0d355-a53e-7926-b18c-24f1fdd936cd",
+        "lang": null,
+        "code": "fb06",
+        "name": "BOOSTER PACK -RIVALS CLASH-[FB06]",
+        "cardCount": 143,
+        "releasedAt": null,
+        "images": {
+          "icon": null,
+          "logo": "/dragonballfusion/sets/fallback.webp"
+        }
+      }
+    }
+  ],
+  "newReleases": [
+    {
+      "id": "01a0d354-35d1-7996-8e82-fbbf9e70e515",
+      "lang": null,
+      "code": "OP-17",
+      "name": "The World's Strongest Warriors",
+      "cardCount": 169,
+      "releasedAt": "2026-08-29",
+      "images": {
+        "icon": null,
+        "logo": "/onepiece/sets/fallback.webp"
+      },
+      "tcg": "onepiece"
+    },
+    {
+      "id": "01a0d346-3bac-73dc-a6ba-68ad2ad0b387",
+      "lang": null,
+      "code": "aov",
+      "name": "Attack of the Vine!",
+      "cardCount": 207,
+      "releasedAt": "2026-07-24",
+      "images": {
+        "icon": null,
+        "logo": "/lorcana/sets/aov.webp"
+      },
+      "tcg": "lorcana"
+    },
+    {
+      "id": "01a0d360-7c22-7b13-8a6d-3e9f4b2c7d15",
+      "lang": "en",
+      "code": "tla",
+      "name": "Avatar: The Last Airbender",
+      "cardCount": 286,
+      "releasedAt": "2025-11-21",
+      "images": {
+        "icon": "/mtg/sets/tla.svg",
+        "logo": null
+      },
+      "tcg": "mtg"
+    },
+    {
+      "id": "01a0d360-7c21-7a4e-9f3b-5d8e2c1a4b90",
+      "lang": "en",
+      "code": "me02",
+      "name": "Phantasmal Flames",
+      "cardCount": 130,
+      "releasedAt": "2025-11-14",
+      "images": {
+        "icon": "/pokemon/sets/icons/me02.webp",
+        "logo": "/pokemon/sets/me02.webp"
+      },
+      "tcg": "pokemon"
+    },
+    {
+      "id": "01a0d3d0-4fde-7735-a061-a73f69ff4f91",
+      "lang": "en",
+      "code": "spm",
+      "name": "Marvel's Spider-Man",
+      "cardCount": 286,
+      "releasedAt": "2025-09-26",
+      "images": {
+        "icon": "/mtg/sets/spm.svg",
+        "logo": null
+      },
+      "tcg": "mtg"
+    },
+    {
+      "id": "01a0d316-a8dd-74c3-85cc-26db09707f41",
+      "lang": "en",
+      "code": "me01",
+      "name": "Mega Evolution",
+      "cardCount": 188,
+      "releasedAt": "2025-09-26",
+      "images": {
+        "icon": "/pokemon/sets/icons/me01.webp",
+        "logo": "/pokemon/sets/me01.webp"
+      },
+      "tcg": "pokemon"
+    }
+  ],
+  "trending": [
+    {
+      "card": {
+        "id": "01a0d30b-ec63-7b5f-9582-3bf39c653938",
+        "tcg": "pokemon",
+        "name": "Mega Charizard X ex",
+        "lang": "en",
+        "number": "125/094",
+        "rarity": "Mega Hyper Rare",
+        "typeLine": "Pokémon - Stage 2 - ex",
+        "images": {
+          "small": "/pokemon/small/01a0d30b-ec63-7b5f-9582-3bf39c653938.webp",
+          "medium": "/pokemon/medium/01a0d30b-ec63-7b5f-9582-3bf39c653938.webp",
+          "large": "/pokemon/large/01a0d30b-ec63-7b5f-9582-3bf39c653938.webp"
+        },
+        "set": {
+          "id": "01a0d360-7c21-7a4e-9f3b-5d8e2c1a4b90",
+          "lang": "en",
+          "code": "me02",
+          "name": "Phantasmal Flames",
+          "cardCount": 130,
+          "releasedAt": "2025-11-14",
+          "images": {
+            "icon": "/pokemon/sets/icons/me02.webp",
+            "logo": "/pokemon/sets/me02.webp"
+          }
+        }
+      },
+      "price": 684.0,
+      "change7d": 12.4
+    },
+    {
+      "card": {
+        "id": "01a0d3fc-1e2f-76fb-a4ca-cbb93f63af83",
+        "tcg": "onepiece",
+        "name": "Shanks",
+        "lang": null,
+        "number": "OP17-120",
+        "rarity": "Secret Rare",
+        "typeLine": "Character - Red-Haired Pirates",
+        "images": {
+          "small": "/onepiece/small/01a0d3fc-1e2f-76fb-a4ca-cbb93f63af83.webp",
+          "medium": "/onepiece/medium/01a0d3fc-1e2f-76fb-a4ca-cbb93f63af83.webp",
+          "large": "/onepiece/large/01a0d3fc-1e2f-76fb-a4ca-cbb93f63af83.webp"
+        },
+        "set": {
+          "id": "01a0d354-35d1-7996-8e82-fbbf9e70e515",
+          "lang": null,
+          "code": "OP-17",
+          "name": "The World's Strongest Warriors",
+          "cardCount": 169,
+          "releasedAt": "2026-08-29",
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          }
+        }
+      },
+      "price": 142.5,
+      "change7d": 31.8
+    },
+    {
+      "card": {
+        "id": "01a0d3c8-fe36-7294-954b-cda472fdf202",
+        "tcg": "lorcana",
+        "name": "Stitch - Carefree Surfer",
+        "lang": null,
+        "number": "215/207",
+        "rarity": "Enchanted",
+        "typeLine": "Character - Storyborn - Hero - Alien",
+        "images": {
+          "small": "/lorcana/small/01a0d3c8-fe36-7294-954b-cda472fdf202.webp",
+          "medium": "/lorcana/medium/01a0d3c8-fe36-7294-954b-cda472fdf202.webp",
+          "large": "/lorcana/large/01a0d3c8-fe36-7294-954b-cda472fdf202.webp"
+        },
+        "set": {
+          "id": "01a0d346-3bac-73dc-a6ba-68ad2ad0b387",
+          "lang": null,
+          "code": "aov",
+          "name": "Attack of the Vine!",
+          "cardCount": 207,
+          "releasedAt": "2026-07-24",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/aov.webp"
+          }
+        }
+      },
+      "price": 98.4,
+      "change7d": -6.2
+    },
+    {
+      "card": {
+        "id": "01a0d38e-461b-7dc6-a3a3-d4a1b4d66a3a",
+        "tcg": "mtg",
+        "name": "Zuko, Exiled Prince",
+        "lang": "en",
+        "number": "349",
+        "rarity": "Mythic Rare",
+        "typeLine": "Legendary Creature — Human Noble",
+        "images": {
+          "small": "/mtg/small/01a0d38e-461b-7dc6-a3a3-d4a1b4d66a3a.webp",
+          "medium": "/mtg/medium/01a0d38e-461b-7dc6-a3a3-d4a1b4d66a3a.webp",
+          "large": "/mtg/large/01a0d38e-461b-7dc6-a3a3-d4a1b4d66a3a.webp"
+        },
+        "set": {
+          "id": "01a0d360-7c22-7b13-8a6d-3e9f4b2c7d15",
+          "lang": "en",
+          "code": "tla",
+          "name": "Avatar: The Last Airbender",
+          "cardCount": 286,
+          "releasedAt": "2025-11-21",
+          "images": {
+            "icon": "/mtg/sets/tla.svg",
+            "logo": null
+          }
+        }
+      },
+      "price": 41.75,
+      "change7d": 8.9
+    },
+    {
+      "card": {
+        "id": "01a0d3b7-c2c9-7762-9351-5a39153e7c2a",
+        "tcg": "pokemon",
+        "name": "Ethan's Ho-Oh ex",
+        "lang": "en",
+        "number": "230/182",
+        "rarity": "Special Illustration Rare",
+        "typeLine": "Pokémon - Basic - ex",
+        "images": {
+          "small": "/pokemon/small/01a0d3b7-c2c9-7762-9351-5a39153e7c2a.webp",
+          "medium": "/pokemon/medium/01a0d3b7-c2c9-7762-9351-5a39153e7c2a.webp",
+          "large": "/pokemon/large/01a0d3b7-c2c9-7762-9351-5a39153e7c2a.webp"
+        },
+        "set": {
+          "id": "01a0d307-24d4-7412-a0eb-1ece0330c433",
+          "lang": "en",
+          "code": "sv10",
+          "name": "Destined Rivals",
+          "cardCount": 244,
+          "releasedAt": "2025-05-30",
+          "images": {
+            "icon": "/pokemon/sets/icons/sv10.webp",
+            "logo": "/pokemon/sets/sv10.webp"
+          }
+        }
+      },
+      "price": 126.3,
+      "change7d": -2.7
+    },
+    {
+      "card": {
+        "id": "01a0d34d-76c3-7777-818b-5d5c96d0cc5f",
+        "tcg": "dragonballfusion",
+        "name": "Vegeta",
+        "lang": null,
+        "number": "FB06-139",
+        "rarity": "Secret Rare",
+        "typeLine": "Battle - Saiyan",
+        "images": {
+          "small": "/dragonballfusion/small/01a0d34d-76c3-7777-818b-5d5c96d0cc5f.webp",
+          "medium": "/dragonballfusion/medium/01a0d34d-76c3-7777-818b-5d5c96d0cc5f.webp",
+          "large": "/dragonballfusion/large/01a0d34d-76c3-7777-818b-5d5c96d0cc5f.webp"
+        },
+        "set": {
+          "id": "01a0d355-a53e-7926-b18c-24f1fdd936cd",
+          "lang": null,
+          "code": "fb06",
+          "name": "BOOSTER PACK -RIVALS CLASH-[FB06]",
+          "cardCount": 143,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/dragonballfusion/sets/fallback.webp"
+          }
+        }
+      },
+      "price": 44.1,
+      "change7d": 4.5
+    }
+  ]
+}

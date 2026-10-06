@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'collection.dart';
+part of 'collection_summary.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -589,7 +589,7 @@ as int,
 /// @nodoc
 mixin _$CollectionSummaryTcg {
 
- String get name; double get value; int get collected; int get wishlisted; TcgSet get latestSet;
+ Tcg get tcg; double get value; int get collected; int get wishlisted; TcgSet? get latestSet;
 /// Create a copy of CollectionSummaryTcg
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -603,20 +603,20 @@ $CollectionSummaryTcgCopyWith<CollectionSummaryTcg> get copyWith => _$Collection
 @override
 bool operator ==(Object other) {
   final _this = this as CollectionSummaryTcg;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CollectionSummaryTcg&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.collected, _this.collected) || other.collected == _this.collected)&&(identical(other.wishlisted, _this.wishlisted) || other.wishlisted == _this.wishlisted)&&(identical(other.latestSet, _this.latestSet) || other.latestSet == _this.latestSet));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CollectionSummaryTcg&&(identical(other.tcg, _this.tcg) || other.tcg == _this.tcg)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.collected, _this.collected) || other.collected == _this.collected)&&(identical(other.wishlisted, _this.wishlisted) || other.wishlisted == _this.wishlisted)&&(identical(other.latestSet, _this.latestSet) || other.latestSet == _this.latestSet));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as CollectionSummaryTcg;
-  return Object.hash(runtimeType,_this.name,_this.value,_this.collected,_this.wishlisted,_this.latestSet);
+  return Object.hash(runtimeType,_this.tcg,_this.value,_this.collected,_this.wishlisted,_this.latestSet);
 }
 
 @override
 String toString() {
   final _this = this as CollectionSummaryTcg;
-  return 'CollectionSummaryTcg(name: ${_this.name}, value: ${_this.value}, collected: ${_this.collected}, wishlisted: ${_this.wishlisted}, latestSet: ${_this.latestSet})';
+  return 'CollectionSummaryTcg(tcg: ${_this.tcg}, value: ${_this.value}, collected: ${_this.collected}, wishlisted: ${_this.wishlisted}, latestSet: ${_this.latestSet})';
 }
 
 
@@ -627,11 +627,11 @@ abstract mixin class $CollectionSummaryTcgCopyWith<$Res>  {
   factory $CollectionSummaryTcgCopyWith(CollectionSummaryTcg value, $Res Function(CollectionSummaryTcg) _then) = _$CollectionSummaryTcgCopyWithImpl;
 @useResult
 $Res call({
- String name, double value, int collected, int wishlisted, TcgSet latestSet
+ Tcg tcg, double value, int collected, int wishlisted, TcgSet? latestSet
 });
 
 
-$TcgSetCopyWith<$Res> get latestSet;
+$TcgSetCopyWith<$Res>? get latestSet;
 
 }
 /// @nodoc
@@ -644,23 +644,26 @@ class _$CollectionSummaryTcgCopyWithImpl<$Res>
 
 /// Create a copy of CollectionSummaryTcg
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? value = null,Object? collected = null,Object? wishlisted = null,Object? latestSet = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? tcg = null,Object? value = null,Object? collected = null,Object? wishlisted = null,Object? latestSet = freezed,}) {
   return _then(CollectionSummaryTcg(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+tcg: null == tcg ? _self.tcg : tcg // ignore: cast_nullable_to_non_nullable
+as Tcg,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as double,collected: null == collected ? _self.collected : collected // ignore: cast_nullable_to_non_nullable
 as int,wishlisted: null == wishlisted ? _self.wishlisted : wishlisted // ignore: cast_nullable_to_non_nullable
-as int,latestSet: null == latestSet ? _self.latestSet : latestSet // ignore: cast_nullable_to_non_nullable
-as TcgSet,
+as int,latestSet: freezed == latestSet ? _self.latestSet : latestSet // ignore: cast_nullable_to_non_nullable
+as TcgSet?,
   ));
 }
 /// Create a copy of CollectionSummaryTcg
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$TcgSetCopyWith<$Res> get latestSet {
-  
-  return $TcgSetCopyWith<$Res>(_self.latestSet, (value) {
+$TcgSetCopyWith<$Res>? get latestSet {
+    if (_self.latestSet == null) {
+    return null;
+  }
+
+  return $TcgSetCopyWith<$Res>(_self.latestSet!, (value) {
     return _then(_self.copyWith(latestSet: value));
   });
 }
@@ -745,10 +748,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  double value,  int collected,  int wishlisted,  TcgSet latestSet)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Tcg tcg,  double value,  int collected,  int wishlisted,  TcgSet? latestSet)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CollectionSummaryTcg() when $default != null:
-return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
+return $default(_that.tcg,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
   return orElse();
 
 }
@@ -766,10 +769,10 @@ return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.la
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  double value,  int collected,  int wishlisted,  TcgSet latestSet)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Tcg tcg,  double value,  int collected,  int wishlisted,  TcgSet? latestSet)  $default,) {final _that = this;
 switch (_that) {
 case _CollectionSummaryTcg():
-return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
+return $default(_that.tcg,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -786,10 +789,10 @@ return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.la
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  double value,  int collected,  int wishlisted,  TcgSet latestSet)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Tcg tcg,  double value,  int collected,  int wishlisted,  TcgSet? latestSet)?  $default,) {final _that = this;
 switch (_that) {
 case _CollectionSummaryTcg() when $default != null:
-return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
+return $default(_that.tcg,_that.value,_that.collected,_that.wishlisted,_that.latestSet);case _:
   return null;
 
 }
@@ -801,14 +804,14 @@ return $default(_that.name,_that.value,_that.collected,_that.wishlisted,_that.la
 @JsonSerializable()
 
 class _CollectionSummaryTcg implements CollectionSummaryTcg {
-  const _CollectionSummaryTcg({required this.name, required this.value, required this.collected, required this.wishlisted, required this.latestSet});
+  const _CollectionSummaryTcg({required this.tcg, required this.value, required this.collected, required this.wishlisted, required this.latestSet});
   factory _CollectionSummaryTcg.fromJson(Map<String, dynamic> json) => _$CollectionSummaryTcgFromJson(json);
 
-@override final  String name;
+@override final  Tcg tcg;
 @override final  double value;
 @override final  int collected;
 @override final  int wishlisted;
-@override final  TcgSet latestSet;
+@override final  TcgSet? latestSet;
 
 /// Create a copy of CollectionSummaryTcg
 /// with the given fields replaced by the non-null parameter values.
@@ -823,18 +826,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CollectionSummaryTcg&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value)&&(identical(other.collected, collected) || other.collected == collected)&&(identical(other.wishlisted, wishlisted) || other.wishlisted == wishlisted)&&(identical(other.latestSet, latestSet) || other.latestSet == latestSet));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CollectionSummaryTcg&&(identical(other.tcg, tcg) || other.tcg == tcg)&&(identical(other.value, value) || other.value == value)&&(identical(other.collected, collected) || other.collected == collected)&&(identical(other.wishlisted, wishlisted) || other.wishlisted == wishlisted)&&(identical(other.latestSet, latestSet) || other.latestSet == latestSet));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,value,collected,wishlisted,latestSet);
+    return Object.hash(runtimeType,tcg,value,collected,wishlisted,latestSet);
 }
 
 @override
 String toString() {
-    return 'CollectionSummaryTcg(name: $name, value: $value, collected: $collected, wishlisted: $wishlisted, latestSet: $latestSet)';
+    return 'CollectionSummaryTcg(tcg: $tcg, value: $value, collected: $collected, wishlisted: $wishlisted, latestSet: $latestSet)';
 }
 
 
@@ -845,11 +848,11 @@ abstract mixin class _$CollectionSummaryTcgCopyWith<$Res> implements $Collection
   factory _$CollectionSummaryTcgCopyWith(_CollectionSummaryTcg value, $Res Function(_CollectionSummaryTcg) _then) = __$CollectionSummaryTcgCopyWithImpl;
 @override @useResult
 $Res call({
- String name, double value, int collected, int wishlisted, TcgSet latestSet
+ Tcg tcg, double value, int collected, int wishlisted, TcgSet? latestSet
 });
 
 
-@override $TcgSetCopyWith<$Res> get latestSet;
+@override $TcgSetCopyWith<$Res>? get latestSet;
 
 }
 /// @nodoc
@@ -862,14 +865,14 @@ class __$CollectionSummaryTcgCopyWithImpl<$Res>
 
 /// Create a copy of CollectionSummaryTcg
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? value = null,Object? collected = null,Object? wishlisted = null,Object? latestSet = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? tcg = null,Object? value = null,Object? collected = null,Object? wishlisted = null,Object? latestSet = freezed,}) {
   return _then(_CollectionSummaryTcg(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+tcg: null == tcg ? _self.tcg : tcg // ignore: cast_nullable_to_non_nullable
+as Tcg,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as double,collected: null == collected ? _self.collected : collected // ignore: cast_nullable_to_non_nullable
 as int,wishlisted: null == wishlisted ? _self.wishlisted : wishlisted // ignore: cast_nullable_to_non_nullable
-as int,latestSet: null == latestSet ? _self.latestSet : latestSet // ignore: cast_nullable_to_non_nullable
-as TcgSet,
+as int,latestSet: freezed == latestSet ? _self.latestSet : latestSet // ignore: cast_nullable_to_non_nullable
+as TcgSet?,
   ));
 }
 
@@ -877,9 +880,12 @@ as TcgSet,
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$TcgSetCopyWith<$Res> get latestSet {
-  
-  return $TcgSetCopyWith<$Res>(_self.latestSet, (value) {
+$TcgSetCopyWith<$Res>? get latestSet {
+    if (_self.latestSet == null) {
+    return null;
+  }
+
+  return $TcgSetCopyWith<$Res>(_self.latestSet!, (value) {
     return _then(_self.copyWith(latestSet: value));
   });
 }

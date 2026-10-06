@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'collection.dart';
+part of 'collection_summary.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
@@ -38,19 +38,29 @@ Map<String, dynamic> _$CollectionSummaryTotalToJson(
 _CollectionSummaryTcg _$CollectionSummaryTcgFromJson(
   Map<String, dynamic> json,
 ) => _CollectionSummaryTcg(
-  name: json['name'] as String,
+  tcg: $enumDecode(_$TcgEnumMap, json['tcg']),
   value: (json['value'] as num).toDouble(),
   collected: (json['collected'] as num).toInt(),
   wishlisted: (json['wishlisted'] as num).toInt(),
-  latestSet: TcgSet.fromJson(json['latestSet'] as Map<String, dynamic>),
+  latestSet: json['latestSet'] == null
+      ? null
+      : TcgSet.fromJson(json['latestSet'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$CollectionSummaryTcgToJson(
   _CollectionSummaryTcg instance,
 ) => <String, dynamic>{
-  'name': instance.name,
+  'tcg': _$TcgEnumMap[instance.tcg]!,
   'value': instance.value,
   'collected': instance.collected,
   'wishlisted': instance.wishlisted,
   'latestSet': instance.latestSet,
+};
+
+const _$TcgEnumMap = {
+  Tcg.pokemon: 'pokemon',
+  Tcg.mtg: 'mtg',
+  Tcg.onePiece: 'onepiece',
+  Tcg.lorcana: 'lorcana',
+  Tcg.dragonBallFusion: 'dragonballfusion',
 };

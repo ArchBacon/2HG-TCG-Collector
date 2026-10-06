@@ -2,7 +2,9 @@
 
 import 'package:app/data/repositories/collection/collection_repository.dart';
 import 'package:app/data/services/local/remote_data_service.dart';
-import 'package:app/domain/models/collection/collection.dart';
+import 'package:app/domain/models/collection/collection_overview.dart';
+import 'package:app/domain/models/collection/collection_summary.dart';
+import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:app/utils/result.dart';
 
 // TODO: replace with API results.
@@ -20,5 +22,11 @@ class CollectionRepositoryRemote implements CollectionRepository {
     } on Exception catch (error) {
       return Result.error(error);
     }
+  }
+
+  @override
+  Future<Result<CollectionOverview>> getCollectionFor(Tcg tcg) {
+    // TODO: implement getCollectionFor
+    throw UnimplementedError();
   }
 }

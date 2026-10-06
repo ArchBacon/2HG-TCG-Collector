@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../tmp/core/utils/format.dart';
-import '../tmp/shared/theme/app_colors.dart';
+import '../../tmp/core/utils/format.dart';
+import '../../tmp/shared/theme/app_colors.dart';
 
 // The card gradient isn't in the Stitch values; it's measured from references/collection_value.png.
 const _cardTop = Color(0xFF141923); // Background color at the top of the card

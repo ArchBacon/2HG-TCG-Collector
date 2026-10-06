@@ -1,0 +1,207 @@
+{
+  "tcg": "lorcana",
+  "value": 412.35,
+  "collected": 186,
+  "wishlisted": 23,
+  "latestSet": {
+    "id": "01a0d346-3bac-73dc-a6ba-68ad2ad0b387",
+    "lang": null,
+    "code": "aov",
+    "name": "Attack of the Vine!",
+    "cardCount": 207,
+    "releasedAt": "2026-07-24",
+    "images": {
+      "icon": null,
+      "logo": "/lorcana/sets/aov.webp"
+    }
+  },
+  "blocks": [
+    {
+      "block": null,
+      "sets": [
+        {
+          "id": "01a0d346-3bac-73dc-a6ba-68ad2ad0b387",
+          "lang": null,
+          "code": "aov",
+          "name": "Attack of the Vine!",
+          "cardCount": 207,
+          "releasedAt": "2026-07-24",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/aov.webp"
+          },
+          "collected": 22
+        },
+        {
+          "id": "01a0d346-3baf-7611-9138-a939fa245921",
+          "lang": null,
+          "code": "wun",
+          "name": "Wilds Unknown",
+          "cardCount": 204,
+          "releasedAt": "2026-05-15",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/wun.webp"
+          },
+          "collected": 20
+        },
+        {
+          "id": "01a0d346-3baf-748d-9138-a939f9e2536c",
+          "lang": null,
+          "code": "win",
+          "name": "Winterspell",
+          "cardCount": 204,
+          "releasedAt": "2026-02-13",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/win.webp"
+          },
+          "collected": 12
+        },
+        {
+          "id": "01a0d346-3baf-730d-9138-a939f943855b",
+          "lang": null,
+          "code": "whi",
+          "name": "Whispers in the Well",
+          "cardCount": 204,
+          "releasedAt": "2025-11-07",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/whi.webp"
+          },
+          "collected": 8
+        },
+        {
+          "id": "01a0d346-3bae-765c-8778-c8680b648239",
+          "lang": null,
+          "code": "fab",
+          "name": "Fabled",
+          "cardCount": 204,
+          "releasedAt": "2025-08-29",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/fab.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d346-3bae-7c94-8778-c8680df0c5c9",
+          "lang": null,
+          "code": "roj",
+          "name": "Reign of Jafar",
+          "cardCount": 204,
+          "releasedAt": "2025-05-30",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/roj.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d346-3bae-720c-8778-c8680a28fe73",
+          "lang": null,
+          "code": "ari",
+          "name": "Archazia's Island",
+          "cardCount": 204,
+          "releasedAt": "2025-03-07",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/ari.webp"
+          },
+          "collected": 22
+        },
+        {
+          "id": "01a0d346-3bae-7480-8778-c8680a6ecc11",
+          "lang": null,
+          "code": "azs",
+          "name": "Azurite Sea",
+          "cardCount": 204,
+          "releasedAt": "2024-11-15",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/azs.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d346-3bae-7e18-8778-c8680e527add",
+          "lang": null,
+          "code": "ssk",
+          "name": "Shimmering Skies",
+          "cardCount": 204,
+          "releasedAt": "2024-08-09",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/ssk.webp"
+          },
+          "collected": 15
+        },
+        {
+          "id": "01a0d346-3baf-7185-9138-a939f93910b8",
+          "lang": null,
+          "code": "urs",
+          "name": "Ursula's Return",
+          "cardCount": 204,
+          "releasedAt": "2024-05-17",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/urs.webp"
+          },
+          "collected": 20
+        },
+        {
+          "id": "01a0d346-3bae-797c-8778-c8680cc58195",
+          "lang": null,
+          "code": "qu1",
+          "name": "Illumineer's Quest: Deep Trouble",
+          "cardCount": 35,
+          "releasedAt": "2024-05-17",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/qu1.webp"
+          },
+          "collected": 2
+        },
+        {
+          "id": "01a0d346-3bae-77f4-8778-c8680bf88d37",
+          "lang": null,
+          "code": "ink",
+          "name": "Into the Inklands",
+          "cardCount": 204,
+          "releasedAt": "2024-02-23",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/ink.webp"
+          },
+          "collected": 6
+        },
+        {
+          "id": "01a0d346-3bae-7b08-8778-c8680d261227",
+          "lang": null,
+          "code": "rof",
+          "name": "Rise of The Floodborn",
+          "cardCount": 204,
+          "releasedAt": "2023-11-17",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/rof.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d346-3baf-7001-9138-a939f89a8d92",
+          "lang": null,
+          "code": "tfc",
+          "name": "The First Chapter",
+          "cardCount": 204,
+          "releasedAt": "2023-08-18",
+          "images": {
+            "icon": null,
+            "logo": "/lorcana/sets/tfc.webp"
+          },
+          "collected": 10
+        }
+      ]
+    }
+  ]
+}

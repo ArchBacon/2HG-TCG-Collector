@@ -6,7 +6,7 @@
   },
   "tcgs": {
     "pokemon": {
-      "name": "Pokémon TCG",
+      "tcg": "pokemon",
       "value": 856.20,
       "collected": 402,
       "wishlisted": 38,
@@ -24,7 +24,7 @@
       }
     },
     "mtg": {
-      "name": "Magic: The Gathering",
+      "tcg": "mtg",
       "value": 527.75,
       "collected": 219,
       "wishlisted": 41,
@@ -42,7 +42,7 @@
       }
     },
     "lorcana": {
-      "name": "Disney Lorcana",
+      "tcg": "lorcana",
       "value": 412.35,
       "collected": 186,
       "wishlisted": 23,
@@ -59,7 +59,7 @@
       }
     },
     "onepiece": {
-      "name": "One Piece",
+      "tcg": "onepiece",
       "value": 1284.90,
       "collected": 341,
       "wishlisted": 57,
@@ -76,7 +76,7 @@
       }
     },
     "dragonballfusion": {
-      "name": "Dragon Ball Super Fusion World",
+      "tcg": "dragonballfusion",
       "value": 96.40,
       "collected": 88,
       "wishlisted": 12,

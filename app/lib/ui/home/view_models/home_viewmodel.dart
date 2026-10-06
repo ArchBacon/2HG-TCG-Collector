@@ -1,7 +1,7 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'package:app/data/repositories/collection/collection_repository.dart';
-import 'package:app/domain/models/collection/collection.dart';
+import 'package:app/domain/models/collection/collection_summary.dart';
 import 'package:app/utils/command.dart';
 import 'package:app/utils/result.dart';
 import 'package:flutter/foundation.dart';

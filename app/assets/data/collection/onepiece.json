@@ -1,0 +1,311 @@
+{
+  "tcg": "onepiece",
+  "value": 1284.9,
+  "collected": 341,
+  "wishlisted": 57,
+  "latestSet": {
+    "id": "01a0d354-35d1-7996-8e82-fbbf9e70e515",
+    "lang": null,
+    "code": "OP-17",
+    "name": "The World's Strongest Warriors",
+    "cardCount": 169,
+    "releasedAt": null,
+    "images": {
+      "icon": null,
+      "logo": "/onepiece/sets/fallback.webp"
+    }
+  },
+  "blocks": [
+    {
+      "block": null,
+      "sets": [
+        {
+          "id": "01a0d354-35d1-70fa-8e82-fbbf9ae1c822",
+          "lang": null,
+          "code": "PRB-02",
+          "name": "Premium Booster - The Best - Vol. 2",
+          "cardCount": 314,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 44
+        },
+        {
+          "id": "01a0d354-35d0-7f30-8bfc-acace705c9a7",
+          "lang": null,
+          "code": "PRB-01",
+          "name": "Premium Booster - The Best",
+          "cardCount": 317,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 44
+        },
+        {
+          "id": "01a0d354-35d1-76c6-8e82-fbbf9cb4a766",
+          "lang": null,
+          "code": "OP15-EB04",
+          "name": "Adventure on Kami's Island",
+          "cardCount": 201,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 40
+        },
+        {
+          "id": "01a0d354-35d1-73d6-8e82-fbbf9bbbb472",
+          "lang": null,
+          "code": "OP14-EB04",
+          "name": "The Azure Sea's Seven",
+          "cardCount": 200,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d354-35d1-7996-8e82-fbbf9e70e515",
+          "lang": null,
+          "code": "OP-17",
+          "name": "The World's Strongest Warriors",
+          "cardCount": 169,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 22
+        },
+        {
+          "id": "01a0d354-35d1-782e-8e82-fbbf9d8fde9e",
+          "lang": null,
+          "code": "OP-16",
+          "name": "The Time of Battle",
+          "cardCount": 155,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 22
+        },
+        {
+          "id": "01a0d354-35d1-726e-8e82-fbbf9b9d0461",
+          "lang": null,
+          "code": "OP-13",
+          "name": "Carrying On His Will",
+          "cardCount": 174,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d354-35d0-7dc4-8bfc-acace6506a47",
+          "lang": null,
+          "code": "OP-12",
+          "name": "Legacy of the Master",
+          "cardCount": 155,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 14
+        },
+        {
+          "id": "01a0d354-35d0-7aec-8bfc-acace55fb022",
+          "lang": null,
+          "code": "OP-11",
+          "name": "A Fist of Divine Speed",
+          "cardCount": 156,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d354-35d0-7980-8bfc-acace4c74f99",
+          "lang": null,
+          "code": "OP-10",
+          "name": "Royal Blood",
+          "cardCount": 151,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d354-35d0-7814-8bfc-acace4b521b6",
+          "lang": null,
+          "code": "OP-09",
+          "name": "Emperors in the New World",
+          "cardCount": 159,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 8
+        },
+        {
+          "id": "01a0d354-35d0-76a4-8bfc-acace3d82583",
+          "lang": null,
+          "code": "OP-08",
+          "name": "Two Legends",
+          "cardCount": 151,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d354-35d0-73d0-8bfc-acace2fbfaf8",
+          "lang": null,
+          "code": "OP-07",
+          "name": "500 Years in the Future",
+          "cardCount": 151,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 0
+        },
+        {
+          "id": "01a0d354-35d0-7264-8bfc-acace2a57b28",
+          "lang": null,
+          "code": "OP-06",
+          "name": "Wings of the Captain",
+          "cardCount": 151,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 16
+        },
+        {
+          "id": "01a0d354-35d0-70f4-8bfc-acace2636afa",
+          "lang": null,
+          "code": "OP-05",
+          "name": "Awakening of the New Era",
+          "cardCount": 154,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d354-35cf-7f1b-ad43-dac92e1be746",
+          "lang": null,
+          "code": "OP-04",
+          "name": "Kingdoms of Intrigue",
+          "cardCount": 155,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 4
+        },
+        {
+          "id": "01a0d354-35cf-7d4f-ad43-dac92db4fdf3",
+          "lang": null,
+          "code": "OP-03",
+          "name": "Pillars of Strength",
+          "cardCount": 154,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d354-35cf-7aff-ad43-dac92d2d0bea",
+          "lang": null,
+          "code": "OP-02",
+          "name": "Paramount War",
+          "cardCount": 154,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 11
+        },
+        {
+          "id": "01a0d354-35cd-7a45-9eb8-0496095c58d8",
+          "lang": null,
+          "code": "OP-01",
+          "name": "Romance Dawn",
+          "cardCount": 154,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 8
+        },
+        {
+          "id": "01a0d354-35d1-7556-8e82-fbbf9c7a1d4e",
+          "lang": null,
+          "code": "EB-03",
+          "name": "Extra Booster: One Piece Heroines Edition",
+          "cardCount": 94,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 3
+        },
+        {
+          "id": "01a0d354-35d0-7c58-8bfc-acace5a49dad",
+          "lang": null,
+          "code": "EB-02",
+          "name": "Extra Booster: Anime 25th Collection",
+          "cardCount": 105,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 3
+        },
+        {
+          "id": "01a0d354-35d0-7538-8bfc-acace3574c1e",
+          "lang": null,
+          "code": "EB-01",
+          "name": "Extra Booster: Memorial Collection",
+          "cardCount": 80,
+          "releasedAt": null,
+          "images": {
+            "icon": null,
+            "logo": "/onepiece/sets/fallback.webp"
+          },
+          "collected": 2
+        }
+      ]
+    }
+  ]
+}
