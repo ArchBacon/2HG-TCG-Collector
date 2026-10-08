@@ -1,16 +1,26 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'package:app/themes/colors.dart';
+import 'package:app/themes/glass_theme.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static ThemeData lightTheme = _theme(AppColors.lightColorScheme, secondaryText: LightColors.textSecondary);
+  static ThemeData lightTheme = _theme(
+    AppColors.lightColorScheme,
+    secondaryText: LightColors.textSecondary,
+    glass: GlassTheme.light,
+  );
 
-  static ThemeData darkTheme = _theme(AppColors.darkColorScheme, secondaryText: DarkColors.textSecondary);
+  static ThemeData darkTheme = _theme(
+    AppColors.darkColorScheme,
+    secondaryText: DarkColors.textSecondary,
+    glass: GlassTheme.dark,
+  );
 
   // Both themes share the same layout; only the colors differ.
-  static ThemeData _theme(ColorScheme colors, {required Color secondaryText}) {
+  static ThemeData _theme(ColorScheme colors, {required Color secondaryText, required GlassTheme glass}) {
     return ThemeData(
+      extensions: [glass],
       brightness: colors.brightness,
       fontFamily: 'Inter',
       colorScheme: colors,

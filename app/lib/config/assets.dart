@@ -7,6 +7,9 @@ abstract final class Assets {
   static const wishlist = 'assets/data/wishlist.json';
   static const catalog = 'assets/data/catalog.json';
   static String collectionFor(Tcg tcg) => 'assets/data/collection/${tcg.slug}.json';
+
+  /// Pre-rendered pile of cardbacks behind the screens (tool/render_card_pile.py). Null = all games.
+  static String backgroundFor(Tcg? tcg) => 'assets/backgrounds/${tcg?.slug ?? 'all'}.jpg';
   static const images = _Images();
 }
 
