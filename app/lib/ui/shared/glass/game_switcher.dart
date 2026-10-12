@@ -9,14 +9,13 @@ import 'package:app/ui/shared/glass/card_thumb.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Header control for picking the game: the game's cardback icon + chevron (+ the name when not
-/// [compact]). Opens a sheet with all games.
+/// Header control for switching game: the game's cardback icon + chevron (screen readers get the
+/// name). Opens a sheet with the games. To see all games, the brand icon goes to the start screen.
 class GameSwitcherButton extends StatelessWidget {
-  final Tcg? game;
-  final ValueChanged<Tcg?> onChanged;
-  final bool compact; // Icon + chevron only; screen readers still get the name
+  final Tcg game;
+  final ValueChanged<Tcg> onChanged;
 
-  const GameSwitcherButton({super.key, required this.game, required this.onChanged, this.compact = false});
+  const GameSwitcherButton({super.key, required this.game, required this.onChanged});
 
   static const height = 38.0; // Shared by the other header controls
   static const _iconSize = 26.0; // Card icon height
@@ -31,11 +30,10 @@ class GameSwitcherButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glass = context.glass;
-    final name = game?.displayName ?? 'All games';
 
     return Semantics(
       button: true,
-      label: 'Game: $name',
+      label: 'Game: ${game.displayName}',
       excludeSemantics: true,
       child: Material(
         type: MaterialType.transparency,
@@ -43,11 +41,11 @@ class GameSwitcherButton extends StatelessWidget {
           borderRadius: _shape,
           onTap: () async {
             final picked = await showGameSheet(context, current: game);
-            if (picked != null) onChanged(picked.game);
+            if (picked != null) onChanged(picked);
           },
           child: Container(
             height: height,
-            padding: EdgeInsets.fromLTRB(_inset, 0, compact ? 8 : 12, 0),
+            padding: const EdgeInsets.fromLTRB(_inset, 0, 8, 0),
             decoration: BoxDecoration(
               color: glass.fill,
               borderRadius: _shape,
@@ -57,17 +55,6 @@ class GameSwitcherButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 GameIcon(game: game, size: _iconSize),
-                if (!compact) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
                 const SizedBox(width: 4),
                 Icon(LucideIcons.chevronDown, size: 16, color: glass.textSecondary),
               ],
@@ -79,16 +66,9 @@ class GameSwitcherButton extends StatelessWidget {
   }
 }
 
-/// Result of the game sheet; wraps the game so "All games" (null) can be told apart from
-/// "dismissed" (no result).
-class GamePick {
-  final Tcg? game;
-  const GamePick(this.game);
-}
-
-/// Frosted bottom sheet listing "All games" and each game.
-Future<GamePick?> showGameSheet(BuildContext context, {required Tcg? current}) {
-  return showModalBottomSheet<GamePick>(
+/// Frosted bottom sheet listing the games. Returns the picked one, or null when dismissed.
+Future<Tcg?> showGameSheet(BuildContext context, {required Tcg current}) {
+  return showModalBottomSheet<Tcg>(
     context: context,
     backgroundColor: Colors.transparent,
     barrierColor: const Color(0x66000000),
@@ -101,7 +81,7 @@ Future<GamePick?> showGameSheet(BuildContext context, {required Tcg? current}) {
 }
 
 class _GameSheet extends StatelessWidget {
-  final Tcg? current;
+  final Tcg current;
 
   const _GameSheet({required this.current});
 
@@ -109,11 +89,11 @@ class _GameSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final glass = context.glass;
 
-    Widget option(Tcg? game) => ListTile(
-      onTap: () => Navigator.pop(context, GamePick(game)),
+    Widget option(Tcg game) => ListTile(
+      onTap: () => Navigator.pop(context, game),
       leading: GameIcon(game: game, size: 36),
       title: Text(
-        game?.displayName ?? 'All games',
+        game.displayName,
         style: TextStyle(color: glass.textPrimary, fontWeight: FontWeight.w600),
       ),
       trailing: game == current ? Icon(LucideIcons.check, color: GamePalette.of(context, game).accent) : null,
@@ -143,8 +123,6 @@ class _GameSheet extends StatelessWidget {
                     height: 4,
                     decoration: BoxDecoration(color: glass.textTertiary, borderRadius: BorderRadius.circular(2)),
                   ),
-                  option(null),
-                  Divider(color: glass.divider, height: 1, indent: 16, endIndent: 16),
                   for (final game in Tcg.values) option(game),
                   const SizedBox(height: 8),
                 ],
@@ -157,28 +135,23 @@ class _GameSheet extends StatelessWidget {
   }
 }
 
-/// Game icon: the cardback as a small card, [size] tall, or a grid icon for "All games" in the
-/// same shape (so lists line up).
+/// Game icon: the game's cardback as a small card, [size] tall.
 class GameIcon extends StatelessWidget {
-  final Tcg? game;
+  final Tcg game;
   final double size;
 
   const GameIcon({super.key, required this.game, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final glass = context.glass;
-
     return Container(
       width: size * CardThumb.aspect,
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.1), // Card corners, scaled with the size
-        color: GamePalette.of(context, game).colors.first.withValues(alpha: 0.3),
-        border: Border.all(color: glass.edge),
-        image: game == null ? null : DecorationImage(image: AssetImage(game!.imageAsset), fit: BoxFit.cover),
+        border: Border.all(color: context.glass.edge),
+        image: DecorationImage(image: AssetImage(game.imageAsset), fit: BoxFit.cover),
       ),
-      child: game == null ? Icon(LucideIcons.layoutGrid, size: size * 0.45, color: glass.textPrimary) : null,
     );
   }
 }

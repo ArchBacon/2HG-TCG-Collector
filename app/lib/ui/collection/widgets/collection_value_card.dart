@@ -63,32 +63,6 @@ class CollectionValueCard extends StatelessWidget {
   }
 }
 
-/// The whole collection, across all games: total value and card count.
-class TotalValueCard extends StatelessWidget {
-  final double value;
-  final int cards;
-  final int games;
-
-  const TotalValueCard({super.key, required this.value, required this.cards, required this.games});
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _Caption('Total collection value'),
-          const SizedBox(height: 6),
-          _Value(value),
-          const SizedBox(height: 4),
-          Text('$cards cards across $games games', style: TextStyle(color: context.glass.textSecondary, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-}
-
 class _Caption extends StatelessWidget {
   final String text;
 

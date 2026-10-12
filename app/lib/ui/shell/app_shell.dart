@@ -13,9 +13,9 @@ class AppShell extends StatelessWidget {
 
   /// Order must match the branches in the router.
   static const _items = [
+    GlassNavItem(icon: LucideIcons.library, label: 'Catalog'),
     GlassNavItem(icon: LucideIcons.layers, label: 'Collection'),
     GlassNavItem(icon: LucideIcons.heart, label: 'Wishlist'),
-    GlassNavItem(icon: LucideIcons.library, label: 'Catalog'),
     GlassNavItem(icon: LucideIcons.settings, label: 'Settings'),
   ];
 

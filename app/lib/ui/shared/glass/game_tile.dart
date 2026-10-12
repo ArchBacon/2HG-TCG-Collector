@@ -3,20 +3,20 @@
 import 'package:app/themes/game_palette.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
-import 'package:app/ui/shared/app_state.dart';
 import 'package:app/ui/shared/glass/card_thumb.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
 import 'package:app/ui/shared/glass/layout.dart';
 import 'package:flutter/material.dart';
 
-/// Compact game tile for the "All games" pages: the game's color glowing in the corner, its
-/// cardback peeking in, the name and two small stats. Tapping it picks that game.
+/// Compact game tile, for picking a game: the game's color glowing in the corner, its cardback
+/// peeking in, the name and two small stats.
 class GameTile extends StatelessWidget {
   final Tcg game;
   final List<(IconData icon, String label)> stats;
   final int newCount; // Shows a "N new" chip when above 0
+  final VoidCallback onTap;
 
-  const GameTile({super.key, required this.game, required this.stats, this.newCount = 0});
+  const GameTile({super.key, required this.game, required this.stats, this.newCount = 0, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class GameTile extends StatelessWidget {
 
     return GlassCard(
       padding: EdgeInsets.zero,
-      onTap: () => selectedGame.value = game,
+      onTap: onTap,
       child: SizedBox(
         height: 150,
         child: Stack(

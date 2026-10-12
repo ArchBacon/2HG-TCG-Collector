@@ -146,7 +146,7 @@ abstract final class MockData {
 
   static Future<Map<Tcg, CollectionStats>>? _allCollections;
 
-  // Collection stats for every game, for the "All games" overview.
+  // Collection stats for every game, for the start screen.
   static Future<Map<Tcg, CollectionStats>> allCollections() => _allCollections ??= () async {
     return {for (final game in Tcg.values) game: await collection(game)};
   }();

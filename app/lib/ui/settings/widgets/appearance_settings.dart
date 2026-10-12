@@ -8,9 +8,10 @@ import 'package:app/ui/shared/glass/game_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Theme (system / light / dark) and the game the screens show.
+/// Theme (system / light / dark), the game the screens show, and whether the app opens on that game
+/// instead of the start screen.
 class AppearanceSettings extends StatelessWidget {
-  final Tcg? game;
+  final Tcg game;
   final Color accent;
 
   const AppearanceSettings({super.key, required this.game, required this.accent});
@@ -49,11 +50,24 @@ class AppearanceSettings extends StatelessWidget {
         SettingRow(
           icon: LucideIcons.layoutGrid,
           title: 'Game',
-          value: game?.displayName ?? 'All games',
+          value: game.displayName,
           onTap: () async {
             final picked = await showGameSheet(context, current: game);
-            if (picked != null) selectedGame.value = picked.game;
+            if (picked != null) selectedGame.value = picked;
           },
+        ),
+        SettingRow(
+          icon: LucideIcons.rocket,
+          title: 'Open last game on start',
+          subtitle: 'Skip the game selection when opening the app',
+          trailing: ValueListenableBuilder(
+            valueListenable: openLastGameOnStart,
+            builder: (context, open, _) => SettingSwitch(
+              value: open,
+              accent: accent,
+              onChanged: (value) => openLastGameOnStart.value = value,
+            ),
+          ),
         ),
       ],
     );
