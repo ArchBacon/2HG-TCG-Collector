@@ -26,11 +26,11 @@ class SettingsScreen extends StatelessWidget {
           title: 'Settings',
           showGameSwitcher: false,
           children: [
-            AccountCard(accent: accent),
+            // AccountCard(accent: accent), // TODO: Replace with create sync code
             AppearanceSettings(game: game, accent: accent),
-            NotificationSettings(accent: accent),
-            const StoreSettings(),
-            const CollectionDataSettings(),
+            // NotificationSettings(accent: accent),
+            // const StoreSettings(),
+            // const CollectionDataSettings(),
             const AboutSettings(),
           ],
         );

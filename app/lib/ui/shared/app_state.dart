@@ -17,4 +17,8 @@ final openLastGameOnStart = ValueNotifier(false);
 final cardSearch = ValueNotifier('');
 
 /// Light / dark / system, picked in the settings.
-final themeModeSetting = ValueNotifier(ThemeMode.dark);
+final themeModeSetting = ValueNotifier(ThemeMode.system);
+
+/// The installed app's version and build number, e.g. '0.0.1 (1)'. From pubspec.yaml at build
+/// time; set in main before runApp.
+late final String appVersion;

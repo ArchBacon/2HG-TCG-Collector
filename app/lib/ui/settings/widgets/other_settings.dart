@@ -3,6 +3,7 @@
 // The settings groups that are only placeholders for now: their rows don't do anything yet.
 
 import 'package:app/ui/settings/widgets/setting_row.dart';
+import 'package:app/ui/shared/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -50,8 +51,8 @@ class AboutSettings extends StatelessWidget {
     return SettingsGroup(
       title: 'About',
       rows: [
-        const SettingRow(icon: LucideIcons.info, title: 'Version', value: '0.1.0'),
-        SettingRow(icon: LucideIcons.fileText, title: 'Terms & privacy', onTap: () {}),
+        SettingRow(icon: LucideIcons.info, title: 'Version', value: appVersion),
+        // SettingRow(icon: LucideIcons.fileText, title: 'Terms & privacy', onTap: () {}),
       ],
     );
   }
