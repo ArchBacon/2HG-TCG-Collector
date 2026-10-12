@@ -10,8 +10,8 @@ import 'package:provider/provider.dart';
 import 'config/dependencies.dart';
 import 'main.dart';
 
-/// Staging config entry point.
-/// launch with `flutter run --target lib/main_staging.dart`.
+/// Production config entry point.
+/// launch with `flutter run --flavor production --target lib/main_production.dart`.
 /// uses remote data from a server.
 Future<void> main() async {
   Logger.root.level = Level.ALL;

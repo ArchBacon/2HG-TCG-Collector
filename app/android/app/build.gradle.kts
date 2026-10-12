@@ -29,6 +29,25 @@ android {
         versionName = flutter.versionName
     }
 
+    buildFeatures {
+        resValues = true // For the per-flavor app_name
+    }
+
+    // One flavor per entry point: run with --flavor development -t lib/main_development.dart, etc.
+    // Development has its own application id, so both can be installed side by side.
+    flavorDimensions += "environment"
+    productFlavors {
+        create("development") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "app (dev)")
+        }
+        create("production") {
+            dimension = "environment"
+            resValue("string", "app_name", "app")
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

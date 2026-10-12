@@ -32,7 +32,7 @@ class GamePickerGrid extends StatelessWidget {
             game: game,
             stats: [
               (LucideIcons.layers, '${viewModel.collectionFor(game)?.collected ?? 0}'),
-              (LucideIcons.euro, (viewModel.collectionFor(game)?.value ?? 0).toStringAsFixed(0)),
+              (LucideIcons.euro, (viewModel.collectionFor(game)?.value ?? 0).toStringAsFixed(2).replaceAll('.', ',')),
             ],
             newCount: viewModel.newInStoreFor(game),
             onTap: () => _open(context, game),
