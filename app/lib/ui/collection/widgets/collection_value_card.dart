@@ -1,6 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'package:app/domain/models/collection/collection_stats.dart';
+import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/tmp/core/utils/format.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
@@ -11,18 +11,18 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// One game's collection: its value with the change this week, and card count, sets started and
 /// completion.
 class CollectionValueCard extends StatelessWidget {
-  final CollectionStats? collection; // Null while loading
+  final CollectionOverview? collection; // Null while loading
+  final List<CollectionOverviewSet> sets;
   final Color accent; // For the completion
 
-  const CollectionValueCard({super.key, required this.collection, required this.accent});
+  const CollectionValueCard({super.key, required this.collection, required this.sets, required this.accent});
 
   @override
   Widget build(BuildContext context) {
-    final value = collection?.value ?? 0;
-    final collected = collection?.collected ?? 0;
-    final sets = collection?.sets ?? const <SetProgress>[];
+    final value = collection?.summary.value ?? 0;
+    final collected = collection?.summary.collected ?? 0;
     final started = sets.where((s) => s.collected > 0).length;
-    final totalCards = sets.fold(0, (n, s) => n + s.total);
+    final totalCards = sets.fold(0, (n, s) => n + (s.set.cardCount ?? 0));
 
     return GlassCard(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),

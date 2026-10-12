@@ -2,6 +2,7 @@
 
 import 'package:app/data/repositories/collection/collection_repository.dart';
 import 'package:app/data/services/local/remote_data_service.dart';
+import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/domain/models/collection/collection_summary.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
@@ -27,6 +28,12 @@ class CollectionRepositoryRemote implements CollectionRepository {
   @override
   Future<Result<CollectionOverview>> getCollectionFor(Tcg tcg) {
     // TODO: implement getCollectionFor
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Result<List<TcgCard>>> getRecentlyAdded(Tcg tcg) {
+    // TODO: implement getRecentlyAdded
     throw UnimplementedError();
   }
 }

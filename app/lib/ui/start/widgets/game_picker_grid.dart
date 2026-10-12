@@ -1,11 +1,10 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'package:app/domain/models/card/tcg_card.dart';
-import 'package:app/domain/models/collection/collection_stats.dart';
 import 'package:app/routing/routes.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:app/ui/shared/glass/game_tile.dart';
+import 'package:app/ui/start/view_models/start_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,10 +13,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// opens that game. Always in the same order (not sorted by collection), so tiles don't move around
 /// as the collection changes.
 class GamePickerGrid extends StatelessWidget {
-  final Map<Tcg, CollectionStats> collections;
-  final List<TcgCard> wishlist;
+  final StartViewModel viewModel;
 
-  const GamePickerGrid({super.key, required this.collections, required this.wishlist});
+  const GamePickerGrid({super.key, required this.viewModel});
 
   void _open(BuildContext context, Tcg game) {
     selectedGame.value = game;
@@ -33,10 +31,10 @@ class GamePickerGrid extends StatelessWidget {
           GameTile(
             game: game,
             stats: [
-              (LucideIcons.layers, '${collections[game]?.collected ?? 0}'),
-              (LucideIcons.euro, (collections[game]?.value ?? 0).toStringAsFixed(0)),
+              (LucideIcons.layers, '${viewModel.collectionFor(game)?.collected ?? 0}'),
+              (LucideIcons.euro, (viewModel.collectionFor(game)?.value ?? 0).toStringAsFixed(0)),
             ],
-            newCount: wishlist.where((c) => c.game == game && c.isNew).length,
+            newCount: viewModel.newInStoreFor(game),
             onTap: () => _open(context, game),
           ),
       ],

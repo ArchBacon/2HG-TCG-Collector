@@ -1,6 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'package:app/domain/models/collection/collection_stats.dart';
+import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
 import 'package:app/ui/shared/glass/layout.dart';
@@ -10,7 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// "Sets" heading and a list of the started sets with a progress bar each, ending in a link to all
 /// sets.
 class SetProgressList extends StatelessWidget {
-  final List<SetProgress> sets;
+  final List<CollectionOverviewSet> sets;
   final Color accent; // Progress bar color
 
   const SetProgressList({super.key, required this.sets, required this.accent});
@@ -43,7 +43,7 @@ class SetProgressList extends StatelessWidget {
 }
 
 class _SetRow extends StatelessWidget {
-  final SetProgress set;
+  final CollectionOverviewSet set;
   final Color accent;
 
   const _SetRow({required this.set, required this.accent});
@@ -51,6 +51,7 @@ class _SetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glass = context.glass;
+    final total = set.set.cardCount ?? 0;
 
     return InkWell(
       onTap: () {}, // TODO: open the set
@@ -63,7 +64,7 @@ class _SetRow extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    set.name,
+                    set.set.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
@@ -71,7 +72,7 @@ class _SetRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '${set.collected}/${set.total}',
+                  '${set.collected}/$total',
                   style: TextStyle(
                     color: glass.textSecondary,
                     fontSize: 13,
@@ -85,7 +86,7 @@ class _SetRow extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: LinearProgressIndicator(
-                value: set.total == 0 ? 0 : set.collected / set.total,
+                value: total == 0 ? 0 : set.collected / total,
                 minHeight: 4,
                 color: accent,
                 backgroundColor: glass.track,

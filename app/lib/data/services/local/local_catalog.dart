@@ -1,79 +1,21 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-// Mock data for the screens until there are view models and repositories for them. The wishlist
-// comes from assets/data/wishlist.json, collection stats from assets/data/collection/, and the
-// catalog is generated. Store availability, prices and owned counts are made up (but stable
-// between runs).
+// The local catalog: there's no card data in the app, so it's generated. 48 cards per game (3 sets
+// of 16), with made-up rarities, prices, owned counts and store state. Stable between runs (fixed
+// random seed per game).
 
-import 'dart:convert';
 import 'dart:math';
 
-import 'package:app/config/assets.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
-import 'package:app/domain/models/collection/collection_stats.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
-import 'package:flutter/services.dart';
 
-abstract final class MockData {
-  // Every card handed out, by id, so the card details page can find it.
-  static final _byId = <String, TcgCard>{};
-
-  static TcgCard? card(String id) => _byId[id];
-
-  // ---------------------------------------------------------------------------------------------
-  // Wishlist
-  // ---------------------------------------------------------------------------------------------
-
-  static Future<List<TcgCard>>? _wishlist;
-
-  // Loaded once and shared by all screens.
-  static Future<List<TcgCard>> wishlist() => _wishlist ??= _loadWishlist();
-
-  static Future<List<TcgCard>> _loadWishlist() async {
-    final json = jsonDecode(await rootBundle.loadString(Assets.wishlist)) as Map<String, dynamic>;
-    final tcgs = json['tcgs'] as Map<String, dynamic>;
-
-    return [
-      for (final group in tcgs.values)
-        for (final entry in (group as Map<String, dynamic>)['entries'] as List)
-          _register(_parseWishlistEntry(entry as Map<String, dynamic>)),
-    ];
-  }
-
-  static TcgCard _parseWishlistEntry(Map<String, dynamic> entry) {
-    final card = entry['card'] as Map<String, dynamic>;
-    final set = card['set'] as Map<String, dynamic>;
-    final id = card['id'] as String;
-
-    // Made-up but stable store state, derived from the card id
-    final hash = int.parse(id.substring(id.length - 4), radix: 16);
-    final inStore = hash % 3 != 0;
-
-    return TcgCard(
-      id: id,
-      game: Tcg.values.firstWhere((t) => t.slug == card['tcg']),
-      name: card['name'] as String,
-      number: card['number'] as String,
-      rarity: card['rarity'] as String?,
-      setCode: set['code'] as String,
-      setName: set['name'] as String,
-      quantity: entry['quantity'] as int,
-      price: (entry['price'] as num).toDouble(),
-      wishlisted: true,
-      inStore: inStore,
-      isNew: inStore && hash % 2 == 0,
-    );
-  }
-
-  // ---------------------------------------------------------------------------------------------
-  // Catalog (generated)
-  // ---------------------------------------------------------------------------------------------
-
+abstract final class LocalCatalog {
   static final _catalogs = <Tcg, List<TcgCard>>{};
 
-  static List<TcgCard> catalog(Tcg game) => _catalogs[game] ??= _generateCatalog(game);
+  /// The catalog of [game]; generated once, then the same list every time.
+  static List<TcgCard> catalog(Tcg game) => _catalogs[game] ??= _generate(game);
 
-  static List<TcgCard> _generateCatalog(Tcg game) {
+  static List<TcgCard> _generate(Tcg game) {
     final spec = _specs[game]!;
     final random = Random(game.index * 1000 + 7);
     const perSet = 16;
@@ -85,7 +27,7 @@ abstract final class MockData {
           final numberInSet = 1 + (i % perSet) * (setSize ~/ perSet) + random.nextInt(3);
           final rarityIndex = _weightedRarity(random, spec.rarities.length);
           final inStore = random.nextDouble() < 0.6;
-          return _register(TcgCard(
+          return TcgCard(
             id: '${game.slug}-$i',
             game: game,
             name: spec.names[(i * 7) % spec.names.length],
@@ -98,7 +40,7 @@ abstract final class MockData {
             wishlisted: random.nextDouble() < 0.15,
             inStore: inStore,
             isNew: inStore && random.nextDouble() < 0.15,
-          ));
+          );
         }(),
     ];
   }
@@ -114,42 +56,6 @@ abstract final class MockData {
     final price = base[min(rarityIndex, base.length - 1)] * (0.6 + random.nextDouble() * 1.4);
     return (price * 100).roundToDouble() / 100;
   }
-
-  static TcgCard _register(TcgCard card) => _byId[card.id] = card;
-
-  // ---------------------------------------------------------------------------------------------
-  // Collection
-  // ---------------------------------------------------------------------------------------------
-
-  static final _collections = <Tcg, Future<CollectionStats>>{};
-
-  static Future<CollectionStats> collection(Tcg game) => _collections[game] ??= _loadCollection(game);
-
-  static Future<CollectionStats> _loadCollection(Tcg game) async {
-    final json = jsonDecode(await rootBundle.loadString(Assets.collectionFor(game))) as Map<String, dynamic>;
-    return CollectionStats(
-      value: (json['value'] as num).toDouble(),
-      collected: json['collected'] as int,
-      wishlisted: json['wishlisted'] as int,
-      sets: [
-        for (final block in json['blocks'] as List)
-          for (final set in (block as Map<String, dynamic>)['sets'] as List)
-            SetProgress(
-              name: (set as Map<String, dynamic>)['name'] as String,
-              code: set['code'] as String,
-              collected: set['collected'] as int? ?? 0,
-              total: set['cardCount'] as int,
-            ),
-      ],
-    );
-  }
-
-  static Future<Map<Tcg, CollectionStats>>? _allCollections;
-
-  // Collection stats for every game, for the start screen.
-  static Future<Map<Tcg, CollectionStats>> allCollections() => _allCollections ??= () async {
-    return {for (final game in Tcg.values) game: await collection(game)};
-  }();
 }
 
 // ---------------------------------------------------------------------------------------------

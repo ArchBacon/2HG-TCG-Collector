@@ -1,7 +1,9 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-/// Market data for a card: price trend, how many collectors have / want it, and store listings.
+/// Market data for a card: the finishes it comes in, price trend, how many collectors have / want
+/// it, and store listings.
 class MarketInfo {
+  final List<String> finishes; // E.g. Normal, Holofoil, Reverse Holo
   final double change7d; // Price change over the last 7 days, in %
   final List<double> history; // Daily prices for the last 30 days, ending today
   final int have; // Collectors who have it
@@ -9,6 +11,7 @@ class MarketInfo {
   final List<StoreListing> listings; // Empty = not for sale
 
   const MarketInfo({
+    required this.finishes,
     required this.change7d,
     required this.history,
     required this.have,

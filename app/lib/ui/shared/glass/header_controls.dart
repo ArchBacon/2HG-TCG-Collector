@@ -1,6 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'package:app/data/services/mock/mock_cart.dart';
+import 'package:app/data/repositories/cart/cart_repository.dart';
 import 'package:app/routing/navigation.dart';
 import 'package:app/routing/routes.dart';
 import 'package:app/themes/game_palette.dart';
@@ -11,6 +11,7 @@ import 'package:app/ui/shared/glass/game_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 /// Search field in the header, for the selected game's catalog. The text is shared by every tab
 /// ([cardSearch]): the Catalog filters on it as you type; on other tabs, submitting opens the
@@ -141,30 +142,37 @@ class ScanButton extends StatelessWidget {
 }
 
 /// Cart button for the header: the cart icon with the number of items on a small badge. Opens the
-/// cart as its own page.
-class CartButton extends StatelessWidget {
+/// cart as its own page. Follows the cart repository, so the count updates wherever items are added.
+class CartButton extends StatefulWidget {
   const CartButton({super.key});
+
+  @override
+  State<CartButton> createState() => _CartButtonState();
+}
+
+class _CartButtonState extends State<CartButton> {
+  @override
+  void initState() {
+    super.initState();
+    // So the count is right before the cart page has been opened; loads only once
+    context.read<CartRepository>().load();
+  }
 
   @override
   Widget build(BuildContext context) {
     final glass = context.glass;
+    final count = context.watch<CartRepository>().itemCount;
 
-    return ValueListenableBuilder(
-      valueListenable: cart,
-      builder: (context, lines, _) {
-        final count = lines.fold(0, (n, l) => n + l.quantity);
-        return IconButton(
-          tooltip: 'Cart',
-          onPressed: context.openCart,
-          icon: Badge(
-            isLabelVisible: count > 0,
-            label: Text('$count'),
-            backgroundColor: glass.badge,
-            textColor: glass.onBadge,
-            child: Icon(LucideIcons.shoppingCart, size: 22, color: glass.textPrimary),
-          ),
-        );
-      },
+    return IconButton(
+      tooltip: 'Cart',
+      onPressed: context.openCart,
+      icon: Badge(
+        isLabelVisible: count > 0,
+        label: Text('$count'),
+        backgroundColor: glass.badge,
+        textColor: glass.onBadge,
+        child: Icon(LucideIcons.shoppingCart, size: 22, color: glass.textPrimary),
+      ),
     );
   }
 }

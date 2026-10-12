@@ -1,8 +1,20 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/data/repositories/cart/cart_repository.dart';
+import 'package:app/data/repositories/cart/cart_repository_local.dart';
+import 'package:app/data/repositories/cart/cart_repository_remote.dart';
+import 'package:app/data/repositories/catalog/catalog_repository.dart';
+import 'package:app/data/repositories/catalog/catalog_repository_local.dart';
+import 'package:app/data/repositories/catalog/catalog_repository_remote.dart';
 import 'package:app/data/repositories/collection/collection_repository.dart';
 import 'package:app/data/repositories/collection/collection_repository_local.dart';
 import 'package:app/data/repositories/collection/collection_repository_remote.dart';
+import 'package:app/data/repositories/market/market_repository.dart';
+import 'package:app/data/repositories/market/market_repository_local.dart';
+import 'package:app/data/repositories/market/market_repository_remote.dart';
+import 'package:app/data/repositories/wishlist/wishlist_repository.dart';
+import 'package:app/data/repositories/wishlist/wishlist_repository_local.dart';
+import 'package:app/data/repositories/wishlist/wishlist_repository_remote.dart';
 import 'package:app/data/services/local/local_data_service.dart';
 import 'package:app/data/services/local/remote_data_service.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +31,27 @@ List<SingleChildWidget> get providersLocal {
             CollectionRepositoryLocal(localDataService: context.read())
               as CollectionRepository,
     ),
+    Provider(
+        create: (context) =>
+            WishlistRepositoryLocal(localDataService: context.read())
+              as WishlistRepository,
+    ),
+    Provider(
+        create: (context) =>
+            CatalogRepositoryLocal(localDataService: context.read())
+              as CatalogRepository,
+    ),
+    Provider(
+        create: (context) =>
+            MarketRepositoryLocal(localDataService: context.read())
+              as MarketRepository,
+    ),
+    // ChangeNotifierProvider: the cart notifies when its lines change (e.g. for the cart button)
+    ChangeNotifierProvider(
+        create: (context) =>
+            CartRepositoryLocal(localDataService: context.read())
+              as CartRepository,
+    ),
   ];
 }
 
@@ -31,6 +64,26 @@ List<SingleChildWidget> get providersRemote {
         create: (context) =>
             CollectionRepositoryRemote(remoteDataService: context.read())
               as CollectionRepository,
+    ),
+    Provider(
+        create: (context) =>
+            WishlistRepositoryRemote(remoteDataService: context.read())
+              as WishlistRepository,
+    ),
+    Provider(
+        create: (context) =>
+            CatalogRepositoryRemote(remoteDataService: context.read())
+              as CatalogRepository,
+    ),
+    Provider(
+        create: (context) =>
+            MarketRepositoryRemote(remoteDataService: context.read())
+              as MarketRepository,
+    ),
+    ChangeNotifierProvider(
+        create: (context) =>
+            CartRepositoryRemote(remoteDataService: context.read())
+              as CartRepository,
     ),
   ];
 }

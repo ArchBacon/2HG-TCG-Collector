@@ -1,6 +1,5 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'package:app/data/services/mock/mock_cart.dart';
 import 'package:app/domain/models/cart/cart_line.dart';
 import 'package:app/routing/navigation.dart';
 import 'package:app/themes/glass_theme.dart';
@@ -13,8 +12,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// quantity stepper. Tapping it opens the card.
 class CartLineRow extends StatelessWidget {
   final CartLine line;
+  final ValueChanged<int> onQuantityChanged; // 0 = remove the line
 
-  const CartLineRow({super.key, required this.line});
+  const CartLineRow({super.key, required this.line, required this.onQuantityChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +60,7 @@ class CartLineRow extends StatelessWidget {
                 ],
               ),
             ),
-            _QuantityStepper(line: line),
+            _QuantityStepper(line: line, onChanged: onQuantityChanged),
           ],
         ),
       ),
@@ -71,8 +71,9 @@ class CartLineRow extends StatelessWidget {
 /// Minus / count / plus in a pill. Minus at 1 becomes a bin and removes the line.
 class _QuantityStepper extends StatelessWidget {
   final CartLine line;
+  final ValueChanged<int> onChanged;
 
-  const _QuantityStepper({required this.line});
+  const _QuantityStepper({required this.line, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +91,7 @@ class _QuantityStepper extends StatelessWidget {
           IconButton(
             tooltip: line.quantity == 1 ? 'Remove' : 'One less',
             visualDensity: VisualDensity.compact,
-            onPressed: () => setCartQuantity(line, line.quantity - 1),
+            onPressed: () => onChanged(line.quantity - 1),
             icon: Icon(line.quantity == 1 ? LucideIcons.trash2 : LucideIcons.minus, size: 15),
             color: glass.textPrimary,
           ),
@@ -98,7 +99,7 @@ class _QuantityStepper extends StatelessWidget {
           IconButton(
             tooltip: 'One more',
             visualDensity: VisualDensity.compact,
-            onPressed: () => setCartQuantity(line, line.quantity + 1),
+            onPressed: () => onChanged(line.quantity + 1),
             icon: const Icon(LucideIcons.plus, size: 15),
             color: glass.textPrimary,
           ),
