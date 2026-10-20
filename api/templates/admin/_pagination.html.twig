@@ -1,0 +1,13 @@
+{# Expects: route, params (query params to keep), page, pageSize, total #}
+{% set pages = max(1, (total / pageSize)|round(0, 'ceil')) %}
+{% if pages > 1 %}
+    <nav class="mt-6 flex items-center justify-between text-sm text-slate-500">
+        {% if page > 1 %}
+            <a href="{{ path(route, params|merge({ page: page - 1 })) }}" class="hover:text-slate-900">← Previous</a>
+        {% else %}<span></span>{% endif %}
+        <span>Page {{ page }} of {{ pages }}</span>
+        {% if page < pages %}
+            <a href="{{ path(route, params|merge({ page: page + 1 })) }}" class="hover:text-slate-900">Next →</a>
+        {% else %}<span></span>{% endif %}
+    </nav>
+{% endif %}

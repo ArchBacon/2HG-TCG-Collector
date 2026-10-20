@@ -31,6 +31,25 @@ final readonly class CardImageService
         );
     }
 
+    /**
+     * Ids of every card of a game that has all sizes on disk, as a lookup set. One directory
+     * scan per size instead of a stat per card, for listing cards that are still missing images.
+     *
+     * @return array<string, true>
+     */
+    public function idsWithAllSizes(Game $game): array
+    {
+        $perSize = array_map(function (string $size) use ($game): array {
+            $ids = [];
+            foreach (glob($this->path($game, $size, '*')) ?: [] as $file) {
+                $ids[basename($file, '.webp')] = true;
+            }
+            return $ids;
+        }, array_keys(self::SIZES));
+
+        return array_intersect_key(...$perSize);
+    }
+
     public function convertAndSave(string $imageData, Game $game, string $id): void
     {
         $source = imagecreatefromstring($imageData);
@@ -69,6 +88,11 @@ final readonly class CardImageService
 
     private function save(GdImage $image, string $path): void
     {
+        $dir = dirname($path);
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            throw new RuntimeException(sprintf('Failed to create directory "%s".', $dir));
+        }
+
         if (!imagewebp($image, $path, self::WEBP_QUALITY)) {
             throw new RuntimeException(sprintf('Failed to write WebP file "%s".', $path));
         }

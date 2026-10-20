@@ -9,12 +9,29 @@ security:
             entity:
                 class: App\Entity\User
                 property: id
+        admin_users:
+            entity:
+                class: App\Entity\AdminUser
+                property: username
 
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+        # Back-office pages: session + login form, separate from the stateless app API below.
+        admin:
+            pattern: ^/admin
+            lazy: true
+            provider: admin_users
+            form_login:
+                login_path: admin_login
+                check_path: admin_login
+                default_target_path: admin_products
+                enable_csrf: true
+            logout:
+                path: admin_logout
+                target: admin_login
         main:
             lazy: true
             stateless: true
@@ -30,7 +47,8 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:

@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin login · TCG Collector{% endblock %}
+
+{% block body %}
+    <main class="flex min-h-full items-center justify-center px-4">
+        <form method="post" action="{{ path('admin_login') }}" class="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h1 class="text-xl font-semibold">Admin login</h1>
+
+            {% if error %}
+                <div class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            {% endif %}
+
+            <label class="block text-sm">
+                <span class="text-slate-600">Username</span>
+                <input type="text" name="_username" value="{{ lastUsername }}" required autofocus autocomplete="username"
+                       class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+            </label>
+
+            <label class="block text-sm">
+                <span class="text-slate-600">Password</span>
+                <input type="password" name="_password" required autocomplete="current-password"
+                       class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+            </label>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <button type="submit" class="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Log in</button>
+        </form>
+    </main>
+{% endblock %}

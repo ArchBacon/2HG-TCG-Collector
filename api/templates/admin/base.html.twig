@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin · TCG Collector{% endblock %}
+
+{% block body %}
+    <header class="border-b border-slate-200 bg-white">
+        <nav class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 text-sm">
+            <span class="font-semibold text-slate-900">TCG Admin</span>
+            {% set route = app.request.attributes.get('_route') %}
+            <a href="{{ path('admin_products') }}"
+               class="{{ route starts with 'admin_product' ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900' }}">Unlinked products</a>
+            <a href="{{ path('admin_images') }}"
+               class="{{ route starts with 'admin_image' ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900' }}">Missing images</a>
+            <span class="ml-auto text-slate-400">{{ app.user.userIdentifier }}</span>
+            <a href="{{ path('admin_logout') }}" class="text-slate-500 hover:text-slate-900">Log out</a>
+        </nav>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-8">
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="mb-4 rounded-lg px-4 py-2 text-sm {{ type == 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' }}">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block content %}{% endblock %}
+    </main>
+{% endblock %}

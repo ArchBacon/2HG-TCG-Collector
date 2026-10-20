@@ -1,0 +1,63 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block content %}
+    <a href="{{ path('admin_products', { game: product.game }) }}" class="text-sm text-slate-500 hover:text-slate-900">← Unlinked products</a>
+
+    <div class="mt-3 mb-6 rounded-xl border border-slate-200 bg-white p-4">
+        <h1 class="text-xl font-semibold">{{ product.name }}</h1>
+        <p class="text-sm text-slate-500">{{ product.game }} · product <span class="font-mono">{{ product.productId }}</span></p>
+        {% if product.payload %}
+            <details class="mt-3 text-sm">
+                <summary class="cursor-pointer text-slate-500">Raw shop record</summary>
+                <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs">{{ product.payload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+            </details>
+        {% endif %}
+    </div>
+
+    <form method="get" class="mb-4 flex flex-col gap-2 sm:flex-row">
+        <input type="text" name="q" value="{{ q }}" placeholder="Card name or number"
+               class="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+        <input type="text" name="set" value="{{ set }}" placeholder="Set code"
+               class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-32">
+        <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Search</button>
+    </form>
+
+    {% if cards is empty %}
+        <p class="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">No cards found. Try a shorter name or a set code.</p>
+    {% else %}
+        <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+            {% for card in cards %}
+                {% set finishes = card.details.finishes ?? [] %}
+                <li class="flex items-center gap-4 px-4 py-3">
+                    {% if card.images.small %}
+                        <img src="{{ card.images.small }}" alt="" loading="lazy" class="h-20 w-auto rounded">
+                    {% else %}
+                        <div class="flex h-20 w-14 items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">no image</div>
+                    {% endif %}
+
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium">{{ card.name }}</p>
+                        <p class="text-sm text-slate-500">
+                            {{ card.set.name }} ({{ card.set.code|upper }}) · #{{ card.number }} · {{ card.lang.value|upper }}{% if card.rarity %} · {{ card.rarity }}{% endif %}
+                        </p>
+                    </div>
+
+                    <form method="post" action="{{ path('admin_product_link', { id: product.id }) }}" class="flex flex-wrap items-center justify-end gap-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token('link-product-' ~ product.id) }}">
+                        <input type="hidden" name="cardId" value="{{ card.id }}">
+                        {% if finishes is not empty %}
+                            {% for finish in finishes %}
+                                <button type="submit" name="finish" value="{{ finish }}"
+                                        class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-900 hover:text-white">Link as {{ finish }}</button>
+                            {% endfor %}
+                        {% else %}
+                            <input type="text" name="finish" value="normal" required
+                                   class="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-xs">
+                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-900 hover:text-white">Link</button>
+                        {% endif %}
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

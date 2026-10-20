@@ -1,0 +1,57 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block content %}
+    <div class="mb-6 flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-semibold">Unlinked products</h1>
+            <p class="text-sm text-slate-500">{{ total }} shop product{{ total == 1 ? '' : 's' }} not linked to a card yet.</p>
+        </div>
+        <form method="get" class="flex gap-2">
+            <select name="game" onchange="this.form.requestSubmit()"
+                    class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+                <option value="">All games</option>
+                {% for g in games %}
+                    <option value="{{ g.value }}" {{ g.value == game ? 'selected' }}>{{ g.value }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if products is empty %}
+        <p class="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Nothing to link. 🎉</p>
+    {% else %}
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                        <th class="px-4 py-2 font-medium">Game</th>
+                        <th class="px-4 py-2 font-medium">Product</th>
+                        <th class="px-4 py-2 font-medium">Product id</th>
+                        <th class="px-4 py-2 font-medium">Stock</th>
+                        <th class="px-4 py-2 font-medium">Price</th>
+                        <th class="px-4 py-2 font-medium">Since</th>
+                        <th class="px-4 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for product in products %}
+                        <tr>
+                            <td class="px-4 py-2 text-slate-500">{{ product.game }}</td>
+                            <td class="px-4 py-2 font-medium">{{ product.name }}</td>
+                            <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ product.productId }}</td>
+                            <td class="px-4 py-2">{{ product.payload.stock ?? '–' }}</td>
+                            <td class="px-4 py-2">{{ product.payload.price ?? '–' }}</td>
+                            <td class="px-4 py-2 text-slate-500">{{ product.createdAt|date('Y-m-d') }}</td>
+                            <td class="px-4 py-2 text-right">
+                                <a href="{{ path('admin_product_show', { id: product.id }) }}"
+                                   class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700">Link</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ include('admin/_pagination.html.twig', { route: 'admin_products', params: { game: game } }) }}
+    {% endif %}
+{% endblock %}
