@@ -10,8 +10,8 @@ import 'package:app/ui/shared/glass/layout.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// "For sale": the store listings for the card (condition, seller, stock, price, add button), or a
-/// note that it's not in store.
+/// "For sale at 2HG": the store listings for the card, one per finish and condition (stock, price,
+/// add button), or a note that it's not in store.
 class ListingsSection extends StatelessWidget {
   final List<StoreListing> listings;
   final ValueChanged<StoreListing> onAdd;
@@ -26,7 +26,7 @@ class ListingsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeading(
-          'For sale',
+          'For sale at 2HG',
           trailing: listings.isEmpty
               ? null
               : Text(
@@ -50,7 +50,9 @@ class ListingsSection extends StatelessWidget {
             ),
           )
         else
-          GlassListCard(rows: [for (final listing in listings) _ListingRow(listing: listing, onAdd: () => onAdd(listing))]),
+          GlassListCard(
+            rows: [for (final listing in listings) _ListingRow(listing: listing, onAdd: () => onAdd(listing))],
+          ),
       ],
     );
   }
@@ -74,13 +76,22 @@ class _ListingRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(listing.condition, style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  formatCondition(listing.condition),
+                  style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 2),
-                Text('${listing.seller} · ${listing.stock} available', style: TextStyle(color: glass.textTertiary, fontSize: 12)),
+                Text(
+                  '${listing.finish} · ${listing.stock} available',
+                  style: TextStyle(color: glass.textTertiary, fontSize: 12),
+                ),
               ],
             ),
           ),
-          Text(formatEuro(listing.price), style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
+          Text(
+            formatEuro(listing.price),
+            style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(width: 6),
           IconButton(
             tooltip: 'Add to cart',

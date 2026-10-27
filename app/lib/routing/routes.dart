@@ -20,4 +20,7 @@ abstract final class Routes {
   static const appSettings = '/app-settings'; // The settings, opened from the start screen
 
   static String cardFor(String id) => '/card/$id';
+
+  /// One of the user's collections, over the Collection tab.
+  static String collectionFor(String id) => '$collection/$id';
 }

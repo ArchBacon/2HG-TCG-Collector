@@ -6,6 +6,7 @@ import 'package:app/ui/settings/widgets/setting_row.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Orders, shipping, payment and currency.
 class StoreSettings extends StatelessWidget {
@@ -42,7 +43,7 @@ class CollectionDataSettings extends StatelessWidget {
   }
 }
 
-/// Version, terms and privacy.
+/// Version, terms and privacy, and who made the app (opens their site).
 class AboutSettings extends StatelessWidget {
   const AboutSettings({super.key});
 
@@ -53,6 +54,12 @@ class AboutSettings extends StatelessWidget {
       rows: [
         SettingRow(icon: LucideIcons.info, title: 'Version', value: appVersion),
         // SettingRow(icon: LucideIcons.fileText, title: 'Terms & privacy', onTap: () {}),
+        SettingRow(
+          icon: LucideIcons.codeXml,
+          title: 'Developed by',
+          value: 'Christian Delicaat',
+          onTap: () => launchUrl(Uri.parse('https://itschris.dev'), mode: LaunchMode.externalApplication),
+        ),
       ],
     );
   }

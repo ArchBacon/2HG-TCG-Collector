@@ -72,7 +72,7 @@ class _WishlistCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                Opacity(opacity: card.inStore ? 1 : 0.45, child: CardThumb(game: card.game, width: constraints.maxWidth)),
+                Opacity(opacity: card.inStore ? 1 : 0.45, child: CardThumb(game: card.game, imageUrl: card.imageUrl, width: constraints.maxWidth, store: true)),
                 if (card.quantity > 1)
                   Positioned(top: 4, left: 4, child: _Marker(label: '×${card.quantity}', color: GlassTheme.onImage)),
                 if (card.inStore)

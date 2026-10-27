@@ -2,6 +2,7 @@
 
 import 'package:app/data/repositories/cart/cart_repository.dart';
 import 'package:app/data/services/local/local_data_service.dart';
+import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/cart/cart_line.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
@@ -29,10 +30,10 @@ class CartRepositoryLocal extends CartRepository {
       final onePiece = await _localDataService.getCatalog(Tcg.onePiece);
       final lorcana = await _localDataService.getCatalog(Tcg.lorcana);
       _lines = [
-        CartLine(card: pokemon[5], finish: 'Holofoil', condition: 'Near Mint', quantity: 1),
-        CartLine(card: pokemon[21], finish: 'Normal', condition: 'Near Mint', quantity: 3),
-        CartLine(card: onePiece[9], finish: 'Normal', condition: 'Lightly Played', quantity: 1),
-        CartLine(card: lorcana[14], finish: 'Foil', condition: 'Near Mint', quantity: 2),
+        CartLine(card: pokemon[5], productId: '${pokemon[5].id}-1', finish: 'Holofoil', condition: 'Near Mint', quantity: 1),
+        CartLine(card: pokemon[21], productId: '${pokemon[21].id}-1', finish: 'Normal', condition: 'Near Mint', quantity: 3),
+        CartLine(card: onePiece[9], productId: '${onePiece[9].id}-1', finish: 'Normal', condition: 'Lightly Played', quantity: 1),
+        CartLine(card: lorcana[14], productId: '${lorcana[14].id}-1', finish: 'Foil', condition: 'Near Mint', quantity: 2),
       ];
       notifyListeners();
       return const Result.ok(null);
@@ -43,8 +44,17 @@ class CartRepositoryLocal extends CartRepository {
   }
 
   @override
-  Future<Result<void>> add(TcgCard card, {required String finish, required String condition}) async {
-    _lines = [..._lines, CartLine(card: card, finish: finish, condition: condition, quantity: 1)];
+  Future<Result<void>> add(TcgCard card, StoreListing listing) async {
+    _lines = [
+      ..._lines,
+      CartLine(
+        card: card,
+        productId: listing.productId,
+        finish: listing.finish,
+        condition: listing.condition,
+        quantity: 1,
+      ),
+    ];
     notifyListeners();
     return const Result.ok(null);
   }

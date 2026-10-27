@@ -30,7 +30,12 @@ class CardHero extends StatelessWidget {
               const BoxShadow(color: Color(0x80000000), blurRadius: 24, offset: Offset(0, 12)),
             ],
           ),
-          child: CardThumb(game: card.game, width: MediaQuery.sizeOf(context).width * 0.58, radius: 14),
+          child: CardThumb(
+            game: card.game,
+            imageUrl: card.mediumImageUrl,
+            width: MediaQuery.sizeOf(context).width * 0.58,
+            radius: 14,
+          ),
         ),
         const SizedBox(height: 24),
         Text(

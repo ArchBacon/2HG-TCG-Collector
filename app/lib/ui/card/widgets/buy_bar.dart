@@ -42,7 +42,7 @@ class BuyBar extends StatelessWidget {
                       formatEuro(listing.price),
                       style: TextStyle(color: glass.textPrimary, fontSize: 20, fontWeight: FontWeight.w700),
                     ),
-                    Text('${listing.condition} · $finish', style: TextStyle(color: glass.textSecondary, fontSize: 12)),
+                    Text('${formatCondition(listing.condition)} · $finish', style: TextStyle(color: glass.textSecondary, fontSize: 12)),
                   ],
                 ),
               ),

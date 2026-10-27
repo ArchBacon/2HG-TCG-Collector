@@ -23,14 +23,22 @@ class CardDetailsList extends StatelessWidget {
             _Detail('Set', card.setName),
             _Detail('Number', card.number),
             if (card.rarity != null) _Detail('Rarity', card.rarity!),
-            const _Detail('Language', 'English'), // Mock
-            const _Detail('Artist', 'Mock Artist'), // Mock
+            _Detail('Language', _languageName(card.lang)),
+            _Detail('Artist', card.artist ?? '-'),
           ],
         ),
       ],
     );
   }
 }
+
+/// The API's language codes by name; an unknown code as itself, uppercase.
+String _languageName(String? code) => switch (code) {
+  null || '' => '-',
+  'en' => 'English',
+  'ja' => 'Japanese',
+  _ => code.toUpperCase(),
+};
 
 class _Detail extends StatelessWidget {
   final String label;

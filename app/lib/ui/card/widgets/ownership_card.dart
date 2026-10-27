@@ -1,46 +1,89 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'package:app/domain/models/card/market_info.dart';
+import 'package:app/domain/models/collection/card_collection.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
 import 'package:app/ui/shared/glass/layout.dart';
+import 'package:app/ui/shared/glass/option_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Your copies (stepper) and wishlist status (switch), and how many other collectors have and want
-/// the card.
+/// Your copies per collection (a stepper each), a row to add the card to a(nother) collection, and
+/// wishlist status (switch); then how many other collectors have and want the card. Copies are of
+/// the selected finish.
 class OwnershipCard extends StatelessWidget {
-  final int owned;
+  final List<(CardCollection, int)> heldIn; // Collections with copies, and how many
+  final List<CardCollection> addOptions; // Collections it can be added to
+  final CardCollection? addTarget; // Null = none to add to yet
   final bool wishlisted;
   final MarketInfo market;
   final Color accent;
-  final ValueChanged<int> onOwnedChanged;
+  final void Function(String collectionId, int delta) onChange;
+  final ValueChanged<CardCollection> onPickAddTarget;
+  final ValueChanged<bool> onNewCollection; // Makes a collection to add to; true: with a copy in it right away
   final ValueChanged<bool> onWishlistedChanged;
 
   const OwnershipCard({
     super.key,
-    required this.owned,
+    required this.heldIn,
+    required this.addOptions,
+    required this.addTarget,
     required this.wishlisted,
     required this.market,
     required this.accent,
-    required this.onOwnedChanged,
+    required this.onChange,
+    required this.onPickAddTarget,
+    required this.onNewCollection,
     required this.onWishlistedChanged,
   });
 
+  static const _newCollection = 'New collection…';
+
   static String _compact(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
+
+  Future<void> _pick(BuildContext context) async {
+    final picked = await showOptionSheet(
+      context,
+      title: heldIn.isEmpty ? 'Add to collection' : 'Add to another collection',
+      options: [for (final c in addOptions) c.name, _newCollection],
+      current: addTarget?.name ?? _newCollection,
+    );
+    if (picked == null) return;
+    if (picked == _newCollection) {
+      onNewCollection(false);
+    } else {
+      onPickAddTarget(addOptions.firstWhere((c) => c.name == picked));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final target = addTarget;
+
     return GlassListCard(
       rows: [
+        for (final (collection, quantity) in heldIn)
+          _Row(
+            icon: LucideIcons.layers,
+            title: _Title(caption: 'In collection', text: collection.name),
+            trailing: _Stepper(value: quantity, onChanged: (value) => onChange(collection.id, value - quantity)),
+          ),
         _Row(
-          icon: LucideIcons.layers,
-          title: 'In your collection',
-          trailing: _Stepper(value: owned, onChanged: onOwnedChanged),
+          icon: heldIn.isEmpty ? LucideIcons.layers : LucideIcons.plus,
+          title: _Title(
+            caption: heldIn.isEmpty ? 'Add to collection' : 'Add to another collection',
+            text: target?.name ?? _newCollection,
+            dropdown: true,
+            accent: accent,
+            onTap: () => _pick(context),
+          ),
+          // Adding the first copy moves it up to its own row, and this one offers the next collection
+          trailing: _Stepper(value: 0, onChanged: (_) => target == null ? onNewCollection(true) : onChange(target.id, 1)),
         ),
         _Row(
           icon: LucideIcons.heart,
-          title: 'On your wishlist',
+          title: const _Title(text: 'On your wishlist'),
           trailing: Switch(
             value: wishlisted,
             activeThumbColor: accent,
@@ -64,7 +107,7 @@ class OwnershipCard extends StatelessWidget {
 
 class _Row extends StatelessWidget {
   final IconData icon;
-  final String title;
+  final Widget title;
   final Widget trailing;
 
   const _Row({required this.icon, required this.title, required this.trailing});
@@ -75,19 +118,64 @@ class _Row extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
-      child: SizedBox(
-        height: 48,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
         child: Row(
           children: [
             Icon(icon, size: 18, color: glass.textSecondary),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(title, style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w500)),
-            ),
+            Expanded(child: title),
             trailing,
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A row's text, with an optional caption above it. As a [dropdown], the text is the picked option,
+/// in the accent color with a chevron, and tapping it opens the options.
+class _Title extends StatelessWidget {
+  final String? caption;
+  final String text;
+  final bool dropdown;
+  final Color? accent;
+  final VoidCallback? onTap;
+
+  const _Title({this.caption, required this.text, this.dropdown = false, this.accent, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final glass = context.glass;
+    final color = dropdown ? accent ?? glass.textPrimary : glass.textPrimary;
+
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (caption != null) Text(caption!, style: TextStyle(color: glass.textTertiary, fontSize: 12)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: color, fontSize: 15, fontWeight: dropdown ? FontWeight.w600 : FontWeight.w500),
+              ),
+            ),
+            if (dropdown) ...[const SizedBox(width: 4), Icon(LucideIcons.chevronDown, size: 16, color: color)],
+          ],
+        ),
+      ],
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: content),
     );
   }
 }

@@ -1,37 +1,48 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'package:app/data/repositories/cart/cart_repository.dart';
-import 'package:app/data/services/local/remote_data_service.dart';
+import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/cart/cart_line.dart';
 import 'package:app/utils/result.dart';
 
-// TODO: replace with API results. Keep [lines] up to date and call notifyListeners() after changes,
-// so the cart button's count follows.
+/// Cart kept in the app only, in memory (lost when the app closes). Starts empty.
 class CartRepositoryRemote extends CartRepository {
-  CartRepositoryRemote({required this._remoteDataService});
-
-  // ignore: unused_field
-  final RemoteDataService _remoteDataService;
+  var _lines = <CartLine>[];
 
   @override
-  List<CartLine> get lines => const [];
+  List<CartLine> get lines => _lines;
 
   @override
-  Future<Result<void>> load() {
-    // TODO: implement load
-    throw UnimplementedError();
+  Future<Result<void>> load() async => const Result.ok(null); // Nothing to fetch: the lines live here
+
+  @override
+  Future<Result<void>> add(TcgCard card, StoreListing listing) async {
+    _lines = [
+      ..._lines,
+      CartLine(
+        card: card,
+        productId: listing.productId,
+        finish: listing.finish,
+        condition: listing.condition,
+        quantity: 1,
+      ),
+    ];
+    notifyListeners();
+    return const Result.ok(null);
   }
 
   @override
-  Future<Result<void>> add(TcgCard card, {required String finish, required String condition}) {
-    // TODO: implement add
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Result<void>> setQuantity(CartLine line, int quantity) {
-    // TODO: implement setQuantity
-    throw UnimplementedError();
+  Future<Result<void>> setQuantity(CartLine line, int quantity) async {
+    final index = _lines.indexOf(line);
+    if (index < 0) return Result.error(Exception('Line not in the cart'));
+    _lines = [..._lines];
+    if (quantity <= 0) {
+      _lines.removeAt(index);
+    } else {
+      _lines[index] = line.withQuantity(quantity);
+    }
+    notifyListeners();
+    return const Result.ok(null);
   }
 }

@@ -12,6 +12,9 @@ import 'package:app/data/repositories/collection/collection_repository_remote.da
 import 'package:app/data/repositories/market/market_repository.dart';
 import 'package:app/data/repositories/market/market_repository_local.dart';
 import 'package:app/data/repositories/market/market_repository_remote.dart';
+import 'package:app/data/repositories/sync/sync_repository.dart';
+import 'package:app/data/repositories/sync/sync_repository_local.dart';
+import 'package:app/data/repositories/sync/sync_repository_remote.dart';
 import 'package:app/data/repositories/wishlist/wishlist_repository.dart';
 import 'package:app/data/repositories/wishlist/wishlist_repository_local.dart';
 import 'package:app/data/repositories/wishlist/wishlist_repository_remote.dart';
@@ -26,25 +29,33 @@ import 'package:provider/single_child_widget.dart';
 List<SingleChildWidget> get providersLocal {
   return [
     Provider.value(value: LocalDataService()),
-    Provider(
+    // ChangeNotifierProvider: collections notify when they change, so their pages reload
+    ChangeNotifierProvider(
         create: (context) =>
             CollectionRepositoryLocal(localDataService: context.read())
               as CollectionRepository,
     ),
-    Provider(
+    ChangeNotifierProvider(
         create: (context) =>
             WishlistRepositoryLocal(localDataService: context.read())
               as WishlistRepository,
     ),
     Provider(
         create: (context) =>
-            CatalogRepositoryLocal(localDataService: context.read())
-              as CatalogRepository,
+            CatalogRepositoryLocal(
+              localDataService: context.read(),
+              collectionRepository: context.read<CollectionRepository>() as CollectionRepositoryLocal,
+            ) as CatalogRepository,
     ),
     Provider(
         create: (context) =>
             MarketRepositoryLocal(localDataService: context.read())
               as MarketRepository,
+    ),
+    Provider(
+        create: (context) =>
+            SyncRepositoryLocal(localDataService: context.read())
+              as SyncRepository,
     ),
     // ChangeNotifierProvider: the cart notifies when its lines change (e.g. for the cart button)
     ChangeNotifierProvider(
@@ -56,34 +67,39 @@ List<SingleChildWidget> get providersLocal {
 }
 
 /// Configure dependencies for remote data.
-/// This dependency list uses repositories that connect to a remote server.
-List<SingleChildWidget> get providersRemote {
+/// This dependency list uses repositories that connect to a remote server, as the user [token].
+List<SingleChildWidget> providersRemote({required String? token}) {
   return [
-    Provider.value(value: RemoteDataService()),
-    Provider(
+    Provider.value(value: RemoteDataService(token: token)),
+    ChangeNotifierProvider(
         create: (context) =>
             CollectionRepositoryRemote(remoteDataService: context.read())
               as CollectionRepository,
     ),
-    Provider(
+    ChangeNotifierProvider(
         create: (context) =>
             WishlistRepositoryRemote(remoteDataService: context.read())
               as WishlistRepository,
     ),
     Provider(
         create: (context) =>
-            CatalogRepositoryRemote(remoteDataService: context.read())
-              as CatalogRepository,
+            CatalogRepositoryRemote(
+              remoteDataService: context.read(),
+              collectionRepository: context.read(),
+              wishlistRepository: context.read(),
+            ) as CatalogRepository,
     ),
     Provider(
         create: (context) =>
             MarketRepositoryRemote(remoteDataService: context.read())
               as MarketRepository,
     ),
-    ChangeNotifierProvider(
+    Provider(
         create: (context) =>
-            CartRepositoryRemote(remoteDataService: context.read())
-              as CartRepository,
+            SyncRepositoryRemote(remoteDataService: context.read())
+              as SyncRepository,
     ),
+    // App-only: the cart isn't stored on the server
+    ChangeNotifierProvider(create: (context) => CartRepositoryRemote() as CartRepository),
   ];
 }

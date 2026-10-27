@@ -29,6 +29,9 @@ class GlassScaffold extends StatelessWidget {
   final bool showCart; // False on the cart page itself
   final bool isStartScreen; // The brand icon doesn't link to the start screen on the start screen itself
   final List<Widget>? actions; // Extra header buttons, before the cart
+  final List<Widget>? trailingActions; // Extra header buttons after the cart, e.g. a page's menu
+  final ValueNotifier<String>? search; // What the header's search field searches; null = the catalog
+  final String? searchHint; // E.g. "Search wishlist"; null = "Search catalog"
   final List<Widget> children;
   final double sidePadding;
 
@@ -40,6 +43,9 @@ class GlassScaffold extends StatelessWidget {
     this.showCart = true,
     this.isStartScreen = false,
     this.actions,
+    this.trailingActions,
+    this.search,
+    this.searchHint,
     required this.children,
     this.sidePadding = 16,
   });
@@ -56,9 +62,9 @@ class GlassScaffold extends StatelessWidget {
         leading: pushed ? null : _BrandButton(linksToStart: !isStartScreen),
         leadingWidth: pushed ? null : 56,
         titleSpacing: pushed ? null : 10,
-        actions: [...?actions, if (showCart) const CartButton(), const SizedBox(width: 8)],
+        actions: [...?actions, if (showCart) const CartButton(), ...?trailingActions, const SizedBox(width: 8)],
         title: Text(title, style: TextStyle(color: context.glass.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
-        bottom: showGameSwitcher && game != null ? _GameRow(game: game!) : null,
+        bottom: showGameSwitcher && game != null ? _GameRow(game: game!, search: search, searchHint: searchHint) : null,
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -109,8 +115,10 @@ class _BrandButton extends StatelessWidget {
 /// Second header row: compact game switcher, search and scan.
 class _GameRow extends StatelessWidget implements PreferredSizeWidget {
   final Tcg game;
+  final ValueNotifier<String>? search;
+  final String? searchHint;
 
-  const _GameRow({required this.game});
+  const _GameRow({required this.game, this.search, this.searchHint});
 
   @override
   Size get preferredSize => const Size.fromHeight(GameSwitcherButton.height + 10);
@@ -123,7 +131,7 @@ class _GameRow extends StatelessWidget implements PreferredSizeWidget {
         children: [
           GameSwitcherButton(game: game, onChanged: (game) => selectedGame.value = game),
           const SizedBox(width: 8),
-          Expanded(child: HeaderSearchField(game: game)),
+          Expanded(child: HeaderSearchField(game: game, query: search, hint: searchHint)),
           const SizedBox(width: 8),
           const ScanButton(),
         ],

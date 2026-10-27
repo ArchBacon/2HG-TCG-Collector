@@ -8,11 +8,19 @@ import 'package:app/utils/result.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
-/// One game's wishlist, with the store status of each card.
+/// One game's wishlist, with the store status of each card. The search in the header ([search])
+/// narrows the cards per set down by name.
 class WishlistViewModel extends ChangeNotifier {
   WishlistViewModel({required this.tcg, required this._wishlistRepository}) {
     load = Command0(_load)..execute();
+    search.addListener(notifyListeners);
+    _wishlistRepository.addListener(_reload);
   }
+
+  void _reload() => load.execute();
+
+  /// The header's search: part of a card's name; empty = all.
+  final search = ValueNotifier('');
 
   final Tcg tcg;
   final WishlistRepository _wishlistRepository;
@@ -27,10 +35,11 @@ class WishlistViewModel extends ChangeNotifier {
   /// Wishlisted cards that were recently added to the store.
   List<TcgCard> get newInStore => _cards.where((c) => c.isNew).toList();
 
-  /// The cards grouped by set, keeping the order they first appear in.
+  /// The cards that match [search], grouped by set, keeping the order they first appear in.
   Map<String, List<TcgCard>> get bySet {
+    final text = search.value.trim().toLowerCase();
     final groups = <String, List<TcgCard>>{};
-    for (final card in _cards) {
+    for (final card in _cards.where((c) => text.isEmpty || c.name.toLowerCase().contains(text))) {
       groups.putIfAbsent(card.setName, () => []).add(card);
     }
     return groups;
@@ -49,5 +58,12 @@ class WishlistViewModel extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _wishlistRepository.removeListener(_reload);
+    search.dispose();
+    super.dispose();
   }
 }

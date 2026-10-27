@@ -20,6 +20,8 @@ class CardScreenContainer extends StatelessWidget {
         catalogRepository: context.read(),
         marketRepository: context.read(),
         cartRepository: context.read(),
+        collectionRepository: context.read(),
+        wishlistRepository: context.read(),
       ),
       builder: (context, viewModel) => CardScreen(viewModel: viewModel),
     );

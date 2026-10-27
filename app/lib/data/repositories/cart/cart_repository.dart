@@ -1,5 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/cart/cart_line.dart';
 import 'package:app/utils/result.dart';
@@ -17,8 +18,8 @@ abstract class CartRepository extends ChangeNotifier {
   /// (Re)loads the lines.
   Future<Result<void>> load();
 
-  /// Adds one copy of [card] in [finish] and [condition] as a new line.
-  Future<Result<void>> add(TcgCard card, {required String finish, required String condition});
+  /// Adds one copy of [card] as the 2HG product [listing] (its finish and condition) as a new line.
+  Future<Result<void>> add(TcgCard card, StoreListing listing);
 
   /// Sets a line's quantity; 0 removes the line.
   Future<Result<void>> setQuantity(CartLine line, int quantity);

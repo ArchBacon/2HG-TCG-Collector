@@ -22,8 +22,9 @@ abstract final class LocalMarket {
       for (var i = 0; i < 30; i++) start + (card.price - start) * (i / 29) + (random.nextDouble() - 0.5) * card.price * 0.06,
     ]..[29] = card.price;
 
+    final finishes = finishesFor(card.game);
     return MarketInfo(
-      finishes: _finishesFor(card.game),
+      finishes: finishes,
       change7d: change,
       history: history,
       have: have,
@@ -31,16 +32,28 @@ abstract final class LocalMarket {
       listings: !card.inStore
           ? const []
           : [
-              StoreListing(condition: 'Near Mint', seller: 'TCG Collector Store', price: card.price, stock: 1 + random.nextInt(4)),
-              StoreListing(condition: 'Near Mint', seller: 'Partner seller', price: card.price * 1.06, stock: 1),
-              StoreListing(condition: 'Lightly Played', seller: 'TCG Collector Store', price: card.price * 0.82, stock: 2),
+              StoreListing(
+                productId: '${card.id}-1',
+                finish: finishes.first.label,
+                condition: 'Near Mint',
+                price: card.price,
+                stock: 1 + random.nextInt(4),
+              ),
+              StoreListing(
+                productId: '${card.id}-2',
+                finish: finishes.first.label,
+                condition: 'Lightly Played',
+                price: card.price * 0.82,
+                stock: 2,
+              ),
             ],
     );
   }
 
-  static List<String> _finishesFor(Tcg game) => switch (game) {
-    Tcg.pokemon => const ['Normal', 'Holofoil', 'Reverse Holo'],
-    Tcg.mtg => const ['Nonfoil', 'Foil'],
-    _ => const ['Normal', 'Foil'],
+  /// The finishes of [game]'s cards, with the API's ids.
+  static List<CardFinish> finishesFor(Tcg game) => switch (game) {
+    Tcg.pokemon => const [CardFinish('normal', 'Normal'), CardFinish('holo', 'Holo'), CardFinish('reverse', 'Reverse Holo')],
+    Tcg.mtg => const [CardFinish('nonfoil', 'Normal'), CardFinish('foil', 'Foil')],
+    _ => const [CardFinish('normal', 'Normal'), CardFinish('foil', 'Foil')],
   };
 }

@@ -1,12 +1,13 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Glass segmented control for the card's finish (e.g. Normal / Holofoil / Reverse Holo).
 class FinishSelector extends StatelessWidget {
-  final List<String> options;
-  final String selected;
+  final List<CardFinish> options;
+  final String selected; // A finish id
   final Color accent;
   final ValueChanged<String> onChanged;
 
@@ -34,23 +35,23 @@ class FinishSelector extends StatelessWidget {
           for (final option in options)
             Expanded(
               child: Semantics(
-                selected: option == selected,
+                selected: option.id == selected,
                 button: true,
                 child: GestureDetector(
-                  onTap: () => onChanged(option),
+                  onTap: () => onChanged(option.id),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     decoration: BoxDecoration(
-                      color: option == selected ? accent.withValues(alpha: 0.2) : Colors.transparent,
+                      color: option.id == selected ? accent.withValues(alpha: 0.2) : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: option == selected ? accent.withValues(alpha: 0.5) : Colors.transparent),
+                      border: Border.all(color: option.id == selected ? accent.withValues(alpha: 0.5) : Colors.transparent),
                     ),
                     child: Text(
-                      option,
+                      option.label,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: option == selected ? accent : glass.textSecondary,
+                        color: option.id == selected ? accent : glass.textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),

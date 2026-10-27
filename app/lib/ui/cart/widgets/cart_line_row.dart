@@ -26,7 +26,7 @@ class CartLineRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
         child: Row(
           children: [
-            CardThumb(game: line.card.game, width: 48, radius: 5),
+            CardThumb(game: line.card.game, imageUrl: line.card.imageUrl, width: 48, radius: 5),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -47,7 +47,7 @@ class CartLineRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${line.finish} · ${line.condition}',
+                    '${line.finish} · ${formatCondition(line.condition)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: glass.textSecondary, fontSize: 12),

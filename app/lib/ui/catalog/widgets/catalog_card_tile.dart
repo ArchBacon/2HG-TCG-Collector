@@ -8,8 +8,10 @@ import 'package:app/ui/shared/glass/card_thumb.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// A card in the catalog grid: the image with markers (owned count top-left, wishlisted top-right),
-/// then name, number and price. Opens the card.
+/// A card in the catalog grid: the image with markers (owned count top-left, wishlisted top-right)
+/// and its name over a dark fade at the bottom, then set code and price (when it has one), and the
+/// number under them.
+/// Opens the card.
 class CatalogCardTile extends StatelessWidget {
   final TcgCard card;
   final Color accent; // For the wishlist marker
@@ -28,39 +30,77 @@ class CatalogCardTile extends StatelessWidget {
           children: [
             Stack(
               children: [
-                CardThumb(game: card.game, width: constraints.maxWidth, radius: 8),
+                CardThumb(
+                  game: card.game,
+                  imageUrl: card.imageUrl,
+                  width: constraints.maxWidth,
+                  radius: 8,
+                  store: CardThumb.storeFor(card),
+                ),
+                // Dark fade at the bottom, so the name stays readable on any card
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Color(0xE6000000), Color(0x99000000), Color(0x00000000)],
+                          stops: [0, 0.18, 0.4],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 6,
+                  right: 6,
+                  bottom: 6,
+                  child: Text(
+                    card.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: GlassTheme.onImage, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
                 if (card.owned > 0)
                   Positioned(
                     top: 5,
                     left: 5,
-                    child: _Badge(icon: LucideIcons.check, label: '${card.owned}', color: glass.positive),
+                    child: CatalogBadge(icon: LucideIcons.check, label: '${card.owned}', color: glass.positive),
                   ),
-                if (card.wishlisted) Positioned(top: 5, right: 5, child: _Badge(icon: LucideIcons.heart, color: accent)),
+                if (card.wishlisted)
+                  Positioned(
+                    top: 5,
+                    right: 5,
+                    child: CatalogBadge(icon: LucideIcons.heart, color: accent),
+                  ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              card.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: glass.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 1),
+            const SizedBox(height: 5),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    card.number,
+                    card.setCode.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: glass.textTertiary, fontSize: 11),
                   ),
                 ),
-                Text(
-                  formatEuro(card.price),
-                  style: TextStyle(color: glass.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
-                ),
+                if (card.price > 0)
+                  Text(
+                    formatEuro(card.price),
+                    style: TextStyle(color: glass.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
               ],
+            ),
+            Text(
+              card.number,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: glass.textTertiary, fontSize: 11),
             ),
           ],
         ),
@@ -70,12 +110,12 @@ class CatalogCardTile extends StatelessWidget {
 }
 
 /// Small dark marker on the card image: an icon with an optional count.
-class _Badge extends StatelessWidget {
+class CatalogBadge extends StatelessWidget {
   final IconData icon;
   final String? label;
   final Color color;
 
-  const _Badge({required this.icon, this.label, required this.color});
+  const CatalogBadge({super.key, required this.icon, this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +132,10 @@ class _Badge extends StatelessWidget {
           Icon(icon, size: 10, color: color),
           if (label != null) ...[
             const SizedBox(width: 3),
-            Text(label!, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text(
+              label!,
+              style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
+            ),
           ],
         ],
       ),

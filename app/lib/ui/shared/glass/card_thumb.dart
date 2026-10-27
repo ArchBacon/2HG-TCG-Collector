@@ -4,15 +4,30 @@ import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/routing/navigation.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
+import 'package:app/ui/shared/glass/loading_indicator.dart';
+import 'package:app/ui/shared/glass/stored_card_image.dart';
 import 'package:flutter/material.dart';
 
-/// Card-shaped thumbnail: the game's cardback as a stand-in for the card image.
+/// Card-shaped thumbnail: the card image, or the game's cardback when there's no image ([imageUrl]
+/// null), while it loads, and when it fails to load. With [store], the image is kept on the device.
 class CardThumb extends StatelessWidget {
   final Tcg game;
+  final String? imageUrl;
   final double width;
   final double radius;
+  final bool store; // Keep the image on the device (CardImageStore): for the user's own cards
 
-  const CardThumb({super.key, required this.game, required this.width, this.radius = 8});
+  const CardThumb({
+    super.key,
+    required this.game,
+    this.imageUrl,
+    required this.width,
+    this.radius = 8,
+    this.store = false,
+  });
+
+  /// Whether [card]'s small image is kept on the device: when it's in a collection or the wishlist.
+  static bool storeFor(TcgCard card) => card.owned > 0 || card.wishlisted;
 
   static const aspect = 146 / 204; // Width / height of the cardback images
 
@@ -20,7 +35,50 @@ class CardThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: Image.asset(game.imageAsset, width: width, height: width / aspect, fit: BoxFit.cover),
+      child: SizedBox(
+        width: width,
+        height: width / aspect,
+        child: CardImage(game: game, imageUrl: imageUrl, store: store),
+      ),
+    );
+  }
+}
+
+/// The card image filling its box, with the game's cardback in its place while it loads, when it
+/// fails to load, or when there's no image ([imageUrl] null). With [store], it's loaded from the
+/// device when it's there, and kept there when it isn't yet.
+class CardImage extends StatelessWidget {
+  final Tcg game;
+  final String? imageUrl;
+  final bool store;
+
+  const CardImage({super.key, required this.game, required this.imageUrl, this.store = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final cardback = Image.asset(game.imageAsset, fit: BoxFit.cover);
+    if (imageUrl == null) return cardback;
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Image(
+        image: ResizeImage.resizeIfNeeded(
+          // Decoded at the size it's shown, not the file's size: many are on screen at once
+          constraints.maxWidth.isFinite ? (constraints.maxWidth * MediaQuery.devicePixelRatioOf(context)).round() : null,
+          null,
+          store ? StoredCardImage(imageUrl!) : NetworkImage(imageUrl!),
+        ),
+        fit: BoxFit.cover,
+        frameBuilder: (context, child, frame, loadedSynchronously) => loadedSynchronously || frame != null
+            ? child
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  cardback,
+                  const Center(child: LoadingIndicator(size: 18, color: GlassTheme.onImage)),
+                ],
+              ),
+        errorBuilder: (context, error, stackTrace) => cardback,
+      ),
     );
   }
 }
@@ -44,7 +102,7 @@ class CardOverlayThumb extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(card.game.imageAsset, fit: BoxFit.cover),
+              CardImage(game: card.game, imageUrl: card.imageUrl, store: CardThumb.storeFor(card)),
               // Dark fade at the bottom, so the text stays readable on any card
               const DecoratedBox(
                 decoration: BoxDecoration(
@@ -73,7 +131,11 @@ class CardOverlayThumb extends StatelessWidget {
                       card.number,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: GlassTheme.onImageSecondary, fontSize: 11, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: GlassTheme.onImageSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),

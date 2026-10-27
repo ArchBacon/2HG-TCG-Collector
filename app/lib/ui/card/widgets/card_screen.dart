@@ -12,20 +12,54 @@ import 'package:app/ui/card/widgets/finish_selector.dart';
 import 'package:app/ui/card/widgets/listings_section.dart';
 import 'package:app/ui/card/widgets/ownership_card.dart';
 import 'package:app/ui/card/widgets/price_card.dart';
+import 'package:app/ui/collection/widgets/collection_dialogs.dart';
 import 'package:app/ui/shared/glass/game_backdrop.dart';
 import 'package:app/ui/shared/glass/header_controls.dart';
 import 'package:app/ui/shared/glass_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Card details, full screen over the nav bar. Collection and shop in one place: the card, its
-/// price, your copies and wishlist status, and the store listings to buy it from, with an "Add to
-/// cart" bar at the bottom. Borrows from Discogs: community have/want counts, and the marketplace
+/// Card details, full screen over the nav bar. Collection and shop in one place: the card, your
+/// copies and wishlist status, the 2HG listings to buy it from, then its price trend, with an "Add
+/// to cart" bar at the bottom. Borrows from Discogs: community have/want counts, and the marketplace
 /// listings right on the item page.
 class CardScreen extends StatelessWidget {
   final CardViewModel viewModel;
 
   const CardScreen({super.key, required this.viewModel});
+
+  Future<void> _changeQuantity(BuildContext context, String collectionId, int delta) async {
+    if (await viewModel.changeQuantity(collectionId, delta) || !context.mounted) return;
+    _showMessage(context, "Couldn't update the collection");
+  }
+
+  /// Asks for a name and makes a collection to add to; with [addCopy], with a copy in it right away.
+  Future<void> _newCollection(BuildContext context, Color accent, {required bool addCopy}) async {
+    final name = await showCollectionNameDialog(context, accent: accent);
+    if (name == null || !context.mounted) return;
+    final collection = await viewModel.createCollection(name);
+    if (!context.mounted) return;
+    if (collection == null) {
+      _showMessage(context, "Couldn't make the collection");
+    } else if (addCopy) {
+      await _changeQuantity(context, collection.id, 1);
+    }
+  }
+
+  Future<void> _setWishlisted(BuildContext context, bool wishlisted) async {
+    if (await viewModel.setWishlisted(wishlisted) || !context.mounted) return;
+    _showMessage(context, "Couldn't update the wishlist");
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 96), // Above the buy bar
+        content: Text(message),
+      ));
+  }
 
   Future<void> _addToCart(BuildContext context, TcgCard card, StoreListing listing) async {
     await viewModel.addToCart.execute(listing);
@@ -60,7 +94,7 @@ class CardScreen extends StatelessWidget {
             actions: [
               IconButton(
                 tooltip: viewModel.wishlisted ? 'Remove from wishlist' : 'Add to wishlist',
-                onPressed: () => viewModel.wishlisted = !viewModel.wishlisted,
+                onPressed: () => _setWishlisted(context, !viewModel.wishlisted),
                 icon: Icon(LucideIcons.heart, color: viewModel.wishlisted ? accent : glass.textPrimary),
               ),
               IconButton(tooltip: 'Share', onPressed: () {}, icon: Icon(LucideIcons.share2, color: glass.textPrimary)),
@@ -86,18 +120,22 @@ class CardScreen extends StatelessWidget {
                       onChanged: (finish) => viewModel.finish = finish,
                     ),
                     const SizedBox(height: 14),
-                    PriceCard(price: card.price, market: market, accent: accent),
-                    const SizedBox(height: 14),
                     OwnershipCard(
-                      owned: viewModel.owned,
+                      heldIn: viewModel.heldIn,
+                      addOptions: viewModel.addOptions,
+                      addTarget: viewModel.addTarget,
                       wishlisted: viewModel.wishlisted,
                       market: market,
                       accent: accent,
-                      onOwnedChanged: (owned) => viewModel.owned = owned,
-                      onWishlistedChanged: (wishlisted) => viewModel.wishlisted = wishlisted,
+                      onChange: (collectionId, delta) => _changeQuantity(context, collectionId, delta),
+                      onPickAddTarget: (collection) => viewModel.addTarget = collection,
+                      onNewCollection: (addCopy) => _newCollection(context, accent, addCopy: addCopy),
+                      onWishlistedChanged: (wishlisted) => _setWishlisted(context, wishlisted),
                     ),
                     const SizedBox(height: 24),
                     ListingsSection(listings: market.listings, onAdd: (listing) => _addToCart(context, card, listing)),
+                    const SizedBox(height: 14),
+                    PriceCard(price: card.price, market: market, accent: accent),
                     const SizedBox(height: 24),
                     CardDetailsList(card: card),
                   ],
@@ -110,7 +148,7 @@ class CardScreen extends StatelessWidget {
                   bottom: 0,
                   child: BuyBar(
                     listing: market.listings.first,
-                    finish: viewModel.finish,
+                    finish: market.listings.first.finish,
                     accent: accent,
                     onAdd: () => _addToCart(context, card, market.listings.first),
                   ),

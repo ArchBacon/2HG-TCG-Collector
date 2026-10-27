@@ -1,6 +1,7 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:app/config/assets.dart';
 import 'package:app/data/services/local/local_catalog.dart';
@@ -9,6 +10,7 @@ import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/domain/models/collection/collection_summary.dart';
+import 'package:app/domain/models/user/sync_code.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:flutter/services.dart';
 
@@ -26,7 +28,8 @@ class LocalDataService {
   }
 
   /// Cards in the collection, as the catalog has them; the first ones stand in for "recently added".
-  Future<List<TcgCard>> getCollectedCards(Tcg tcg) async => LocalCatalog.catalog(tcg).where((c) => c.owned > 0).toList();
+  Future<List<TcgCard>> getCollectedCards(Tcg tcg) async =>
+      LocalCatalog.catalog(tcg).where((c) => c.owned > 0).toList();
 
   /// The wishlist of every game.
   Future<List<TcgCard>> getWishlist() async {
@@ -34,7 +37,8 @@ class LocalDataService {
     final tcgs = json['tcgs'] as Map<String, dynamic>;
     return [
       for (final group in tcgs.values)
-        for (final entry in (group as Map<String, dynamic>)['entries'] as List) _parseWishlistEntry(entry as Map<String, dynamic>),
+        for (final entry in (group as Map<String, dynamic>)['entries'] as List)
+          _parseWishlistEntry(entry as Map<String, dynamic>),
     ];
   }
 
@@ -51,6 +55,16 @@ class LocalDataService {
 
   Future<MarketInfo> getMarketInfo(TcgCard card) async => LocalMarket.forCard(card);
 
+  /// A made-up sync code, valid for an hour like the API's. Can't be used on another device.
+  Future<SyncCode> createSyncCode() async {
+    const alphabet = '23456789ABCDEFGHJKMNPQRSTWXYZ'; // Like the API's
+    final random = Random.secure();
+    return SyncCode(
+      code: String.fromCharCodes([for (var i = 0; i < 8; i++) alphabet.codeUnitAt(random.nextInt(alphabet.length))]),
+      expiresAt: DateTime.now().add(const Duration(hours: 1)),
+    );
+  }
+
   TcgCard _parseWishlistEntry(Map<String, dynamic> entry) {
     final card = entry['card'] as Map<String, dynamic>;
     final set = card['set'] as Map<String, dynamic>;
@@ -60,6 +74,8 @@ class LocalDataService {
       name: card['name'] as String,
       number: card['number'] as String,
       rarity: card['rarity'] as String?,
+      artist: card['artist'] as String?,
+      lang: card['lang'] as String?,
       setCode: set['code'] as String,
       setName: set['name'] as String,
       quantity: entry['quantity'] as int,

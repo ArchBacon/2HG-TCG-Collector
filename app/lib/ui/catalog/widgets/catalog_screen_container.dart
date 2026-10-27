@@ -14,7 +14,8 @@ class CatalogScreenContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameViewModelHost(
-      create: (context, game) => CatalogViewModel(tcg: game, catalogRepository: context.read()),
+      create: (context, game) =>
+          CatalogViewModel(tcg: game, catalogRepository: context.read(), collectionRepository: context.read()),
       builder: (context, viewModel) => CatalogScreen(viewModel: viewModel),
     );
   }

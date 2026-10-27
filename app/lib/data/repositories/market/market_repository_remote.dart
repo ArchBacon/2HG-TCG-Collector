@@ -6,16 +6,17 @@ import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/utils/result.dart';
 
-// TODO: replace with API results.
 class MarketRepositoryRemote implements MarketRepository {
   MarketRepositoryRemote({required this._remoteDataService});
 
-  // ignore: unused_field
   final RemoteDataService _remoteDataService;
 
   @override
-  Future<Result<MarketInfo>> getMarketInfo(TcgCard card) {
-    // TODO: implement getMarketInfo
-    throw UnimplementedError();
+  Future<Result<MarketInfo>> getMarketInfo(TcgCard card) async {
+    try {
+      return Result.ok(await _remoteDataService.getMarketInfo(card));
+    } on Exception catch (error) {
+      return Result.error(error);
+    }
   }
 }

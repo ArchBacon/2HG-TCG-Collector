@@ -29,7 +29,19 @@ GoRouter router() => GoRouter(
           routes: [GoRoute(path: Routes.catalog, builder: (context, state) => const CatalogScreenContainer())],
         ),
         StatefulShellBranch(
-          routes: [GoRoute(path: Routes.collection, builder: (context, state) => const CollectionScreenContainer())],
+          routes: [
+            GoRoute(
+              path: Routes.collection,
+              builder: (context, state) => const CollectionsScreenContainer(),
+              // A collection, over the tab (keeping the nav bar)
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) => CollectionScreenContainer(collectionId: state.pathParameters['id']!),
+                ),
+              ],
+            ),
+          ],
         ),
         StatefulShellBranch(
           routes: [GoRoute(path: Routes.wishlist, builder: (context, state) => const WishlistScreenContainer())],

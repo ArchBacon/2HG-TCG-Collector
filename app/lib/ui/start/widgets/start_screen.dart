@@ -32,7 +32,7 @@ class StartScreen extends StatelessWidget {
         children: [
           TotalsCard(collected: viewModel.collected, wishlisted: viewModel.wishlisted),
           const SizedBox(height: 24),
-          const SectionHeading('Select a game'), // Not "your games": every game is listed, also ones without cards
+          const SectionHeading('Select a game'),
           GamePickerGrid(viewModel: viewModel),
         ],
       ),

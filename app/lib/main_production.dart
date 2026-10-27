@@ -1,6 +1,7 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'package:app/data/services/local/app_preferences.dart';
+import 'package:app/data/services/remote/user_token.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -20,6 +21,19 @@ Future<void> main() async {
   await AppPreferences.load(); // Before the first screen: it depends on the saved game
   final info = await PackageInfo.fromPlatform();
   appVersion = info.version;
+  // Ensure the anonymous user exists, for the API calls
+  UserToken.current.value = await UserToken.loadOrCreate();
 
-  runApp(MultiProvider(providers: providersRemote, child: const MainApp()));
+  // A new token (after redeeming a sync code) means another user: everything is built again for
+  // it, from the start screen, so no data of the previous user is kept
+  runApp(
+    ValueListenableBuilder(
+      valueListenable: UserToken.current,
+      builder: (context, token, _) => MultiProvider(
+        key: ValueKey(token),
+        providers: providersRemote(token: token),
+        child: const MainApp(),
+      ),
+    ),
+  );
 }
