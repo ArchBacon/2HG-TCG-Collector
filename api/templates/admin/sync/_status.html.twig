@@ -1,0 +1,26 @@
+{# A job's state as a small pill: scheduled, queued, running, stopped, done, or failed with its exit code. #}
+{% if job.startedAt is null and (job.runAt ?? null) and date(job.runAt) > date() %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700" data-job-status>
+        {{ ux_icon('lucide:calendar-clock', { class: 'h-3 w-3' }) }} Scheduled
+    </span>
+{% elseif job.startedAt is null %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600" data-job-status>
+        {{ ux_icon('lucide:clock', { class: 'h-3 w-3' }) }} Queued
+    </span>
+{% elseif running %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700" data-job-status>
+        {{ ux_icon('lucide:loader-circle', { class: 'h-3 w-3 animate-spin' }) }} Running
+    </span>
+{% elseif job.stopped ?? false or job.exitCode is null %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700" data-job-status>
+        {{ ux_icon('lucide:circle-help', { class: 'h-3 w-3' }) }} Stopped
+    </span>
+{% elseif job.exitCode == 0 %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700" data-job-status>
+        {{ ux_icon('lucide:circle-check', { class: 'h-3 w-3' }) }} Done
+    </span>
+{% else %}
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700" data-job-status>
+        {{ ux_icon('lucide:circle-x', { class: 'h-3 w-3' }) }} Failed ({{ job.exitCode }})
+    </span>
+{% endif %}

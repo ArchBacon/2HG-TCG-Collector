@@ -1,57 +1,64 @@
 {% extends 'admin/base.html.twig' %}
 
+{% block title %}Unlinked products · TCG Admin{% endblock %}
+
 {% block content %}
-    <div class="mb-6 flex items-end justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-semibold">Unlinked products</h1>
-            <p class="text-sm text-slate-500">{{ total }} shop product{{ total == 1 ? '' : 's' }} not linked to a card yet.</p>
-        </div>
-        <form method="get" class="flex gap-2">
-            <select name="game" onchange="this.form.requestSubmit()"
-                    class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                <option value="">All games</option>
-                {% for g in games %}
-                    <option value="{{ g.value }}" {{ g.value == game ? 'selected' }}>{{ g.value }}</option>
-                {% endfor %}
-            </select>
-        </form>
+    <div class="mb-5">
+        <h1 class="text-2xl font-semibold tracking-tight">Unlinked products</h1>
+        <p class="mt-1 text-sm text-slate-500">{{ total }} shop product{{ total == 1 ? '' : 's' }} not linked to a card yet.</p>
     </div>
 
-    {% if products is empty %}
-        <p class="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Nothing to link. 🎉</p>
-    {% else %}
-        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 text-slate-500">
-                    <tr>
-                        <th class="px-4 py-2 font-medium">Game</th>
-                        <th class="px-4 py-2 font-medium">Product</th>
-                        <th class="px-4 py-2 font-medium">Product id</th>
-                        <th class="px-4 py-2 font-medium">Stock</th>
-                        <th class="px-4 py-2 font-medium">Price</th>
-                        <th class="px-4 py-2 font-medium">Since</th>
-                        <th class="px-4 py-2"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for product in products %}
-                        <tr>
-                            <td class="px-4 py-2 text-slate-500">{{ product.game }}</td>
-                            <td class="px-4 py-2 font-medium">{{ product.name }}</td>
-                            <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ product.productId }}</td>
-                            <td class="px-4 py-2">{{ product.payload.stock ?? '–' }}</td>
-                            <td class="px-4 py-2">{{ product.payload.price ?? '–' }}</td>
-                            <td class="px-4 py-2 text-slate-500">{{ product.createdAt|date('Y-m-d') }}</td>
-                            <td class="px-4 py-2 text-right">
-                                <a href="{{ path('admin_product_show', { id: product.id }) }}"
-                                   class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700">Link</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="mb-4">
+        {{ include('admin/_game_tabs.html.twig', { route: 'admin_products', current: game, allLabel: 'All games' }) }}
+    </div>
 
-        {{ include('admin/_pagination.html.twig', { route: 'admin_products', params: { game: game } }) }}
-    {% endif %}
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {% if products is empty %}
+            <div class="flex flex-col items-center gap-2 px-4 py-16 text-center text-slate-500">
+                {{ ux_icon('lucide:circle-check', { class: 'h-8 w-8 text-emerald-500' }) }}
+                <p>Nothing to link.</p>
+            </div>
+        {% else %}
+            {# Column headings only where the rows line up as a table. #}
+            <div class="hidden grid-cols-[1fr_6rem_6rem_7rem] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-slate-500 md:grid">
+                <span>Product</span>
+                <span class="text-right">Stock</span>
+                <span class="text-right">Price</span>
+                <span></span>
+            </div>
+
+            <ul class="divide-y divide-slate-100">
+                {% for product in products %}
+                    <li class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5 md:grid-cols-[1fr_6rem_6rem_7rem]">
+                        <div class="min-w-0">
+                            <p class="truncate font-medium text-slate-900">{{ product.name }}</p>
+                            <p class="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                                <span class="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">{{ product.game ?? 'unknown' }}</span>
+                                <span class="font-mono">#{{ product.productId }}</span>
+                                <span>since {{ product.createdAt|date('Y-m-d') }}</span>
+                            </p>
+                            {% if product.reason %}
+                                <p class="mt-0.5 truncate text-xs text-amber-700">{{ product.reason }}</p>
+                            {% endif %}
+                        </div>
+
+                        {# On mobile stock + price sit under the name; from md up they're columns. #}
+                        <p class="col-start-1 text-sm text-slate-600 md:hidden">
+                            Stock {{ product.payload.total_stock ?? '–' }} · {{ product.payload.price_excl_tax is defined ? '€ ' ~ product.payload.price_excl_tax|number_format(2, ',', '.') : 'no price' }}
+                        </p>
+                        <span class="hidden text-right text-sm tabular-nums md:block">{{ product.payload.total_stock ?? '–' }}</span>
+                        <span class="hidden text-right text-sm tabular-nums md:block">{{ product.payload.price_excl_tax is defined ? '€ ' ~ product.payload.price_excl_tax|number_format(2, ',', '.') : '–' }}</span>
+
+                        <a href="{{ path('admin_product_show', { id: product.id }) }}"
+                           class="col-start-2 row-span-2 row-start-1 inline-flex items-center justify-center gap-1.5 justify-self-end rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 md:col-start-auto md:row-span-1 md:row-start-auto">
+                            {{ ux_icon('lucide:link', { class: 'h-4 w-4' }) }}
+                            Link
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {{ include('admin/_pagination.html.twig', { route: 'admin_products', params: { game: game } }) }}
+        {% endif %}
+    </section>
 {% endblock %}

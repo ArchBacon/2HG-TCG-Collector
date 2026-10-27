@@ -1,13 +1,18 @@
 {# Expects: route, params (query params to keep), page, pageSize, total #}
 {% set pages = max(1, (total / pageSize)|round(0, 'ceil')) %}
 {% if pages > 1 %}
-    <nav class="mt-6 flex items-center justify-between text-sm text-slate-500">
+    {% set button = 'inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm transition hover:bg-slate-50' %}
+    <nav class="flex items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 text-sm sm:px-5">
         {% if page > 1 %}
-            <a href="{{ path(route, params|merge({ page: page - 1 })) }}" class="hover:text-slate-900">← Previous</a>
+            <a href="{{ path(route, params|merge({ page: page - 1 })) }}" class="{{ button }}">
+                {{ ux_icon('lucide:chevron-left', { class: 'h-4 w-4' }) }}<span class="hidden sm:inline">Previous</span>
+            </a>
         {% else %}<span></span>{% endif %}
-        <span>Page {{ page }} of {{ pages }}</span>
+        <span class="text-slate-500">Page {{ page }} of {{ pages }}</span>
         {% if page < pages %}
-            <a href="{{ path(route, params|merge({ page: page + 1 })) }}" class="hover:text-slate-900">Next →</a>
+            <a href="{{ path(route, params|merge({ page: page + 1 })) }}" class="{{ button }}">
+                <span class="hidden sm:inline">Next</span>{{ ux_icon('lucide:chevron-right', { class: 'h-4 w-4' }) }}
+            </a>
         {% else %}<span></span>{% endif %}
     </nav>
 {% endif %}

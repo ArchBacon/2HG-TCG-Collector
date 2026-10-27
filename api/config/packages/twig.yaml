@@ -1,5 +1,8 @@
 twig:
     file_name_pattern: '*.twig'
+    # Dates and times show in the admin's time zone; the server runs in UTC
+    date:
+        timezone: '%env(ADMIN_TIMEZONE)%'
 
 when@test:
     twig:

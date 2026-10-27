@@ -27,7 +27,7 @@ security:
             form_login:
                 login_path: admin_login
                 check_path: admin_login
-                default_target_path: admin_products
+                default_target_path: admin_home
                 enable_csrf: true
             logout:
                 path: admin_logout

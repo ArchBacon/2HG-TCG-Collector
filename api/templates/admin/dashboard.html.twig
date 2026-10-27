@@ -1,0 +1,69 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard · TCG Admin{% endblock %}
+
+{% block content %}
+    {% set t = totals %}
+    {% set newDelta = t.newUsers - t.newUsersPrevious %}
+    {% set tiles = [
+        { label: 'Users', value: t.users, note: t.newUsers ~ ' new this week' },
+        { label: 'Active this week', value: t.activeUsers, note: t.users > 0 ? (t.activeUsers / t.users * 100)|round ~ '% of users' : '–' },
+        { label: 'Cards collected', value: t.collectedCopies, note: t.collectedCards|number_format ~ ' unique cards' },
+        { label: 'Cards wishlisted', value: t.wishlistedCopies, note: 'copies wanted' },
+        { label: 'Shop listings', value: t.listings, note: t.listingsInStock|number_format ~ ' in stock' },
+        { label: 'Unlinked products', value: t.unlinked, note: t.unlinked > 0 ? 'need linking' : 'all linked', href: path('admin_products') },
+    ] %}
+
+    <div class="mb-5">
+        <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p class="mt-1 text-sm text-slate-500">How the app is being used, and what needs attention.</p>
+    </div>
+
+    <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3">
+        {% for tile in tiles %}
+            {% set tag = tile.href is defined ? 'a' : 'div' %}
+            <{{ tag }} {% if tile.href is defined %}href="{{ tile.href }}"{% endif %}
+                class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm {{ tile.href is defined ? 'transition hover:border-slate-300 hover:shadow' }}">
+                <p class="text-sm text-slate-500">{{ tile.label }}</p>
+                <p class="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl">{{ tile.value|number_format }}</p>
+                <p class="mt-1 text-xs text-slate-500">
+                    {{ tile.note }}
+                    {% if loop.first and (t.newUsers > 0 or t.newUsersPrevious > 0) %}
+                        <span class="{{ newDelta >= 0 ? 'text-emerald-600' : 'text-red-600' }}">({{ newDelta >= 0 ? '↑' : '↓' }} {{ newDelta|abs }} vs last week)</span>
+                    {% endif %}
+                </p>
+            </{{ tag }}>
+        {% endfor %}
+    </div>
+
+    <div class="mb-6 grid gap-4 lg:grid-cols-2">
+        {{ include('admin/_top_cards.html.twig', { title: 'Most collected', lists: topCollected, userLabel: ['collector', 'collectors'] }) }}
+        {{ include('admin/_top_cards.html.twig', { title: 'Most wishlisted', lists: topWishlisted, userLabel: ['user', 'users'] }) }}
+    </div>
+    <p class="-mt-4 mb-6 text-xs text-slate-400">Ranked by number of users; "week" and "month" count cards added to a list in that period.</p>
+
+    <div class="mb-6 grid gap-4 lg:grid-cols-2">
+        {{ include('admin/_daily_chart.html.twig', { title: 'New users', days: newUsersPerDay, unit: 'new users' }) }}
+        {{ include('admin/_daily_chart.html.twig', { title: 'Cards added to collections', days: collectionAddsPerDay, unit: 'cards added' }) }}
+    </div>
+
+    <section class="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="mb-4 text-sm font-medium text-slate-600">Collected copies per game</h2>
+        {% if collectedPerGame is empty %}
+            <p class="py-6 text-center text-sm text-slate-500">No cards collected yet.</p>
+        {% else %}
+            {% set peak = max(1, max(collectedPerGame|map(g => g.value))) %}
+            <ul class="space-y-3">
+                {% for game in collectedPerGame %}
+                    <li class="grid grid-cols-[7.5rem_1fr_4rem] items-center gap-3 text-sm" title="{{ game.label }}: {{ game.value }} copies">
+                        <span class="truncate text-slate-700">{{ game.label }}</span>
+                        <div class="h-2 rounded-full bg-[#2a78d6]/15">
+                            <div class="h-full rounded-full bg-[#2a78d6]" style="width: {{ (game.value / peak * 100)|round(2) }}%"></div>
+                        </div>
+                        <span class="text-right font-medium tabular-nums text-slate-900">{{ game.value|number_format }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ job.label }} · TCG Admin{% endblock %}
+
+{% block content %}
+    <a href="{{ path('admin_sync') }}" class="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+        {{ ux_icon('lucide:arrow-left', { class: 'h-4 w-4' }) }} Sync
+    </a>
+
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+        <h1 class="min-w-0 text-2xl font-semibold tracking-tight">{{ job.label }}</h1>
+        <span id="job-status">{{ include('admin/sync/_status.html.twig', { job: job, running: running }) }}</span>
+        {% if running and (job.stoppable ?? false) %}
+            {% if stopping %}
+                <span class="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500">
+                    {{ ux_icon('lucide:loader-circle', { class: 'h-4 w-4 animate-spin' }) }} Stopping...
+                </span>
+            {% else %}
+                <form method="post" action="{{ path('admin_sync_stop', { id: job.id }) }}" class="ml-auto"
+                      onsubmit="return confirm('Stop {{ job.label|e('js') }}? It ends wherever it is now.');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('admin-sync-stop-' ~ job.id) }}">
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-50">
+                        {{ ux_icon('lucide:square', { class: 'h-4 w-4' }) }}
+                        Stop
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+    <p class="mb-4 text-sm text-slate-500">
+        {% if queued and (job.runAt ?? null) and date(job.runAt) > date() %}
+            Scheduled for {{ job.runAt|date('l j F Y \\a\\t H:i') }}; then it joins the queue.
+        {% elseif queued %}
+            Waiting in the queue; it starts when the jobs before it are done.
+        {% else %}
+            Started {{ job.startedAt|date('j M Y H:i:s') }}{% if job.finishedAt %} · finished {{ job.finishedAt|date('H:i:s') }}{% endif %}
+        {% endif %}
+    </p>
+
+    {# Console-like output; filled and followed by the script below. #}
+    <pre id="job-log"
+         class="h-[65vh] overflow-auto rounded-2xl bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-100 shadow-sm sm:text-sm"></pre>
+
+    <script>
+        (() => {
+            const logUrl = {{ path('admin_sync_log', { id: job.id })|json_encode|raw }};
+            const pre = document.getElementById('job-log');
+            const lines = [''];
+            let offset = 0;
+            let carry = ''; // A chunk can end between the \r and \n of a Windows line ending
+            const wasQueued = {{ queued ? 'true' : 'false' }};
+
+            // Progress output prints a new line per update when there's no terminal (e.g.
+            // "12 set(s) synced [1%, ETA 5m 39.6s]"): a line with a percentage or a bar replaces
+            // the one before it when they only differ in their numbers or what is between the brackets,
+            // so it updates in place
+            const isProgress = (line) => /\d+%|\[[=>\-]{2,}/.test(line);
+            const shape = (line) => line.replace(/\[[^\]]*\]/g, '[]').replace(/\d+(\.\d+)?/g, '#');
+
+            const append = (chunk) => {
+                let text = (carry + chunk).replace(/\r\n/g, '\n');
+                carry = text.endsWith('\r') ? '\r' : '';
+                if (carry) text = text.slice(0, -1);
+
+                for (const [i, part] of text.split('\n').entries()) {
+                    if (i > 0) lines.push('');
+                    // A lone carriage return redraws the line from the start
+                    const redraws = part.split('\r');
+                    lines[lines.length - 1] = redraws.length > 1 ? redraws.pop() : lines[lines.length - 1] + part;
+
+                    const last = lines.length - 1;
+                    if (last > 0 && isProgress(lines[last]) && shape(lines[last]) === shape(lines[last - 1])) {
+                        lines.splice(last - 1, 1);
+                    }
+                }
+            };
+
+            const poll = async () => {
+                let data;
+                try {
+                    const response = await fetch(`${logUrl}?offset=${offset}`, { headers: { Accept: 'application/json' } });
+                    if (response.status === 404) {
+                        location.href = {{ path('admin_sync')|json_encode|raw }}; // Taken out of the queue
+                        return;
+                    }
+                    data = await response.json();
+                } catch {
+                    setTimeout(poll, 3000); // Try again; the job keeps running regardless
+                    return;
+                }
+
+                if (data.output !== '') {
+                    const atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20;
+                    append(data.output);
+                    pre.textContent = lines.join('\n');
+                    if (atBottom) pre.scrollTop = pre.scrollHeight;
+                }
+                offset = data.offset;
+
+                if (data.queued) {
+                    setTimeout(poll, 2000);
+                } else if (data.running) {
+                    if (wasQueued) location.reload(); // Started while watching: show when it started
+                    setTimeout(poll, 1000);
+                } else if (data.output !== '') {
+                    poll(); // Read what's left
+                } else if (wasQueued || {{ running ? 'true' : 'false' }}) {
+                    location.reload(); // Finished while watching: show the final status
+                }
+            };
+            poll();
+        })();
+    </script>
+{% endblock %}

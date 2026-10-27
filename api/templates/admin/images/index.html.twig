@@ -1,47 +1,59 @@
 {% extends 'admin/base.html.twig' %}
 
+{% block title %}Missing images · TCG Admin{% endblock %}
+
 {% block content %}
-    <div class="mb-6 flex items-end justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-semibold">Missing images</h1>
-            <p class="text-sm text-slate-500">{{ total }} {{ game.value }} card{{ total == 1 ? '' : 's' }} without a (complete) image.</p>
-        </div>
-        <form method="get">
-            <select name="game" onchange="this.form.requestSubmit()"
-                    class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                {% for g in games %}
-                    <option value="{{ g.value }}" {{ g == game ? 'selected' }}>{{ g.value }}</option>
-                {% endfor %}
-            </select>
-        </form>
+    <div class="mb-5">
+        <h1 class="text-2xl font-semibold tracking-tight">Missing images</h1>
+        <p class="mt-1 text-sm text-slate-500">{{ total }} {{ game.value }} card{{ total == 1 ? '' : 's' }} without a complete image.</p>
     </div>
 
-    {% if cards is empty %}
-        <p class="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Every card has its images. 🎉</p>
-    {% else %}
-        <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-            {% for card in cards %}
-                <li class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium">{{ card.name }}</p>
-                        <p class="text-sm text-slate-500">
-                            {{ card.set.name }} ({{ card.set.code|upper }}) · #{{ card.number }} · {{ card.lang.value|upper }}
-                            · <span class="font-mono text-xs">{{ card.id }}</span>
-                        </p>
-                    </div>
+    <div class="mb-4">
+        {{ include('admin/_game_tabs.html.twig', { route: 'admin_images', current: game.value }) }}
+    </div>
 
-                    <form method="post" enctype="multipart/form-data"
-                          action="{{ path('admin_image_upload', { game: game.value, id: card.id, page: page }) }}"
-                          class="flex items-center gap-2">
-                        <input type="hidden" name="_token" value="{{ csrf_token('upload-image-' ~ card.id) }}">
-                        <input type="file" name="image" accept="image/*" required
-                               class="text-xs file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium hover:file:bg-slate-200">
-                        <button type="submit" class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700">Upload</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {% if cards is empty %}
+            <div class="flex flex-col items-center gap-2 px-4 py-16 text-center text-slate-500">
+                {{ ux_icon('lucide:circle-check', { class: 'h-8 w-8 text-emerald-500' }) }}
+                <p>Every {{ game.value }} card has its images.</p>
+            </div>
+        {% else %}
+            <ul class="divide-y divide-slate-100">
+                {% for card in cards %}
+                    <li class="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:px-5">
+                        <div class="flex min-w-0 flex-1 items-center gap-4">
+                            <div class="flex h-16 w-[2.9rem] shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400">
+                                {{ ux_icon('lucide:image-off', { class: 'h-4 w-4' }) }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-medium text-slate-900">{{ card.name }}</p>
+                                <p class="mt-0.5 truncate text-sm text-slate-500">{{ card.set.name }}</p>
+                                <p class="mt-1 flex flex-wrap gap-1.5 text-xs">
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">{{ card.set.code|upper }}</span>
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">#{{ card.number }}</span>
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{{ card.lang.value|upper }}</span>
+                                </p>
+                            </div>
+                        </div>
 
-        {{ include('admin/_pagination.html.twig', { route: 'admin_images', params: { game: game.value } }) }}
-    {% endif %}
+                        <form method="post" enctype="multipart/form-data"
+                              action="{{ path('admin_image_upload', { game: game.value, id: card.id, page: page }) }}"
+                              class="flex items-center gap-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('upload-image-' ~ card.id) }}">
+                            <input type="file" name="image" accept="image/*" required aria-label="Image for {{ card.name }}"
+                                   class="min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 md:w-64 md:flex-none">
+                            <button type="submit"
+                                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700">
+                                {{ ux_icon('lucide:upload', { class: 'h-4 w-4' }) }}
+                                Upload
+                            </button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {{ include('admin/_pagination.html.twig', { route: 'admin_images', params: { game: game.value } }) }}
+        {% endif %}
+    </section>
 {% endblock %}

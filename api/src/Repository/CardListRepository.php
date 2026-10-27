@@ -28,6 +28,6 @@ final class CardListRepository extends ServiceEntityRepository
             $criteria['type'] = $type;
         }
 
-        return $this->findBy($criteria, ['createdAt' => 'ASC']);
+        return $this->findBy($criteria, ['createdAt' => 'ASC', 'name' => 'ASC']); // By name when made in the same second
     }
 }

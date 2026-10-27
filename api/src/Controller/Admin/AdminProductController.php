@@ -6,6 +6,7 @@ use App\Entity\UnmatchedProduct;
 use App\Enum\Game;
 use App\Repository\UnmatchedProductRepository;
 use App\Service\ProductLinkService;
+use App\Service\ShopFeed;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use function explode;
 use function sprintf;
 use function trim;
 
@@ -55,15 +57,21 @@ final class AdminProductController extends AbstractController
         UnmatchedProduct $product,
         #[MapQueryParameter] ?string $q = null,
         #[MapQueryParameter] ?string $set = null,
+        #[MapQueryParameter] ?string $game = null,
     ): Response {
-        $q = trim($q ?? $product->name);
+        $q = trim($q ?? self::cardName($product->name));
         $set = trim($set ?? '');
+        // The product's game when known; otherwise the admin picks one
+        $game = Game::tryFrom($game ?? $product->game ?? '') ?? Game::Pokemon;
 
         return $this->render('admin/products/show.html.twig', [
             'product' => $product,
             'q' => $q,
             'set' => $set,
-            'cards' => $this->searchCards($product->game, $q, $set),
+            'game' => $game,
+            'games' => Game::cases(),
+            'conditions' => ShopFeed::conditions($product->payload ?? []),
+            'cards' => $this->searchCards($game, $q, $set),
         ]);
     }
 
@@ -77,16 +85,16 @@ final class AdminProductController extends AbstractController
 
         $cardId = $request->request->getString('cardId');
         $finish = trim($request->request->getString('finish'));
-        if (!Uuid::isValid($cardId) || $finish === '') {
+        $game = Game::tryFrom($request->request->getString('game'));
+        if (!Uuid::isValid($cardId) || $finish === '' || $game === null) {
             $this->addFlash('error', 'Pick a card and a finish.');
             return $this->redirectToRoute('admin_product_show', ['id' => $product->id]);
         }
 
         $label = sprintf('%s (%s)', $product->name, $product->productId);
-        $game = $product->game;
 
         try {
-            $this->linker->link($product, Uuid::fromString($cardId), $finish);
+            $this->linker->link($product, $game, Uuid::fromString($cardId), $finish);
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
             return $this->redirectToRoute('admin_product_show', ['id' => $product->id]);
@@ -94,16 +102,26 @@ final class AdminProductController extends AbstractController
 
         $this->addFlash('success', sprintf('Linked %s.', $label));
 
-        return $this->redirectToRoute('admin_products', ['game' => $game]);
+        return $this->redirectToRoute('admin_products', ['game' => $product->game]);
+    }
+
+    /**
+     * The card name in a shop product name, to search with: `EVS 004 - Jumpluff - Reverse Holo` is
+     * Jumpluff.
+     */
+    private static function cardName(string $productName): string
+    {
+        $parts = explode(' - ', $productName);
+
+        return trim($parts[1] ?? $parts[0]);
     }
 
     /**
      * @return list<\App\ApiResource\Card>
      */
-    private function searchCards(string $game, string $q, string $set): array
+    private function searchCards(Game $game, string $q, string $set): array
     {
-        $game = Game::tryFrom($game);
-        if ($game === null || ($q === '' && $set === '')) {
+        if ($q === '' && $set === '') {
             return [];
         }
 

@@ -12,8 +12,9 @@ use Symfony\Component\Uid\Uuid;
  * An anonymous app user, created server-side on the device's first startup. The device keeps
  * {@see self::$id} plus the plaintext secret handed out at creation; only its hash is stored.
  *
- * Redeeming a {@see SyncCode} gives another device the same user (with a fresh secret), so all
- * synced devices share one set of {@see CardList}s instead of merging copies.
+ * Redeeming a {@see SyncCode} gives another device the same user (with a fresh secret of its own,
+ * in {@see self::$syncedSecretHashes}), so all synced devices share one set of {@see CardList}s
+ * instead of merging copies, and every device keeps working.
  *
  * The secret is 256 random bits, not a user-chosen password, so a plain SHA-256 is enough to
  * store it: there is nothing to brute-force, and it keeps per-request authentication cheap. See
@@ -32,6 +33,15 @@ class User implements UserInterface
         get => $this->secretHash;
         set => $this->secretHash = $value;
     }
+
+    /**
+     * Hashes of the secrets of the devices that joined through a {@see SyncCode}; the first
+     * device's is {@see self::$secretHash}.
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: 'json')]
+    public private(set) array $syncedSecretHashes = [];
 
     #[ORM\Column]
     public private(set) DateTimeImmutable $createdAt;
@@ -64,9 +74,24 @@ class User implements UserInterface
         return hash('sha256', $secret);
     }
 
+    /**
+     * Lets another device in with $secret, next to the ones that already are.
+     */
+    public function addSyncedSecret(string $secret): void
+    {
+        $this->syncedSecretHashes[] = self::hashSecret($secret);
+    }
+
     public function verifySecret(string $secret): bool
     {
-        return hash_equals($this->secretHash, self::hashSecret($secret));
+        $hash = self::hashSecret($secret);
+        foreach ([$this->secretHash, ...$this->syncedSecretHashes] as $known) {
+            if (hash_equals($known, $hash)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getRoles(): array

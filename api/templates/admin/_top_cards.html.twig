@@ -1,0 +1,57 @@
+{# Ranked top cards with period tabs. Expects: title, lists (period key => rows), periods, userLabel ([singular, plural]) #}
+<section data-controller="tabs" class="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+        <h2 class="font-semibold text-slate-900">{{ title }}</h2>
+        <div role="tablist" class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium">
+            {% for key, period in periods %}
+                <button type="button" role="tab" data-tabs-target="tab" data-key="{{ key }}" data-action="tabs#select"
+                        aria-selected="{{ loop.first ? 'true' : 'false' }}"
+                        class="rounded-md px-2.5 py-1.5 text-slate-500 transition hover:text-slate-900 aria-selected:bg-white aria-selected:text-slate-900 aria-selected:shadow-sm">{{ period.label }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% for key, period in periods %}
+        {% set rows = lists[key] %}
+        {% set peak = max(1, max(rows|map(r => r.users)|merge([0]))) %}
+        <div role="tabpanel" data-tabs-target="panel" data-key="{{ key }}" {{ not loop.first ? 'hidden' }}>
+            {% if rows is empty %}
+                <p class="px-4 py-12 text-center text-sm text-slate-500">Nothing added {{ key == 'all' ? 'yet' : 'in this period' }}.</p>
+            {% else %}
+                <ol class="divide-y divide-slate-100">
+                    {% for row in rows %}
+                        {% set card = row.card %}
+                        <li class="flex items-center gap-3 px-4 py-2.5 sm:px-5"
+                            title="{{ card.name ?? row.cardId }}: {{ row.users }} {{ userLabel[row.users == 1 ? 0 : 1] }}, {{ row.copies }} {{ row.copies == 1 ? 'copy' : 'copies' }}">
+                            <span class="w-5 shrink-0 text-right text-sm font-medium tabular-nums text-slate-400">{{ loop.index }}</span>
+
+                            {% if card and card.images.small %}
+                                <img src="{{ card.images.small }}" alt="" loading="lazy" class="h-12 w-auto shrink-0 rounded shadow-sm">
+                            {% else %}
+                                <div class="flex h-12 w-[2.15rem] shrink-0 items-center justify-center rounded bg-slate-100 text-slate-400">
+                                    {{ ux_icon('lucide:image-off', { class: 'h-3.5 w-3.5' }) }}
+                                </div>
+                            {% endif %}
+
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-medium text-slate-900">{{ card.name ?? 'Unknown card' }}</p>
+                                <p class="truncate text-xs text-slate-500">
+                                    {{ row.game }}{% if card %} · {{ card.set.code|upper }} #{{ card.number }}{% endif %}
+                                </p>
+                                {# Meter: unfilled track is a light step of the same blue. #}
+                                <div class="mt-1.5 h-1.5 rounded-full bg-[#2a78d6]/15">
+                                    <div class="h-full rounded-full bg-[#2a78d6]" style="width: {{ (row.users / peak * 100)|round(2) }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="shrink-0 text-right">
+                                <p class="text-sm font-semibold tabular-nums text-slate-900">{{ row.users|number_format }} <span class="font-normal text-slate-500">{{ userLabel[row.users == 1 ? 0 : 1] }}</span></p>
+                                <p class="text-xs text-slate-500">{{ row.copies|number_format }} {{ row.copies == 1 ? 'copy' : 'copies' }}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </div>
+    {% endfor %}
+</section>

@@ -2,38 +2,35 @@
 
 namespace App\Controller;
 
-use App\Enum\Game;
+use App\Service\StockTokenService;
 use App\Service\StockUpdateService;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use function hash_equals;
 use function is_array;
-use function is_string;
 
 /**
- * Receives stock updates from the web shop. Authenticated with a shared secret in the
- * `X-Stock-Token` header (env STOCK_UPDATE_TOKEN); the route is disabled while that's unset.
+ * Receives stock updates pushed by the web shop. Authenticated with a shared secret in the
+ * `X-Stock-Token` header, generated in the admin ({@see StockTokenService}); the route refuses
+ * everything while there's none.
  *
- * PROVISIONAL body, until the real feed format is known:
- *   {"game": "mtg", "products": [{"productId": "123", "name": "...", "stock": 4, "price": 1.25}]}
+ * The body is the shop's own export: products in categories, with a variant per condition (see
+ * {@see \App\Service\ShopFeed}). Answers with counts: products updated, newly linked, unmatched
+ * (for the admin to link) and skipped (no product id).
  */
 #[Route('/api/stock')]
 final class StockUpdateController
 {
     public function __construct(
         private readonly StockUpdateService $stockUpdates,
-        #[Autowire(env: 'STOCK_UPDATE_TOKEN')]
-        private readonly string $token,
+        private readonly StockTokenService $tokens,
     ) {}
 
     #[Route('', methods: ['POST'])]
     public function update(Request $request): JsonResponse
     {
-        $sent = $request->headers->get('X-Stock-Token') ?? '';
-        if ($this->token === '' || !hash_equals($this->token, $sent)) {
+        if (!$this->tokens->isValid($request->headers->get('X-Stock-Token') ?? '')) {
             return new JsonResponse(['error' => 'Invalid stock token.'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -42,15 +39,13 @@ final class StockUpdateController
             return new JsonResponse(['error' => 'Invalid JSON body.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $game = is_string($data['game'] ?? null) ? Game::tryFrom($data['game']) : null;
-        if ($game === null) {
-            return new JsonResponse(['error' => 'Missing or invalid "game".'], Response::HTTP_BAD_REQUEST);
+        if (!is_array($data['categories'] ?? null)) {
+            return new JsonResponse(['error' => 'Missing or invalid "categories".'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!is_array($data['products'] ?? null)) {
-            return new JsonResponse(['error' => 'Missing or invalid "products".'], Response::HTTP_BAD_REQUEST);
-        }
+        $result = $this->stockUpdates->apply($data);
+        $this->tokens->recordUpdate($result);
 
-        return new JsonResponse($this->stockUpdates->apply($game->value, $data['products']));
+        return new JsonResponse($result);
     }
 }

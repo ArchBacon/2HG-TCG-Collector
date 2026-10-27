@@ -1,0 +1,106 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Stock feed · TCG Admin{% endblock %}
+
+{% block content %}
+    <div class="mb-5">
+        <h1 class="text-2xl font-semibold tracking-tight">Stock feed</h1>
+        <p class="mt-1 text-sm text-slate-500">The web shop pushes its stock here. It sends this token with every update; give it a new one when you generate one.</p>
+    </div>
+
+    <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-semibold">Token</h2>
+            {% if origin.source == 'admin' %}
+                <span class="text-xs text-slate-500">Generated {{ origin.since|date('j M Y \\a\\t H:i') }}</span>
+            {% elseif origin.source == 'env' %}
+                <span class="text-xs text-amber-700">From the env var STOCK_UPDATE_TOKEN; generating one here replaces it</span>
+            {% endif %}
+        </div>
+
+        {% if token %}
+            <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input type="password" readonly value="{{ token }}" id="stock-token" aria-label="Stock token"
+                       class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900">
+                <div class="flex gap-2">
+                    <button type="button" id="stock-token-show"
+                            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 sm:flex-none">
+                        {{ ux_icon('lucide:eye', { class: 'h-4 w-4' }) }}
+                        <span>Show</span>
+                    </button>
+                    <button type="button" id="stock-token-copy"
+                            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 sm:flex-none">
+                        {{ ux_icon('lucide:copy', { class: 'h-4 w-4' }) }}
+                        <span>Copy</span>
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">No token yet, so stock updates are refused. Generate one and give it to the web shop.</p>
+        {% endif %}
+
+        <form method="post" action="{{ path('admin_stock_token') }}" class="mt-4"
+              {% if token %}onsubmit="return confirm('Make a new token? The current one stops working right away, until the web shop has the new one.')"{% endif %}>
+            <input type="hidden" name="_token" value="{{ csrf_token('admin-stock-token') }}">
+            <button type="submit"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700">
+                {{ ux_icon('lucide:key-round', { class: 'h-4 w-4' }) }}
+                {{ token ? 'Generate a new token' : 'Generate a token' }}
+            </button>
+        </form>
+    </section>
+
+    <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="font-semibold">How the shop sends it</h2>
+        <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-[8rem_1fr]">
+            <dt class="text-slate-500">Endpoint</dt>
+            <dd class="break-all font-mono">POST {{ endpoint }}</dd>
+            <dt class="text-slate-500">Header</dt>
+            <dd class="font-mono">X-Stock-Token: &lt;the token&gt;</dd>
+            <dt class="text-slate-500">Body</dt>
+            <dd>The shop's JSON export: <span class="font-mono">{"language": "en", "categories": [{"name", "cards": [...]}]}</span>. It may hold only the products that changed.</dd>
+        </dl>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="font-semibold">Last update</h2>
+        {% if lastUpdate %}
+            <p class="mt-1 text-sm text-slate-500">{{ lastUpdate.at|date('j M Y \\a\\t H:i') }}</p>
+            <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                {% for key, label in { products: 'Products', updated: 'Updated', linked: 'Newly linked', unmatched: 'Unmatched', skipped: 'Skipped' } %}
+                    <div>
+                        <dt class="text-slate-500">{{ label }}</dt>
+                        <dd class="text-lg font-semibold tabular-nums">{{ lastUpdate.result[key] ?? 0 }}</dd>
+                    </div>
+                {% endfor %}
+            </dl>
+        {% else %}
+            <p class="mt-1 text-sm text-slate-500">None yet.</p>
+        {% endif %}
+        {% if unlinked > 0 %}
+            <a href="{{ path('admin_products') }}" class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900 hover:underline">
+                {{ unlinked }} product{{ unlinked == 1 ? '' : 's' }} to link by hand
+                {{ ux_icon('lucide:arrow-right', { class: 'h-4 w-4' }) }}
+            </a>
+        {% endif %}
+    </section>
+
+    <script>
+        (() => {
+            const field = document.getElementById('stock-token');
+            if (!field) return;
+            const show = document.getElementById('stock-token-show');
+            show.addEventListener('click', () => {
+                const hidden = field.type === 'password';
+                field.type = hidden ? 'text' : 'password';
+                show.querySelector('span').textContent = hidden ? 'Hide' : 'Show';
+            });
+            const copy = document.getElementById('stock-token-copy');
+            copy.addEventListener('click', async () => {
+                await navigator.clipboard.writeText(field.value);
+                copy.querySelector('span').textContent = 'Copied';
+                setTimeout(() => { copy.querySelector('span').textContent = 'Copy'; }, 1500);
+            });
+        })();
+    </script>
+{% endblock %}

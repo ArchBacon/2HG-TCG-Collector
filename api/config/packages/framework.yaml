@@ -5,6 +5,13 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    rate_limiter:
+        # Sync codes are 8 characters, valid for an hour: this keeps guessing one far out of reach
+        sync_code_redeem:
+            policy: sliding_window
+            limit: 5
+            interval: '15 minutes'
+
     # Games' import pipelines (Scryfall, TCGDex, ...) make hundreds to tens of thousands of
     # sequential/concurrent requests per sync run; without this, one dropped connection
     # anywhere in that run kills the whole thing. GenericRetryStrategy always retries transport

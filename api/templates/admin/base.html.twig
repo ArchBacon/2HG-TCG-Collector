@@ -3,26 +3,59 @@
 {% block title %}Admin · TCG Collector{% endblock %}
 
 {% block body %}
-    <header class="border-b border-slate-200 bg-white">
-        <nav class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 text-sm">
-            <span class="font-semibold text-slate-900">TCG Admin</span>
-            {% set route = app.request.attributes.get('_route') %}
-            <a href="{{ path('admin_products') }}"
-               class="{{ route starts with 'admin_product' ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900' }}">Unlinked products</a>
-            <a href="{{ path('admin_images') }}"
-               class="{{ route starts with 'admin_image' ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900' }}">Missing images</a>
-            <span class="ml-auto text-slate-400">{{ app.user.userIdentifier }}</span>
-            <a href="{{ path('admin_logout') }}" class="text-slate-500 hover:text-slate-900">Log out</a>
-        </nav>
-    </header>
+    {% set route = app.request.attributes.get('_route') %}
+    {% set nav = [
+        { label: 'Dashboard', icon: 'lucide:layout-dashboard', path: path('admin_home'), active: route == 'admin_home' },
+        { label: 'Unlinked products', icon: 'lucide:package', path: path('admin_products'), active: route starts with 'admin_product' },
+        { label: 'Missing images', icon: 'lucide:image-off', path: path('admin_images'), active: route starts with 'admin_image' },
+        { label: 'Stock feed', icon: 'lucide:key-round', path: path('admin_stock'), active: route starts with 'admin_stock' },
+        { label: 'Sync', icon: 'lucide:refresh-cw', path: path('admin_sync'), active: route starts with 'admin_sync' },
+    ] %}
 
-    <main class="mx-auto max-w-6xl px-4 py-8">
-        {% for type, messages in app.flashes %}
-            {% for message in messages %}
-                <div class="mb-4 rounded-lg px-4 py-2 text-sm {{ type == 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' }}">{{ message }}</div>
+    <div class="min-h-full bg-slate-100">
+        <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+            <div class="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 pt-3 sm:px-6">
+                <a href="{{ path('admin_home') }}" class="flex items-center gap-2 font-semibold text-slate-900">
+                    {{ ux_icon('lucide:layers', { class: 'h-5 w-5 text-slate-400' }) }}
+                    <span>TCG Admin</span>
+                </a>
+
+                <div class="ml-auto flex items-center gap-1 text-sm">
+                    <span class="hidden items-center gap-1.5 px-2 text-slate-500 sm:inline-flex">
+                        {{ ux_icon('lucide:user', { class: 'h-4 w-4' }) }}
+                        {{ app.user.userIdentifier }}
+                    </span>
+                    <a href="{{ path('admin_logout') }}" title="Log out"
+                       class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+                        {{ ux_icon('lucide:log-out', { class: 'h-4 w-4' }) }}
+                        <span class="hidden sm:inline">Log out</span>
+                    </a>
+                </div>
+            </div>
+
+            {# Tabs scroll sideways instead of wrapping on narrow screens. #}
+            <nav class="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-6">
+                {% for item in nav %}
+                    <a href="{{ item.path }}"
+                       class="inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition {{ item.active ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-900' }}">
+                        {{ ux_icon(item.icon, { class: 'h-4 w-4' }) }}
+                        {{ item.label }}
+                    </a>
+                {% endfor %}
+            </nav>
+        </header>
+
+        <main class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="mb-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-sm {{ type == 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+                        {{ ux_icon(type == 'error' ? 'lucide:circle-alert' : 'lucide:circle-check', { class: 'mt-0.5 h-4 w-4 shrink-0' }) }}
+                        <span class="min-w-0 break-words">{{ message }}</span>
+                    </div>
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
 
-        {% block content %}{% endblock %}
-    </main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 {% endblock %}

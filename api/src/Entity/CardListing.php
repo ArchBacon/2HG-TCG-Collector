@@ -4,17 +4,23 @@ namespace App\Entity;
 
 use App\ApiResource\Traits\TimestampableTrait;
 use App\Repository\CardListingRepository;
+use App\Service\ShopFeed;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A shop listing (product id, stock, price) for one card printing + finish, matched against
- * a game's own Card table by an automatcher.
+ * A shop product linked to one card printing + finish: by {@see \App\Service\ProductMatcher}
+ * when stock comes in, or by hand in the admin. The link stays once made; stock and price are per
+ * condition ({@see CardListingCondition}), and a product without any is linked all the same.
  *
  * Deliberately not game-specific and not FK-linked to any game's card table, the same as
  * {@see ImageJobQueue}: {@see self::$cardId} is a loose reference, resolved per
  * {@see self::$game}. `finish` is a plain string rather than an enum since the vocabulary is
- * per-game (MTG: nonfoil/foil/etched; other games will have their own).
+ * per-game (MTG: nonfoil/foil/etched; Pokémon: normal/holo/reverse).
+ *
+ * @phpstan-import-type ShopCondition from ShopFeed
  */
 #[ORM\Entity(repositoryClass: CardListingRepository::class)]
 #[ORM\Table(name: 'product_listing')]
@@ -54,17 +60,9 @@ class CardListing
         set => $this->productId = $value;
     }
 
-    #[ORM\Column]
-    public int $stock = 0 {
-        get => $this->stock;
-        set => $this->stock = $value;
-    }
-
-    #[ORM\Column]
-    public float $price = 0.0 {
-        get => $this->price;
-        set => $this->price = $value;
-    }
+    /** @var Collection<int, CardListingCondition> */
+    #[ORM\OneToMany(targetEntity: CardListingCondition::class, mappedBy: 'listing', cascade: ['persist'], orphanRemoval: true)]
+    public private(set) Collection $conditions;
 
     public function __construct(string $game, Uuid $cardId, string $finish, string $productId)
     {
@@ -72,6 +70,40 @@ class CardListing
         $this->cardId = $cardId;
         $this->finish = $finish;
         $this->productId = $productId;
+        $this->conditions = new ArrayCollection();
         $this->initializeTimestamps();
+    }
+
+    /**
+     * Makes the conditions what the shop sent: updates the known ones, adds new ones, and removes
+     * the ones the shop no longer has.
+     *
+     * @param list<ShopCondition> $conditions
+     */
+    public function syncConditions(array $conditions): void
+    {
+        $known = [];
+        foreach ($this->conditions as $condition) {
+            $known[$condition->variantId] = $condition;
+        }
+
+        $sent = [];
+        foreach ($conditions as $data) {
+            $condition = $known[$data['variantId']] ?? null;
+            if ($condition === null) {
+                $condition = new CardListingCondition($this, $data['variantId'], $data['condition']);
+                $this->conditions->add($condition);
+            }
+            $condition->condition = $data['condition'];
+            $condition->stock = $data['stock'];
+            $condition->price = $data['price'];
+            $sent[$data['variantId']] = true;
+        }
+
+        foreach ($known as $variantId => $condition) {
+            if (!isset($sent[$variantId])) {
+                $this->conditions->removeElement($condition);
+            }
+        }
     }
 }

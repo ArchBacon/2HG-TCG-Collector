@@ -1,0 +1,44 @@
+{# Single-series daily bar chart. Expects: title, days (list of {date, value}), unit (e.g. 'new users') #}
+{% set values = days|map(d => d.value) %}
+{% set peak = max(1, max(values)) %}
+{% set count = days|length %}
+
+<section class="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <div class="flex items-baseline justify-between gap-2">
+        <h2 class="text-sm font-medium text-slate-600">{{ title }}</h2>
+        <span class="text-xs text-slate-400">Last {{ count }} days</span>
+    </div>
+    <p class="mt-1 text-2xl font-semibold text-slate-900">{{ values|reduce((sum, v) => sum + v, 0)|number_format }}</p>
+
+    <div class="mt-4 flex gap-2" aria-hidden="true">
+        <div class="relative flex h-36 flex-1 items-end gap-[2px] border-b border-slate-300">
+            {# One recessive gridline at the peak, labelled on the right. #}
+            <div class="pointer-events-none absolute inset-x-0 top-0 border-t border-dashed border-slate-200"></div>
+
+            {% for day in days %}
+                {# The hit target is the full column, not just the bar. #}
+                <div class="group relative flex h-full min-w-0 flex-1 items-end">
+                    <div class="w-full rounded-t-[4px] bg-[#2a78d6] transition-colors group-hover:bg-[#1d5fae]"
+                         style="height: {{ (day.value / peak * 100)|round(2) }}%;{{ day.value > 0 ? ' min-height: 2px;' }}"></div>
+                    <div class="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block
+                                {{ loop.index0 < count / 3 ? 'left-0' : (loop.index0 > count * 2 / 3 ? 'right-0' : 'left-1/2 -translate-x-1/2') }}">
+                        {{ day.date|date('D j M') }} · <span class="font-semibold">{{ day.value }}</span> {{ unit }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <span class="-mt-2 text-xs tabular-nums text-slate-400">{{ peak }}</span>
+    </div>
+    <div class="mt-1.5 flex justify-between pr-6 text-xs text-slate-400" aria-hidden="true">
+        <span>{{ days|first.date|date('j M') }}</span>
+        <span>Today</span>
+    </div>
+
+    <table class="sr-only">
+        <caption>{{ title }}, per day</caption>
+        <thead><tr><th>Date</th><th>{{ unit|capitalize }}</th></tr></thead>
+        <tbody>
+            {% for day in days %}<tr><td>{{ day.date|date('Y-m-d') }}</td><td>{{ day.value }}</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</section>

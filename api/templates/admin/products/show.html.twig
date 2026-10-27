@@ -1,63 +1,128 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block content %}
-    <a href="{{ path('admin_products', { game: product.game }) }}" class="text-sm text-slate-500 hover:text-slate-900">← Unlinked products</a>
+{% block title %}Link {{ product.name }} · TCG Admin{% endblock %}
 
-    <div class="mt-3 mb-6 rounded-xl border border-slate-200 bg-white p-4">
-        <h1 class="text-xl font-semibold">{{ product.name }}</h1>
-        <p class="text-sm text-slate-500">{{ product.game }} · product <span class="font-mono">{{ product.productId }}</span></p>
+{% block content %}
+    {% set input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 sm:text-sm' %}
+
+    <a href="{{ path('admin_products', { game: product.game }) }}" class="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900">
+        {{ ux_icon('lucide:arrow-left', { class: 'h-4 w-4' }) }}
+        Unlinked products
+    </a>
+
+    <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Shop product</p>
+        <h1 class="mt-1 break-words text-xl font-semibold tracking-tight sm:text-2xl">{{ product.name }}</h1>
+
+        {% if product.reason %}
+            <p class="mt-2 inline-flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm text-amber-800">
+                {{ ux_icon('lucide:circle-help', { class: 'mt-0.5 h-4 w-4 shrink-0' }) }}
+                {{ product.reason }}
+            </p>
+        {% endif %}
+
+        <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <div><dt class="text-slate-500">Game</dt><dd class="font-medium">{{ product.game ?? 'Unknown' }}</dd></div>
+            <div><dt class="text-slate-500">Product id</dt><dd class="break-all font-mono">{{ product.productId }}</dd></div>
+            <div><dt class="text-slate-500">Set</dt><dd class="font-medium">{{ product.payload.reference ?? '–' }}</dd></div>
+            <div><dt class="text-slate-500">Stock</dt><dd class="font-medium">{{ product.payload.total_stock ?? '–' }}</dd></div>
+        </dl>
+
+        {% if conditions is not empty %}
+            <ul class="mt-3 flex flex-wrap gap-1.5 text-xs">
+                {% for condition in conditions %}
+                    <li class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
+                        {{ condition.condition }}: {{ condition.stock }} × € {{ condition.price|number_format(2, ',', '.') }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="mt-3 text-xs text-slate-500">No conditions in the shop yet; it's linked all the same, without stock.</p>
+        {% endif %}
+
         {% if product.payload %}
-            <details class="mt-3 text-sm">
-                <summary class="cursor-pointer text-slate-500">Raw shop record</summary>
-                <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs">{{ product.payload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+            <details class="mt-4 text-sm">
+                <summary class="cursor-pointer text-slate-500 hover:text-slate-900">Raw shop record</summary>
+                <pre class="mt-2 max-h-72 overflow-auto rounded-lg bg-slate-50 p-3 text-xs">{{ product.payload|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
             </details>
         {% endif %}
-    </div>
+    </section>
 
-    <form method="get" class="mb-4 flex flex-col gap-2 sm:flex-row">
-        <input type="text" name="q" value="{{ q }}" placeholder="Card name or number"
-               class="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-        <input type="text" name="set" value="{{ set }}" placeholder="Set code"
-               class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-32">
-        <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Search</button>
+    <h2 class="mb-3 text-lg font-semibold">Find the matching card</h2>
+
+    <form method="get" class="mb-4 grid grid-cols-[1fr_6rem] gap-2 sm:grid-cols-[8rem_1fr_8rem_auto]">
+        <select name="game" aria-label="Game" class="{{ input }} col-span-2 sm:col-span-1">
+            {% for option in games %}
+                <option value="{{ option.value }}" {{ option == game ? 'selected' }}>{{ option.value }}</option>
+            {% endfor %}
+        </select>
+        <input type="search" name="q" value="{{ q }}" placeholder="Card name or number" aria-label="Card name or number" class="{{ input }}">
+        <input type="text" name="set" value="{{ set }}" placeholder="Set code" aria-label="Set code" autocapitalize="none" class="{{ input }}">
+        <button type="submit"
+                class="col-span-2 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 sm:col-span-1">
+            {{ ux_icon('lucide:search', { class: 'h-4 w-4' }) }}
+            Search
+        </button>
     </form>
 
-    {% if cards is empty %}
-        <p class="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">No cards found. Try a shorter name or a set code.</p>
-    {% else %}
-        <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-            {% for card in cards %}
-                {% set finishes = card.details.finishes ?? [] %}
-                <li class="flex items-center gap-4 px-4 py-3">
-                    {% if card.images.small %}
-                        <img src="{{ card.images.small }}" alt="" loading="lazy" class="h-20 w-auto rounded">
-                    {% else %}
-                        <div class="flex h-20 w-14 items-center justify-center rounded bg-slate-100 text-[10px] text-slate-400">no image</div>
-                    {% endif %}
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {% if cards is empty %}
+            <div class="flex flex-col items-center gap-2 px-4 py-16 text-center text-slate-500">
+                {{ ux_icon('lucide:search', { class: 'h-8 w-8 text-slate-300' }) }}
+                <p>No cards found. Try a shorter name or a set code.</p>
+            </div>
+        {% else %}
+            <ul class="divide-y divide-slate-100">
+                {% for card in cards %}
+                    {% set finishes = card.details.finishes ?? [] %}
+                    <li class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+                        <div class="flex min-w-0 flex-1 items-center gap-4">
+                            {% if card.images.small %}
+                                <img src="{{ card.images.small }}" alt="" loading="lazy" class="h-24 w-auto shrink-0 rounded-md shadow-sm">
+                            {% else %}
+                                <div class="flex h-24 w-[4.3rem] shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400">
+                                    {{ ux_icon('lucide:image-off', { class: 'h-5 w-5' }) }}
+                                </div>
+                            {% endif %}
 
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium">{{ card.name }}</p>
-                        <p class="text-sm text-slate-500">
-                            {{ card.set.name }} ({{ card.set.code|upper }}) · #{{ card.number }} · {{ card.lang.value|upper }}{% if card.rarity %} · {{ card.rarity }}{% endif %}
-                        </p>
-                    </div>
+                            <div class="min-w-0">
+                                <p class="font-medium text-slate-900">{{ card.name }}</p>
+                                <p class="mt-0.5 text-sm text-slate-500">{{ card.set.name }}</p>
+                                <p class="mt-1 flex flex-wrap gap-1.5 text-xs">
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">{{ card.set.code|upper }}</span>
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">#{{ card.number }}</span>
+                                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{{ card.lang.value|upper }}</span>
+                                    {% if card.rarity %}<span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{{ card.rarity }}</span>{% endif %}
+                                </p>
+                            </div>
+                        </div>
 
-                    <form method="post" action="{{ path('admin_product_link', { id: product.id }) }}" class="flex flex-wrap items-center justify-end gap-2">
-                        <input type="hidden" name="_token" value="{{ csrf_token('link-product-' ~ product.id) }}">
-                        <input type="hidden" name="cardId" value="{{ card.id }}">
-                        {% if finishes is not empty %}
-                            {% for finish in finishes %}
-                                <button type="submit" name="finish" value="{{ finish }}"
-                                        class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-900 hover:text-white">Link as {{ finish }}</button>
-                            {% endfor %}
-                        {% else %}
-                            <input type="text" name="finish" value="normal" required
-                                   class="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-xs">
-                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-900 hover:text-white">Link</button>
-                        {% endif %}
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                        <form method="post" action="{{ path('admin_product_link', { id: product.id }) }}"
+                              class="flex flex-wrap items-center gap-2 sm:max-w-[16rem] sm:justify-end">
+                            <input type="hidden" name="_token" value="{{ csrf_token('link-product-' ~ product.id) }}">
+                            <input type="hidden" name="cardId" value="{{ card.id }}">
+                            <input type="hidden" name="game" value="{{ game.value }}">
+                            {% if finishes is not empty %}
+                                {% for finish in finishes %}
+                                    <button type="submit" name="finish" value="{{ finish }}"
+                                            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-900 hover:bg-slate-900 hover:text-white sm:flex-none">
+                                        {{ ux_icon('lucide:link', { class: 'h-3.5 w-3.5' }) }}
+                                        {{ finish }}
+                                    </button>
+                                {% endfor %}
+                            {% else %}
+                                <input type="text" name="finish" value="normal" required aria-label="Finish" autocapitalize="none"
+                                       class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-base shadow-sm sm:w-28 sm:flex-none sm:text-sm">
+                                <button type="submit"
+                                        class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-900 hover:bg-slate-900 hover:text-white">
+                                    {{ ux_icon('lucide:link', { class: 'h-3.5 w-3.5' }) }}
+                                    Link
+                                </button>
+                            {% endif %}
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
 {% endblock %}
