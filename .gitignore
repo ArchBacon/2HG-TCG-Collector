@@ -1,1 +1,3 @@
 .idea
+# Test data (e.g. 2HG exports), kept out of the repo
+/test/
