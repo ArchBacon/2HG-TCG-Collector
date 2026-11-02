@@ -12,6 +12,9 @@ import 'package:app/data/repositories/collection/collection_repository_remote.da
 import 'package:app/data/repositories/market/market_repository.dart';
 import 'package:app/data/repositories/market/market_repository_local.dart';
 import 'package:app/data/repositories/market/market_repository_remote.dart';
+import 'package:app/data/repositories/notifications/notifications_repository.dart';
+import 'package:app/data/repositories/notifications/notifications_repository_local.dart';
+import 'package:app/data/repositories/notifications/notifications_repository_remote.dart';
 import 'package:app/data/repositories/sync/sync_repository.dart';
 import 'package:app/data/repositories/sync/sync_repository_local.dart';
 import 'package:app/data/repositories/sync/sync_repository_remote.dart';
@@ -37,14 +40,14 @@ List<SingleChildWidget> get providersLocal {
     ),
     ChangeNotifierProvider(
         create: (context) =>
-            WishlistRepositoryLocal(localDataService: context.read())
-              as WishlistRepository,
+            WishlistRepositoryLocal() as WishlistRepository,
     ),
     Provider(
         create: (context) =>
             CatalogRepositoryLocal(
               localDataService: context.read(),
               collectionRepository: context.read<CollectionRepository>() as CollectionRepositoryLocal,
+              wishlistRepository: context.read<WishlistRepository>() as WishlistRepositoryLocal,
             ) as CatalogRepository,
     ),
     Provider(
@@ -63,6 +66,7 @@ List<SingleChildWidget> get providersLocal {
             CartRepositoryLocal(localDataService: context.read())
               as CartRepository,
     ),
+    Provider(create: (context) => NotificationsRepositoryLocal() as NotificationsRepository),
   ];
 }
 
@@ -101,5 +105,10 @@ List<SingleChildWidget> providersRemote({required String? token}) {
     ),
     // App-only: the cart isn't stored on the server
     ChangeNotifierProvider(create: (context) => CartRepositoryRemote() as CartRepository),
+    Provider(
+        create: (context) =>
+            NotificationsRepositoryRemote(remoteDataService: context.read())
+              as NotificationsRepository,
+    ),
   ];
 }

@@ -2,6 +2,7 @@
 
 import 'package:app/data/repositories/catalog/catalog_repository.dart';
 import 'package:app/data/repositories/collection/collection_repository_local.dart';
+import 'package:app/data/repositories/wishlist/wishlist_repository_local.dart';
 import 'package:app/data/services/local/local_data_service.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/catalog/catalog_query.dart';
@@ -9,10 +10,15 @@ import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:app/utils/result.dart';
 
 class CatalogRepositoryLocal implements CatalogRepository {
-  CatalogRepositoryLocal({required this._localDataService, required this._collectionRepository});
+  CatalogRepositoryLocal({
+    required this._localDataService,
+    required this._collectionRepository,
+    required this._wishlistRepository,
+  });
 
   final LocalDataService _localDataService;
   final CollectionRepositoryLocal _collectionRepository; // For a collection's cards
+  final WishlistRepositoryLocal _wishlistRepository; // For a wishlist's cards
 
   static const _perPage = 30; // Like the API
 
@@ -20,8 +26,7 @@ class CatalogRepositoryLocal implements CatalogRepository {
   @override
   Future<Result<CatalogPage>> getCatalogPage(Tcg tcg, CatalogQuery query, int page) async {
     try {
-      final collectionId = query.collectionId;
-      final all = collectionId == null ? await _localDataService.getCatalog(tcg) : _collectionRepository.cardsIn(tcg, collectionId);
+      final all = await _cards(tcg, query.listId);
       final cards = all.where(query.matches).toList();
       switch (query.sort) {
         case CatalogSort.number:
@@ -47,9 +52,9 @@ class CatalogRepositoryLocal implements CatalogRepository {
   }
 
   @override
-  Future<Result<CatalogFilterOptions>> getCatalogFilters(Tcg tcg, {String? collectionId}) async {
+  Future<Result<CatalogFilterOptions>> getCatalogFilters(Tcg tcg, {String? listId}) async {
     try {
-      final cards = collectionId == null ? await _localDataService.getCatalog(tcg) : _collectionRepository.cardsIn(tcg, collectionId);
+      final cards = await _cards(tcg, listId);
       return Result.ok(
         CatalogFilterOptions(
           sets: {for (final c in cards) (code: c.setCode, name: c.setName)}.toList(),
@@ -70,5 +75,12 @@ class CatalogRepositoryLocal implements CatalogRepository {
     } on Exception catch (error) {
       return Result.error(error);
     }
+  }
+
+  /// [tcg]'s whole catalog, or the cards in the collection or wishlist [listId].
+  Future<List<TcgCard>> _cards(Tcg tcg, String? listId) async {
+    if (listId == null) return _localDataService.getCatalog(tcg);
+    if (_wishlistRepository.has(listId)) return _wishlistRepository.cardsIn(tcg, wishlistId: listId);
+    return _collectionRepository.cardsIn(tcg, collectionId: listId);
   }
 }

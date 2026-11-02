@@ -10,6 +10,8 @@ import 'package:app/domain/models/catalog/catalog_query.dart';
 import 'package:app/domain/models/collection/card_collection.dart';
 import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/domain/models/collection/collection_summary.dart';
+import 'package:app/domain/models/collection/list_kind.dart';
+import 'package:app/domain/models/notification/received_notification.dart';
 import 'package:app/domain/models/user/sync_code.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:http/http.dart' as http;
@@ -47,9 +49,9 @@ class RemoteDataService {
     return [for (final entry in json['cards'] as List) _parseCard(entry as Map<String, dynamic>)];
   }
 
-  /// The user's collections, with their counts and value for [tcg].
-  Future<List<CardCollection>> getCollections(Tcg tcg) async {
-    final json = await _get('/api/users/lists', {'type': 'collection', 'game': tcg.slug});
+  /// The user's lists of [kind], oldest first, with their counts and value for [tcg].
+  Future<List<CardCollection>> getLists(ListKind kind, Tcg tcg) async {
+    final json = await _get('/api/users/lists', {'type': kind.name, 'game': tcg.slug});
     return [
       for (final list in (json['lists'] as List).cast<Map<String, dynamic>>())
         CardCollection(
@@ -63,49 +65,34 @@ class RemoteDataService {
     ];
   }
 
-  /// Makes a collection with the id [id] (the app's; making it again is harmless).
-  Future<CardCollection> createCollection(String id, String name) async {
-    final json = await _send('POST', '/api/users/lists', {'id': id, 'type': 'collection', 'name': name});
+  /// Makes a list of [kind] with the id [id] (the app's; making it again is harmless).
+  Future<CardCollection> createList(ListKind kind, String id, String name) async {
+    final json = await _send('POST', '/api/users/lists', {'id': id, 'type': kind.name, 'name': name});
     return CardCollection(id: json!['id'] as String, name: json['name'] as String);
   }
 
-  Future<void> renameCollection(String id, String name) => _send('PATCH', '/api/users/lists/$id', {'name': name});
+  Future<void> renameList(String id, String name) => _send('PATCH', '/api/users/lists/$id', {'name': name});
 
-  Future<void> deleteCollection(String id) => _send('DELETE', '/api/users/lists/$id');
+  Future<void> deleteList(String id) => _send('DELETE', '/api/users/lists/$id');
 
-  /// Where the user has [card]: copies per collection and finish.
-  Future<List<CollectionHolding>> getHoldings(TcgCard card) => _getCardLists(card, type: 'collection');
-
-  /// Where [card] is on the user's wishlists: copies per wishlist and finish.
-  Future<List<CollectionHolding>> getWishlistHoldings(TcgCard card) => _getCardLists(card, type: 'wishlist');
-
-  Future<List<CollectionHolding>> _getCardLists(TcgCard card, {required String type}) async {
+  /// Where the user has [card] in their lists of [kind]: copies per list and finish.
+  Future<List<CollectionHolding>> getHoldings(ListKind kind, TcgCard card) async {
     final json = await _get('/api/users/cards/${card.id}/lists');
     return [
       for (final row in (json['lists'] as List).cast<Map<String, dynamic>>())
-        if (row['type'] == type)
+        if (row['type'] == kind.name)
           CollectionHolding(
-            collectionId: row['listId'] as String,
+            listId: row['listId'] as String,
             finish: row['finish'] as String,
             quantity: row['quantity'] as int,
           ),
     ];
   }
 
-  /// The ids of the user's wishlists, oldest first.
-  Future<List<String>> getWishlistIds() async {
-    final json = await _get('/api/users/lists', {'type': 'wishlist'});
-    return [for (final list in (json['lists'] as List).cast<Map<String, dynamic>>()) list['id'] as String];
-  }
-
-  /// Makes a wishlist with the id [id] (the app's; making it again is harmless).
-  Future<void> createWishlist(String id, String name) =>
-      _send('POST', '/api/users/lists', {'id': id, 'type': 'wishlist', 'name': name});
-
-  /// Adds [delta] copies of [card] to a collection (or a wishlist), and returns the copies now in
-  /// it. [changeId] makes a retried call count once.
-  Future<int> changeQuantity(String collectionId, TcgCard card, String finish, int delta, {required String changeId}) async {
-    final json = await _send('POST', '/api/users/lists/$collectionId/entries', {
+  /// Adds [delta] copies of [card] to a collection or wishlist, and returns the copies now in it.
+  /// [changeId] makes a retried call count once.
+  Future<int> changeQuantity(String listId, TcgCard card, String finish, int delta, {required String changeId}) async {
+    final json = await _send('POST', '/api/users/lists/$listId/entries', {
       'changeId': changeId,
       'game': card.game.slug,
       'cardId': card.id,
@@ -136,9 +123,9 @@ class RemoteDataService {
     );
   }
 
-  /// What [tcg]'s catalog can be filtered on; with [collectionId], only what's in that collection.
-  Future<CatalogFilterOptions> getCatalogFilters(Tcg tcg, {String? collectionId}) async {
-    final json = await _get('/api/users/catalog/${tcg.slug}/filters', {'list': ?collectionId});
+  /// What [tcg]'s catalog can be filtered on; with [listId], only what's in that list.
+  Future<CatalogFilterOptions> getCatalogFilters(Tcg tcg, {String? listId}) async {
+    final json = await _get('/api/users/catalog/${tcg.slug}/filters', {'list': ?listId});
     return CatalogFilterOptions(
       sets: [
         for (final set in (json['sets'] as List).cast<Map<String, dynamic>>())
@@ -224,6 +211,36 @@ class RemoteDataService {
       isNew: entry['isNew'] as bool,
     );
   }
+
+  /// Registers this device for push notifications by its Firebase Installation ID [fid], or
+  /// updates it: the [platform] (`android` or `ios`), and whether it wants wishlist notifications
+  /// and the shop's announcements.
+  Future<void> registerDevice(
+    String fid, {
+    required String platform,
+    required bool wishlistInStore,
+    required bool announcements,
+  }) => _send('PUT', '/api/users/devices', {
+    'token': fid,
+    'platform': platform,
+    'wishlistInStore': wishlistInStore,
+    'announcements': announcements,
+  });
+
+  /// The notifications the device with Firebase Installation ID [fid] received, and how many are
+  /// unread.
+  Future<ReceivedNotifications> getReceivedNotifications(String fid) async {
+    final json = await _get('/api/users/devices/notifications', {'token': fid});
+    return ReceivedNotifications(
+      unread: json['unread'] as int,
+      notifications: [
+        for (final n in (json['notifications'] as List).cast<Map<String, dynamic>>()) ReceivedNotification.fromJson(n),
+      ],
+    );
+  }
+
+  /// Marks all notifications of the device with Firebase Installation ID [fid] read.
+  Future<void> markNotificationsRead(String fid) => _send('POST', '/api/users/devices/notifications/read', {'token': fid});
 
   /// The API's finish names (e.g. `nonfoil`, or Pokémon's `reverse`) as the screens show them.
   static String _finishLabel(String finish) => switch (finish) {

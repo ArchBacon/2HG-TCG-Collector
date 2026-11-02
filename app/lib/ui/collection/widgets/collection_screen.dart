@@ -10,30 +10,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// One collection, for the selected game: its cards like the catalog shows them, with the same
-/// filters, sorting and layouts. Renamed and deleted from the menu in the header.
+/// One collection or wishlist, for the selected game: its cards like the catalog shows them, with the
+/// same filters, sorting and layouts. Renamed and deleted from the menu in the header.
 class CollectionScreen extends StatelessWidget {
   final CollectionViewModel viewModel;
-  final CatalogViewModel cardsViewModel; // The collection's cards
+  final CatalogViewModel cardsViewModel; // The list's cards
 
   const CollectionScreen({super.key, required this.viewModel, required this.cardsViewModel});
 
   Future<void> _rename(BuildContext context, Color accent) async {
-    final name = await showCollectionNameDialog(context, accent: accent, initial: viewModel.collection?.name ?? '');
+    final kind = viewModel.kind;
+    final name = await showCollectionNameDialog(
+      context,
+      kind: kind,
+      accent: accent,
+      initial: viewModel.collection?.name ?? '',
+    );
     if (name == null || !context.mounted) return;
     await viewModel.rename.execute(name);
     if (context.mounted && viewModel.rename.error) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't rename the collection")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Couldn't rename the ${kind.name}")));
     }
   }
 
   Future<void> _delete(BuildContext context) async {
+    final kind = viewModel.kind;
     final name = viewModel.collection?.name ?? '';
-    if (!await confirmDeleteCollection(context, name: name) || !context.mounted) return;
+    if (!await confirmDeleteCollection(context, kind: kind, name: name) || !context.mounted) return;
     await viewModel.delete.execute();
     if (!context.mounted) return;
     if (viewModel.delete.error) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't delete the collection")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Couldn't delete the ${kind.name}")));
       return;
     }
     context.pop();
@@ -51,11 +58,11 @@ class CollectionScreen extends StatelessWidget {
 
         return CatalogScreen(
           viewModel: cardsViewModel,
-          title: collection?.name ?? 'Collection',
+          title: collection?.name ?? viewModel.kind.label,
           trailingActions: [
             if (collection != null)
               PopupMenuButton<_Action>(
-                tooltip: 'Collection options',
+                tooltip: '${viewModel.kind.label} options',
                 icon: Icon(LucideIcons.ellipsisVertical, color: glass.textPrimary),
                 color: glass.sheet,
                 onSelected: (action) => switch (action) {

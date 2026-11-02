@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "350514832134",
+    "project_id": "hg-collector",
+    "storage_bucket": "hg-collector.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350514832134:android:caf37c0eea21c041513487",
+        "android_client_info": {
+          "package_name": "nl.twohg.tcgcollector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPkHJ0ilrs-OTlzPXYZiu3c5__uBEG2Co"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350514832134:android:81588d0f506726b9513487",
+        "android_client_info": {
+          "package_name": "nl.twohg.tcgcollector.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPkHJ0ilrs-OTlzPXYZiu3c5__uBEG2Co"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

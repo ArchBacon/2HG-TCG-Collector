@@ -1,18 +1,23 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:flutter/material.dart';
 
-/// Asks for a collection's name: for a new collection, or to rename one ([initial] is its name).
-/// Returns the trimmed name, or null when cancelled.
-Future<String?> showCollectionNameDialog(BuildContext context, {required Color accent, String initial = ''}) =>
-    showDialog<String>(
-      context: context,
-      builder: (context) => _NameDialog(accent: accent, initial: initial),
-    );
+/// Asks for a collection's or wishlist's name: for a new one, or to rename one ([initial] is its
+/// name). Returns the trimmed name, or null when cancelled.
+Future<String?> showCollectionNameDialog(
+  BuildContext context, {
+  required ListKind kind,
+  required Color accent,
+  String initial = '',
+}) => showDialog<String>(
+  context: context,
+  builder: (context) => _NameDialog(kind: kind, accent: accent, initial: initial),
+);
 
-/// Asks whether to delete the collection [name] and its cards. True when confirmed.
-Future<bool> confirmDeleteCollection(BuildContext context, {required String name}) async {
+/// Asks whether to delete the collection or wishlist [name] and its cards. True when confirmed.
+Future<bool> confirmDeleteCollection(BuildContext context, {required ListKind kind, required String name}) async {
   final glass = context.glass;
   final confirmed = await showDialog<bool>(
     context: context,
@@ -24,7 +29,7 @@ Future<bool> confirmDeleteCollection(BuildContext context, {required String name
         style: TextStyle(color: glass.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
       ),
       content: Text(
-        "The collection and the cards in it, of every game, are removed. This can't be undone.",
+        "The ${kind.name} and the cards in it, of every game, are removed. This can't be undone.",
         style: TextStyle(color: glass.textSecondary, fontSize: 14),
       ),
       actions: [
@@ -46,10 +51,11 @@ Future<bool> confirmDeleteCollection(BuildContext context, {required String name
 }
 
 class _NameDialog extends StatefulWidget {
+  final ListKind kind;
   final Color accent;
   final String initial;
 
-  const _NameDialog({required this.accent, required this.initial});
+  const _NameDialog({required this.kind, required this.accent, required this.initial});
 
   @override
   State<_NameDialog> createState() => _NameDialogState();
@@ -81,7 +87,7 @@ class _NameDialogState extends State<_NameDialog> {
       backgroundColor: glass.sheet,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(
-        _isNew ? 'New collection' : 'Rename collection',
+        _isNew ? 'New ${widget.kind.name}' : 'Rename ${widget.kind.name}',
         style: TextStyle(color: glass.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
       ),
       content: TextField(
@@ -93,7 +99,10 @@ class _NameDialogState extends State<_NameDialog> {
         cursorColor: widget.accent,
         style: TextStyle(color: glass.textPrimary),
         decoration: InputDecoration(
-          hintText: 'E.g. Binder, Trades, Graded',
+          hintText: switch (widget.kind) {
+            ListKind.collection => 'E.g. Binder, Trades, Graded',
+            ListKind.wishlist => 'E.g. Deck upgrades, Set to finish, Gifts',
+          },
           hintStyle: TextStyle(color: glass.textTertiary),
           counterText: '',
           focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: widget.accent)),

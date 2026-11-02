@@ -6,13 +6,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Bottom sheet with a title and a list of options, the [current] one checked. Returns the picked
 /// option, or null when dismissed. [searchable] adds a field to narrow the options down, for long
-/// lists; the first option (e.g. "All artists") always stays.
+/// lists; the first option (e.g. "All artists") always stays. [searchHint] is the field's hint.
 Future<String?> showOptionSheet(
   BuildContext context, {
   required String title,
   required List<String> options,
   required String current,
   bool searchable = false,
+  String searchHint = 'Search',
 }) {
   return showModalBottomSheet<String>(
     context: context,
@@ -22,7 +23,7 @@ Future<String?> showOptionSheet(
     isScrollControlled: true,
     useSafeArea: true,
     builder: (context) => searchable
-        ? _SearchableOptionSheet(title: title, options: options, current: current)
+        ? _SearchableOptionSheet(title: title, options: options, current: current, hint: searchHint)
         : _OptionSheet(title: title, options: options, current: current),
   );
 }
@@ -57,8 +58,9 @@ class _SearchableOptionSheet extends StatefulWidget {
   final String title;
   final List<String> options;
   final String current;
+  final String hint;
 
-  const _SearchableOptionSheet({required this.title, required this.options, required this.current});
+  const _SearchableOptionSheet({required this.title, required this.options, required this.current, required this.hint});
 
   @override
   State<_SearchableOptionSheet> createState() => _SearchableOptionSheetState();
@@ -90,7 +92,7 @@ class _SearchableOptionSheetState extends State<_SearchableOptionSheet> {
                 onChanged: (value) => setState(() => _search = value),
                 style: TextStyle(color: glass.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Search',
+                  hintText: widget.hint,
                   hintStyle: TextStyle(color: glass.textTertiary),
                   prefixIcon: Icon(LucideIcons.search, size: 18, color: glass.textTertiary),
                   isDense: true,

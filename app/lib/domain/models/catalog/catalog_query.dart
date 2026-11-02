@@ -23,7 +23,7 @@ class CatalogQuery {
   final bool inStore;
   final String search; // Part of the name; empty = any
   final CatalogSort sort;
-  final String? collectionId; // Only the cards in this collection, `owned` being the copies in it; null = all cards
+  final String? listId; // Only the cards in this collection or wishlist (for a collection, `owned` being the copies in it); null = all cards
 
   const CatalogQuery({
     this.setCode,
@@ -34,7 +34,7 @@ class CatalogQuery {
     this.inStore = false,
     this.search = '',
     this.sort = CatalogSort.number,
-    this.collectionId,
+    this.listId,
   });
 
   bool matches(TcgCard card) =>
@@ -56,7 +56,7 @@ class CatalogQuery {
     if (inStore) 'inStore': '1',
     if (search.isNotEmpty) 'search': search,
     if (sort != CatalogSort.number) 'sort': sort.name,
-    'list': ?collectionId,
+    'list': ?listId,
   };
 }
 

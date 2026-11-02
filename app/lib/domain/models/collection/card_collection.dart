@@ -2,8 +2,8 @@
 
 import 'package:app/domain/models/card/tcg_card.dart';
 
-/// A collection the user made, as the Collection tab shows it: its counts and value for one game,
-/// and the cards added to it last. A collection can hold cards of every game.
+/// A collection or wishlist the user made, as its tab shows it: its counts and value for one game,
+/// and the cards added to it last. It can hold cards of every game.
 class CardCollection {
   final String id;
   final String name;
@@ -22,11 +22,11 @@ class CardCollection {
   });
 }
 
-/// Copies of a card in one of the user's collections, in one finish.
+/// Copies of a card in one of the user's collections or wishlists, in one finish.
 class CollectionHolding {
-  final String collectionId;
+  final String listId;
   final String finish; // The API's name for it, e.g. `reverse`
   final int quantity;
 
-  const CollectionHolding({required this.collectionId, required this.finish, required this.quantity});
+  const CollectionHolding({required this.listId, required this.finish, required this.quantity});
 }

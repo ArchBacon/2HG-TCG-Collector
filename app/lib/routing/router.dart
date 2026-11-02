@@ -1,14 +1,15 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/ui/card/widgets/card_screen_container.dart';
 import 'package:app/ui/cart/widgets/cart_screen_container.dart';
 import 'package:app/ui/catalog/widgets/catalog_screen_container.dart';
 import 'package:app/ui/collection/widgets/collection_screen_container.dart';
+import 'package:app/ui/notifications/widgets/notifications_screen.dart';
 import 'package:app/ui/settings/widgets/settings_screen.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:app/ui/shell/app_shell.dart';
 import 'package:app/ui/start/widgets/start_screen_container.dart';
-import 'package:app/ui/wishlist/widgets/wishlist_screen_container.dart';
 import 'package:go_router/go_router.dart';
 
 import 'routes.dart';
@@ -32,22 +33,43 @@ GoRouter router() => GoRouter(
           routes: [
             GoRoute(
               path: Routes.collection,
-              builder: (context, state) => const CollectionsScreenContainer(),
+              builder: (context, state) => const CollectionsScreenContainer(kind: ListKind.collection),
               // A collection, over the tab (keeping the nav bar)
               routes: [
                 GoRoute(
                   path: ':id',
-                  builder: (context, state) => CollectionScreenContainer(collectionId: state.pathParameters['id']!),
+                  builder: (context, state) =>
+                      CollectionScreenContainer(kind: ListKind.collection, collectionId: state.pathParameters['id']!),
                 ),
               ],
             ),
           ],
         ),
         StatefulShellBranch(
-          routes: [GoRoute(path: Routes.wishlist, builder: (context, state) => const WishlistScreenContainer())],
+          routes: [
+            GoRoute(
+              path: Routes.wishlist,
+              builder: (context, state) => const CollectionsScreenContainer(kind: ListKind.wishlist),
+              // A wishlist, over the tab (keeping the nav bar)
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) =>
+                      CollectionScreenContainer(kind: ListKind.wishlist, collectionId: state.pathParameters['id']!),
+                ),
+              ],
+            ),
+          ],
         ),
         StatefulShellBranch(
-          routes: [GoRoute(path: Routes.settings, builder: (context, state) => const SettingsScreen())],
+          routes: [
+            GoRoute(
+              path: Routes.settings,
+              builder: (context, state) => const SettingsScreen(),
+              // The received notifications, over the tab (keeping the nav bar)
+              routes: [GoRoute(path: Routes.notificationsPath, builder: (context, state) => const NotificationsScreenContainer())],
+            ),
+          ],
         ),
       ],
     ),
@@ -55,6 +77,10 @@ GoRouter router() => GoRouter(
     // header; card details from any card; settings from the start screen.
     GoRoute(path: Routes.cart, builder: (context, state) => const CartScreenContainer()),
     GoRoute(path: Routes.card, builder: (context, state) => CardScreenContainer(cardId: state.pathParameters['id']!)),
-    GoRoute(path: Routes.appSettings, builder: (context, state) => const SettingsScreen()),
+    GoRoute(
+      path: Routes.appSettings,
+      builder: (context, state) => const SettingsScreen(),
+      routes: [GoRoute(path: Routes.notificationsPath, builder: (context, state) => const NotificationsScreenContainer())],
+    ),
   ],
 );

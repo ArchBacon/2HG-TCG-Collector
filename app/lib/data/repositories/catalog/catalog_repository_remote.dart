@@ -23,13 +23,13 @@ class CatalogRepositoryRemote implements CatalogRepository {
   final RemoteDataService _remoteDataService;
 
   // Each page (per game and query) and each game's filters are fetched once while the app runs,
-  // and shared by every caller. Not a collection's, nor the owned cards: those change.
+  // and shared by every caller. Not a list's, nor the owned or wishlisted cards: those change.
   final _pages = <String, Future<Result<CatalogPage>>>{};
   final _filters = <Tcg, Future<Result<CatalogFilterOptions>>>{};
 
   @override
   Future<Result<CatalogPage>> getCatalogPage(Tcg tcg, CatalogQuery query, int page) {
-    if (query.collectionId != null || query.owned) {
+    if (query.listId != null || query.owned || query.wishlisted) {
       return _fetch(() => _remoteDataService.getCatalogPage(tcg, query, page), onError: () {});
     }
     final key = Uri(path: tcg.slug, queryParameters: {...query.toParams(), 'page': '$page'}).toString();
@@ -40,8 +40,8 @@ class CatalogRepositoryRemote implements CatalogRepository {
   }
 
   @override
-  Future<Result<CatalogFilterOptions>> getCatalogFilters(Tcg tcg, {String? collectionId}) => collectionId != null
-      ? _fetch(() => _remoteDataService.getCatalogFilters(tcg, collectionId: collectionId), onError: () {})
+  Future<Result<CatalogFilterOptions>> getCatalogFilters(Tcg tcg, {String? listId}) => listId != null
+      ? _fetch(() => _remoteDataService.getCatalogFilters(tcg, listId: listId), onError: () {})
       : _filters[tcg] ??= _fetch(() => _remoteDataService.getCatalogFilters(tcg), onError: () => _filters.remove(tcg));
 
   @override

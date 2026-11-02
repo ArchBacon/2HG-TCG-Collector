@@ -25,6 +25,7 @@ class StartViewModel extends ChangeNotifier {
 
   CollectionSummary? _summary;
   List<TcgCard> _wishlist = const [];
+  bool _disposed = false;
 
   int get collected => _summary?.total.collected ?? 0;
   int get wishlisted => _summary?.total.wishlisted ?? 0;
@@ -55,7 +56,13 @@ class StartViewModel extends ChangeNotifier {
       }
       return wishlist;
     } finally {
-      notifyListeners();
+      if (!_disposed) notifyListeners(); // Left the screen before it loaded
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }

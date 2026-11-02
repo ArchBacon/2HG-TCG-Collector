@@ -25,19 +25,18 @@ class CollectionRepositoryRemote extends CollectionRepository {
       _summary ??= _fetch(_remoteDataService.getCollectionSummary, onError: () => _summary = null);
 
   @override
-  Future<Result<List<CardCollection>>> getCollections(Tcg tcg) => _run(() => _remoteDataService.getCollections(tcg));
+  Future<Result<List<CardCollection>>> getLists(Tcg tcg) => _run(() => _remoteDataService.getLists(kind, tcg));
 
   @override
-  Future<Result<CardCollection>> createCollection(String name) =>
-      _change(() => _remoteDataService.createCollection(uuidV4(), name));
+  Future<Result<CardCollection>> createList(String name) =>
+      _change(() => _remoteDataService.createList(kind, uuidV4(), name));
 
   @override
-  Future<Result<void>> renameCollection(String collectionId, String name) =>
-      _change(() => _remoteDataService.renameCollection(collectionId, name));
+  Future<Result<void>> renameList(String listId, String name) =>
+      _change(() => _remoteDataService.renameList(listId, name));
 
   @override
-  Future<Result<void>> deleteCollection(String collectionId) =>
-      _change(() => _remoteDataService.deleteCollection(collectionId));
+  Future<Result<void>> deleteList(String listId) => _change(() => _remoteDataService.deleteList(listId));
 
   @override
   Future<Result<CollectionOverview>> getCollectionFor(Tcg tcg, {String? collectionId}) =>
@@ -54,11 +53,11 @@ class CollectionRepositoryRemote extends CollectionRepository {
       );
 
   @override
-  Future<Result<List<CollectionHolding>>> getHoldings(TcgCard card) => _run(() => _remoteDataService.getHoldings(card));
+  Future<Result<List<CollectionHolding>>> getHoldings(TcgCard card) => _run(() => _remoteDataService.getHoldings(kind, card));
 
   @override
-  Future<Result<int>> changeQuantity(String collectionId, TcgCard card, String finish, int delta) =>
-      _change(() => _remoteDataService.changeQuantity(collectionId, card, finish, delta, changeId: uuidV4()));
+  Future<Result<int>> changeQuantity(String listId, TcgCard card, String finish, int delta) =>
+      _change(() => _remoteDataService.changeQuantity(listId, card, finish, delta, changeId: uuidV4()));
 
   /// Runs [fetch] as a [Result]. On an error, [onError] drops it from the cache, so the next call
   /// tries again.

@@ -2,6 +2,7 @@
 
 import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/domain/models/collection/card_collection.dart';
+import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
 import 'package:app/ui/shared/glass/layout.dart';
@@ -9,88 +10,101 @@ import 'package:app/ui/shared/glass/option_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Your copies per collection (a stepper each), a row to add the card to a(nother) collection, and
-/// wishlist status (switch); then how many other collectors have and want the card. Copies are of
-/// the selected finish.
-class OwnershipCard extends StatelessWidget {
-  final List<(CardCollection, int)> heldIn; // Collections with copies, and how many
-  final List<CardCollection> addOptions; // Collections it can be added to
+/// The user's lists of one kind on the card page: where the card is (with copies), and the list
+/// the "add to" row adds to.
+class ListRows {
+  final ListKind kind;
+  final List<(CardCollection, int)> heldIn; // Lists with copies, and how many
+  final List<CardCollection> addOptions; // Lists it can be added to
   final CardCollection? addTarget; // Null = none to add to yet
-  final bool wishlisted;
-  final MarketInfo market;
-  final Color accent;
-  final void Function(String collectionId, int delta) onChange;
+  final void Function(String listId, int delta) onChange;
   final ValueChanged<CardCollection> onPickAddTarget;
-  final ValueChanged<bool> onNewCollection; // Makes a collection to add to; true: with a copy in it right away
-  final ValueChanged<bool> onWishlistedChanged;
+  final ValueChanged<bool> onNewList; // Makes a list to add to; true: with a copy in it right away
 
-  const OwnershipCard({
-    super.key,
+  const ListRows({
+    required this.kind,
     required this.heldIn,
     required this.addOptions,
     required this.addTarget,
-    required this.wishlisted,
-    required this.market,
-    required this.accent,
     required this.onChange,
     required this.onPickAddTarget,
-    required this.onNewCollection,
-    required this.onWishlistedChanged,
+    required this.onNewList,
   });
+}
 
-  static const _newCollection = 'New collection…';
+/// Your copies per collection and per wishlist (a stepper each), with a row each to add the card
+/// to a(nother) collection or wishlist; then how many other collectors have and want the card.
+/// Copies are of the selected finish.
+class OwnershipCard extends StatelessWidget {
+  final ListRows collections;
+  final ListRows wishlists;
+  final MarketInfo market;
+  final Color accent;
+
+  const OwnershipCard({
+    super.key,
+    required this.collections,
+    required this.wishlists,
+    required this.market,
+    required this.accent,
+  });
 
   static String _compact(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 
-  Future<void> _pick(BuildContext context) async {
+  static String _addCaption(ListRows lists) =>
+      lists.heldIn.isEmpty ? 'Add to ${lists.kind.name}' : 'Add to another ${lists.kind.name}';
+
+  Future<void> _pick(BuildContext context, ListRows lists) async {
+    final newList = 'New ${lists.kind.name}…';
     final picked = await showOptionSheet(
       context,
-      title: heldIn.isEmpty ? 'Add to collection' : 'Add to another collection',
-      options: [for (final c in addOptions) c.name, _newCollection],
-      current: addTarget?.name ?? _newCollection,
+      title: _addCaption(lists),
+      options: [for (final c in lists.addOptions) c.name, newList],
+      current: lists.addTarget?.name ?? newList,
     );
     if (picked == null) return;
-    if (picked == _newCollection) {
-      onNewCollection(false);
+    if (picked == newList) {
+      lists.onNewList(false);
     } else {
-      onPickAddTarget(addOptions.firstWhere((c) => c.name == picked));
+      lists.onPickAddTarget(lists.addOptions.firstWhere((c) => c.name == picked));
     }
+  }
+
+  List<Widget> _rows(BuildContext context, ListRows lists) {
+    final icon = switch (lists.kind) {
+      ListKind.collection => LucideIcons.layers,
+      ListKind.wishlist => LucideIcons.heart,
+    };
+    final target = lists.addTarget;
+
+    return [
+      for (final (list, quantity) in lists.heldIn)
+        _Row(
+          icon: icon,
+          title: _Title(caption: lists.kind == ListKind.collection ? 'In collection' : 'On wishlist', text: list.name),
+          trailing: _Stepper(value: quantity, onChanged: (value) => lists.onChange(list.id, value - quantity)),
+        ),
+      _Row(
+        icon: lists.heldIn.isEmpty ? icon : LucideIcons.plus,
+        title: _Title(
+          caption: _addCaption(lists),
+          text: target?.name ?? 'New ${lists.kind.name}…',
+          dropdown: true,
+          accent: accent,
+          onTap: () => _pick(context, lists),
+        ),
+        // Adding the first copy moves it up to its own row, and this one offers the next list
+        trailing: _Stepper(value: 0, onChanged: (_) => target == null ? lists.onNewList(true) : lists.onChange(target.id, 1)),
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final target = addTarget;
-
     return GlassListCard(
       rows: [
-        for (final (collection, quantity) in heldIn)
-          _Row(
-            icon: LucideIcons.layers,
-            title: _Title(caption: 'In collection', text: collection.name),
-            trailing: _Stepper(value: quantity, onChanged: (value) => onChange(collection.id, value - quantity)),
-          ),
-        _Row(
-          icon: heldIn.isEmpty ? LucideIcons.layers : LucideIcons.plus,
-          title: _Title(
-            caption: heldIn.isEmpty ? 'Add to collection' : 'Add to another collection',
-            text: target?.name ?? _newCollection,
-            dropdown: true,
-            accent: accent,
-            onTap: () => _pick(context),
-          ),
-          // Adding the first copy moves it up to its own row, and this one offers the next collection
-          trailing: _Stepper(value: 0, onChanged: (_) => target == null ? onNewCollection(true) : onChange(target.id, 1)),
-        ),
-        _Row(
-          icon: LucideIcons.heart,
-          title: const _Title(text: 'On your wishlist'),
-          trailing: Switch(
-            value: wishlisted,
-            activeThumbColor: accent,
-            activeTrackColor: accent.withValues(alpha: 0.35),
-            onChanged: onWishlistedChanged,
-          ),
-        ),
+        ..._rows(context, collections),
+        ..._rows(context, wishlists),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
           child: Row(

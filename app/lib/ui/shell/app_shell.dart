@@ -1,5 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/data/services/remote/push_notifications.dart';
 import 'package:app/ui/shared/glass_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -12,11 +13,12 @@ class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   /// Order must match the branches in the router.
-  static const _items = [
-    GlassNavItem(icon: LucideIcons.library, label: 'Catalog'),
-    GlassNavItem(icon: LucideIcons.layers, label: 'Collection'),
-    GlassNavItem(icon: LucideIcons.heart, label: 'Wishlist'),
-    GlassNavItem(icon: LucideIcons.settings, label: 'Settings'),
+  static final _items = [
+    const GlassNavItem(icon: LucideIcons.library, label: 'Catalog'),
+    const GlassNavItem(icon: LucideIcons.layers, label: 'Collection'),
+    const GlassNavItem(icon: LucideIcons.heart, label: 'Wishlist'),
+    // The unread notifications, which open from the top of the settings
+    GlassNavItem(icon: LucideIcons.settings, label: 'Settings', badge: PushNotifications.unread),
   ];
 
   @override

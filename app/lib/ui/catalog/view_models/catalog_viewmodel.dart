@@ -4,8 +4,10 @@ import 'dart:async';
 
 import 'package:app/data/repositories/catalog/catalog_repository.dart';
 import 'package:app/data/repositories/collection/collection_repository.dart';
+import 'package:app/data/repositories/wishlist/wishlist_repository.dart';
 import 'package:app/domain/models/card/tcg_card.dart';
 import 'package:app/domain/models/catalog/catalog_query.dart';
+import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:app/ui/catalog/widgets/catalog_filter_bar.dart';
 import 'package:app/ui/shared/app_state.dart';
@@ -13,38 +15,45 @@ import 'package:app/utils/result.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
-/// One game's catalog, a page at a time; or, with [collectionId], the cards in that collection;
-/// or, with [ownedOnly], the cards in any of the user's collections, found by the search (none
-/// before something is typed). Filters, sorting and the search in the header ([search]) are applied
-/// by the repository: changing one loads the first page again, and [loadMore] adds the next.
+/// One game's catalog, a page at a time; or, with [listId], the cards in that collection or
+/// wishlist ([listKind]); or, with [listSearch], the cards in any of the user's lists of [listKind],
+/// found by the search (none before something is typed). Filters, sorting and the search in the
+/// header ([search]) are applied by the repository: changing one loads the first page again, and
+/// [loadMore] adds the next.
 ///
 /// The whole catalog also has the cards the user added to their collections last; the others load
-/// their cards again when a collection changes.
+/// their cards again when a collection or wishlist changes.
 class CatalogViewModel extends ChangeNotifier {
   CatalogViewModel({
     required this.tcg,
-    this.collectionId,
-    this.ownedOnly = false,
+    this.listId,
+    this.listKind = ListKind.collection,
+    this.listSearch = false,
     required this._catalogRepository,
     required this._collectionRepository,
+    required this._wishlistRepository,
   }) {
     search.addListener(_onSearchChanged);
-    _collectionRepository.addListener(_onCollectionsChanged);
+    _collectionRepository.addListener(_onListsChanged);
+    // A list's cards show the copies owned and whether they're wishlisted, so either can change them
+    if (!_isCatalog) _wishlistRepository.addListener(_onListsChanged);
     _loadFilterOptions();
     _reload();
     if (_isCatalog) _loadRecentlyAdded();
   }
 
   final Tcg tcg;
-  final String? collectionId;
-  final bool ownedOnly;
+  final String? listId;
+  final ListKind listKind;
+  final bool listSearch;
 
-  bool get _isCatalog => collectionId == null && !ownedOnly;
+  bool get _isCatalog => listId == null && !listSearch;
 
   /// The header's search: the catalog's, shared by the tabs ([cardSearch]); the others' their own.
   late final ValueNotifier<String> search = _isCatalog ? cardSearch : ValueNotifier('');
   final CatalogRepository _catalogRepository;
   final CollectionRepository _collectionRepository;
+  final WishlistRepository _wishlistRepository;
   final _log = Logger('CatalogViewModel');
 
   List<TcgCard> _recentlyAdded = const [];
@@ -64,7 +73,7 @@ class CatalogViewModel extends ChangeNotifier {
   Timer? _searchDebounce;
   bool _disposed = false;
 
-  /// The cards added to the user's collections last, newest first; none for a collection.
+  /// The cards added to the user's collections last, newest first; none for a list.
   List<TcgCard> get recentlyAdded => _recentlyAdded;
 
   CatalogFilters get filters => _filters;
@@ -104,12 +113,12 @@ class CatalogViewModel extends ChangeNotifier {
     setCode: _options.sets.where((s) => s.name == _filters.set).firstOrNull?.code,
     rarity: _filters.rarity,
     artist: _filters.artist,
-    owned: ownedOnly || _filters.owned,
-    wishlisted: _filters.wishlisted,
+    owned: (listSearch && listKind == ListKind.collection) || _filters.owned,
+    wishlisted: (listSearch && listKind == ListKind.wishlist) || _filters.wishlisted,
     inStore: _filters.inStore,
     search: search.value.trim(),
     sort: _sort,
-    collectionId: collectionId,
+    listId: listId,
   );
 
   /// Loads the next page, unless it's already loading or there is none.
@@ -135,7 +144,7 @@ class CatalogViewModel extends ChangeNotifier {
     _loading = true;
     _loadingMore = false;
     notifyListeners();
-    if (ownedOnly && search.value.trim().isEmpty) {
+    if (listSearch && search.value.trim().isEmpty) {
       _loading = false; // Nothing to find before something is typed
       notifyListeners();
       return;
@@ -164,7 +173,7 @@ class CatalogViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onCollectionsChanged() {
+  void _onListsChanged() {
     if (_isCatalog) {
       _loadRecentlyAdded();
     } else {
@@ -187,7 +196,7 @@ class CatalogViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadFilterOptions() async {
-    final result = await _catalogRepository.getCatalogFilters(tcg, collectionId: collectionId);
+    final result = await _catalogRepository.getCatalogFilters(tcg, listId: listId);
     if (_disposed) return;
     switch (result) {
       case Ok(:final value):
@@ -203,7 +212,8 @@ class CatalogViewModel extends ChangeNotifier {
     _disposed = true;
     search.removeListener(_onSearchChanged);
     if (!_isCatalog) search.dispose(); // Its own
-    _collectionRepository.removeListener(_onCollectionsChanged);
+    _collectionRepository.removeListener(_onListsChanged);
+    _wishlistRepository.removeListener(_onListsChanged);
     _searchDebounce?.cancel();
     super.dispose();
   }

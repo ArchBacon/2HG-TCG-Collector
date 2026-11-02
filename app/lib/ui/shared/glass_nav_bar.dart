@@ -2,6 +2,8 @@
 
 import 'dart:ui';
 
+import 'package:app/themes/glass_theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../tmp/shared/theme/app_colors.dart';
@@ -11,7 +13,10 @@ class GlassNavItem {
   final IconData icon;
   final String label;
 
-  const GlassNavItem({required this.icon, required this.label});
+  /// A count on a bubble over the icon (e.g. unread notifications); hidden at 0.
+  final ValueListenable<int>? badge;
+
+  const GlassNavItem({required this.icon, required this.label, this.badge});
 }
 
 /// Bottom navigation bar with the same frosted-glass look as the GlassAppBar.
@@ -77,6 +82,24 @@ class _NavButton extends StatelessWidget {
 
   const _NavButton({required this.item, required this.selected, required this.onTap});
 
+  /// [icon] with the item's count on a bubble, when it has one above 0.
+  Widget _badged(BuildContext context, Widget icon) {
+    final badge = item.badge;
+    if (badge == null) return icon;
+
+    final glass = context.glass;
+    return ValueListenableBuilder(
+      valueListenable: badge,
+      builder: (context, count, _) => Badge(
+        isLabelVisible: count > 0,
+        label: Text(count > 99 ? '99+' : '$count'),
+        backgroundColor: glass.badge,
+        textColor: glass.onBadge,
+        child: icon,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -101,7 +124,7 @@ class _NavButton extends StatelessWidget {
                 color: selected ? AppColors.brandGreen.withValues(alpha: 0.15) : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(item.icon, size: 20, color: color),
+              child: _badged(context, Icon(item.icon, size: 20, color: color)),
             ),
             const SizedBox(height: 4),
             Text(

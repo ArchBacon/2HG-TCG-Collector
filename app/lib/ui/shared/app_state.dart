@@ -1,7 +1,7 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 // App-wide UI state shared by the screens, until it moves into view models / settings storage.
-// selectedGame, openLastGameOnStart and themeModeSetting are saved between launches
+// selectedGame, openLastGameOnStart, themeModeSetting and the notification switches are saved between launches
 // (AppPreferences).
 
 import 'package:app/tmp/shared/models/tcg.dart';
@@ -18,6 +18,14 @@ final cardSearch = ValueNotifier('');
 
 /// Light / dark / system, picked in the settings.
 final themeModeSetting = ValueNotifier(ThemeMode.system);
+
+/// "Wishlist cards in store" in the settings: a notification when a wishlisted card comes into
+/// stock. Sent to the API with the device's token (PushNotifications).
+final wishlistNotifications = ValueNotifier(true);
+
+/// "News and events" in the settings: the shop's announcements (events, new sets, offers). Sent to
+/// the API with the device's token (PushNotifications).
+final newsNotifications = ValueNotifier(true);
 
 /// The installed app's version and build number, e.g. '0.0.1 (1)'. From pubspec.yaml at build
 /// time; set in main before runApp.

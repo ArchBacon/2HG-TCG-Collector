@@ -2,6 +2,8 @@
 
 import 'package:app/themes/game_palette.dart';
 import 'package:app/ui/settings/widgets/appearance_settings.dart';
+import 'package:app/ui/settings/widgets/notification_settings.dart';
+import 'package:app/ui/settings/widgets/notifications_entry.dart';
 import 'package:app/ui/settings/widgets/other_settings.dart';
 import 'package:app/ui/settings/widgets/storage_settings.dart';
 import 'package:app/ui/settings/widgets/sync_settings.dart';
@@ -26,10 +28,11 @@ class SettingsScreen extends StatelessWidget {
           title: 'Settings',
           showGameSwitcher: false,
           children: [
+            const NotificationsEntry(),
             SyncSettings(accent: accent),
             AppearanceSettings(game: game, accent: accent),
             StorageSettings(accent: accent),
-            // NotificationSettings(accent: accent),
+            NotificationSettings(accent: accent),
             // const StoreSettings(),
             // const CollectionDataSettings(),
             const AboutSettings(),

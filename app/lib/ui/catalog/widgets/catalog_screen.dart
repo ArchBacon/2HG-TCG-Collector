@@ -1,5 +1,6 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
+import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/themes/game_palette.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/ui/catalog/view_models/catalog_viewmodel.dart';
@@ -73,8 +74,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
         title: widget.title,
         game: viewModel.tcg,
         trailingActions: widget.trailingActions,
-        search: viewModel.collectionId == null ? null : viewModel.search,
-        searchHint: viewModel.collectionId == null ? null : 'Search collection',
+        search: viewModel.listId == null ? null : viewModel.search,
+        searchHint: viewModel.listId == null ? null : 'Search ${viewModel.listKind.name}',
         children: [
           if (viewModel.recentlyAdded.isNotEmpty) ...[
             RecentlyAddedRow(cards: viewModel.recentlyAdded),
@@ -86,7 +87,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
             rarities: viewModel.rarities,
             artists: viewModel.artists,
             accent: accent,
-            showOwned: viewModel.collectionId == null, // A collection's cards all are
+            // A collection's cards all are owned, a wishlist's all wishlisted
+            showOwned: viewModel.listId == null || viewModel.listKind != ListKind.collection,
+            showWishlisted: viewModel.listId == null || viewModel.listKind != ListKind.wishlist,
             onChanged: (filters) => viewModel.filters = filters,
           ),
           const SizedBox(height: 16),
@@ -103,7 +106,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           else if (cards.isEmpty)
             _NoResults(
               failed: viewModel.failed,
-              message: viewModel.collectionId != null && viewModel.filters.isEmpty && viewModel.search.value.trim().isEmpty
+              message: viewModel.listId != null && viewModel.filters.isEmpty && viewModel.search.value.trim().isEmpty
                   ? 'No ${viewModel.tcg.displayName} cards in here yet. Add them from a card\'s page.'
                   : 'No cards match these filters',
             )

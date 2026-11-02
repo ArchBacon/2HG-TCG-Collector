@@ -62,6 +62,7 @@ class CatalogFilterBar extends StatelessWidget {
   final List<String> artists;
   final Color accent; // For selected chips
   final bool showOwned; // The "owned" chip; not for a collection's cards
+  final bool showWishlisted; // The "wishlisted" chip; not for a wishlist's cards
   final ValueChanged<CatalogFilters> onChanged;
 
   const CatalogFilterBar({
@@ -72,6 +73,7 @@ class CatalogFilterBar extends StatelessWidget {
     required this.artists,
     required this.accent,
     this.showOwned = true,
+    this.showWishlisted = true,
     required this.onChanged,
   });
 
@@ -85,6 +87,8 @@ class CatalogFilterBar extends StatelessWidget {
       title: 'Set',
       options: [_allSets, ...sets],
       current: filters.set ?? _allSets,
+      searchable: true,
+      searchHint: 'Search sets',
     );
     if (picked != null) onChanged(filters.withSet(picked == _allSets ? null : picked));
   }
@@ -106,6 +110,7 @@ class CatalogFilterBar extends StatelessWidget {
       options: [_allArtists, ...artists],
       current: filters.artist ?? _allArtists,
       searchable: true,
+      searchHint: 'Search artists',
     );
     if (picked != null) onChanged(filters.withArtist(picked == _allArtists ? null : picked));
   }
@@ -147,13 +152,14 @@ class CatalogFilterBar extends StatelessWidget {
             accent: accent,
             onTap: () => onChanged(filters.withOwned(!filters.owned)),
           ),
-          _FilterChip(
-            label: 'Wishlisted',
-            icon: LucideIcons.heart,
-            selected: filters.wishlisted,
-            accent: accent,
-            onTap: () => onChanged(filters.withWishlisted(!filters.wishlisted)),
-          ),
+          if (showWishlisted)
+            _FilterChip(
+              label: 'Wishlisted',
+              icon: LucideIcons.heart,
+              selected: filters.wishlisted,
+              accent: accent,
+              onTap: () => onChanged(filters.withWishlisted(!filters.wishlisted)),
+            ),
           _FilterChip(
             label: 'In store',
             icon: LucideIcons.shoppingCart,
