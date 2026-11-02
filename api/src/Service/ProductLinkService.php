@@ -20,6 +20,7 @@ final readonly class ProductLinkService
     public function __construct(
         private CardListingRepository $listings,
         private EntityManagerInterface $entityManager,
+        private WishlistNotifier $notifier,
     ) {}
 
     /**
@@ -46,10 +47,14 @@ final readonly class ProductLinkService
             $listing->cardId = $cardId;
             $listing->finish = $finish;
         }
-        $listing->syncConditions(ShopFeed::conditions($product->payload ?? []));
+        $cameIntoStock = $listing->syncConditions(ShopFeed::conditions($product->payload ?? []));
 
         $this->entityManager->remove($product);
         $this->entityManager->flush();
+
+        if ($cameIntoStock) {
+            $this->notifier->recordInStock($game, [$cardId]);
+        }
 
         return $listing;
     }

@@ -20,6 +20,9 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
+        dql:
+            string_functions:
+                NATURAL_SORT_KEY: App\Doctrine\NaturalSortKey
         mappings:
             App:
                 type: attribute

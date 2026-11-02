@@ -1,0 +1,7 @@
+{# Who an announcement goes to, in a few words. Expects: announcement. #}
+{% if announcement.forEveryone %}
+    Everyone
+{%- else -%}
+    {{ announcement.games|join(', ') }} collectors
+    <span class="text-slate-400">({{ announcement.lists|map(l => l == 'collection' ? 'collection' : 'wishlist')|join(' or ') }})</span>
+{%- endif %}

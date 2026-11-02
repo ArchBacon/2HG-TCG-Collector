@@ -4,13 +4,18 @@ namespace App\Service;
 
 use App\ApiResource\Card;
 use App\ApiResource\Set;
+use App\Entity\CardList;
+use App\Entity\CardListEntry;
 use App\Entity\CardListingCondition;
+use App\Entity\User;
+use App\Enum\CardListType;
 use App\Enum\Game;
 use App\Games\MTG\Entity\Card as MtgCard;
 use App\Games\Pokemon\Entity\Card as PokemonCard;
 use DateTimeImmutable;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -25,70 +30,136 @@ final readonly class UserCardService
     public function __construct(private EntityManagerInterface $entityManager) {}
 
     /**
-     * Just what's needed to filter and sort every card of $game, without loading the cards
-     * themselves: in set order (newest set first) and number order.
+     * One page of $game's cards that pass $filters, as ids in $sort order, and how many pass in
+     * total. Filtered, sorted and paged by the database, so only the page itself is loaded.
      *
-     * @return list<array{id: Uuid, name: string, number: string, rarity: ?string, artist: ?string, setCode: string, setName: string}>
+     * Sorts: `number` (set order, newest set first, then number), `priceHigh` / `priceLow` (lowest
+     * price in stock; cards not in stock last / first), `name`. Ties keep `number` order.
+     *
+     * @param array{set: string, rarity: string, artist: string, search: string, owned: bool, wishlisted: bool, inStore: bool} $filters empty strings and false filter nothing
+     * @param ?CardList $list only the cards in this collection or wishlist
+     *
+     * @return array{total: int, ids: list<Uuid>}
      */
-    public function findCatalogRows(Game $game): array
+    public function findCatalogPage(Game $game, User $user, ?CardList $list, array $filters, string $sort, int $page, int $perPage): array
     {
-        /** @var list<array{id: Uuid, name: string, number: string, rarity: ?string, artist: ?string, setCode: string, setName: string, releasedAt: ?\DateTimeInterface}> $rows */
-        $rows = $this->entityManager->createQueryBuilder()
-            ->select('c.id AS id', 'c.name AS name', 'c.number AS number', 'c.rarity AS rarity', 'c.artist AS artist', 's.code AS setCode', 's.name AS setName', 's.releasedAt AS releasedAt')
+        $query = $this->entityManager->createQueryBuilder()
             ->from($game->cardClass(), 'c')
-            ->join('c.set', 's')
-            ->getQuery()
-            ->getArrayResult();
+            ->join('c.set', 's');
+        if ($list !== null) {
+            self::onlyInList($query, $list);
+        }
+        foreach (['set' => 's.code', 'rarity' => 'c.rarity', 'artist' => 'c.artist'] as $filter => $field) {
+            if ($filters[$filter] !== '') {
+                $query->andWhere("$field = :$filter")->setParameter($filter, $filters[$filter]);
+            }
+        }
+        if ($filters['search'] !== '') {
+            // The column's collation already ignores case
+            $query->andWhere('c.name LIKE :search')->setParameter('search', '%' . addcslashes($filters['search'], '%_\\') . '%');
+        }
+        foreach (['owned' => CardListType::Collection, 'wishlisted' => CardListType::Wishlist] as $filter => $type) {
+            if ($filters[$filter]) {
+                $query
+                    ->andWhere("EXISTS (SELECT {$filter}E.id FROM " . CardListEntry::class . " {$filter}E JOIN {$filter}E.list {$filter}L"
+                        . " WHERE {$filter}L.user = :user AND {$filter}L.type = :{$filter}Type AND {$filter}E.cardId = c.id)")
+                    ->setParameter('user', $user->id, 'uuid')
+                    ->setParameter("{$filter}Type", $type->value);
+            }
+        }
+        if ($filters['inStore']) {
+            $query
+                ->andWhere('EXISTS (SELECT storeK.id FROM ' . CardListingCondition::class . ' storeK JOIN storeK.listing storeL'
+                    . ' WHERE storeL.game = :storeGame AND storeL.cardId = c.id AND storeK.stock > 0)')
+                ->setParameter('storeGame', $game->value);
+        }
 
-        usort($rows, static fn (array $a, array $b): int
-            => [$b['releasedAt'], $a['setCode']] <=> [$a['releasedAt'], $b['setCode']]
-            ?: strnatcmp($a['number'], $b['number']));
+        $total = (int) (clone $query)->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
 
-        return array_map(static function (array $row): array {
-            unset($row['releasedAt']);
+        $query->select('c.id AS id');
+        if ($sort === 'priceHigh' || $sort === 'priceLow') {
+            // MariaDB sorts NULL (not in stock) first ascending and last descending
+            $query
+                ->addSelect('(SELECT MIN(priceK.price) FROM ' . CardListingCondition::class . ' priceK JOIN priceK.listing priceL'
+                    . ' WHERE priceL.game = :priceGame AND priceL.cardId = c.id AND priceK.stock > 0) AS HIDDEN price')
+                ->setParameter('priceGame', $game->value)
+                ->addOrderBy('price', $sort === 'priceHigh' ? 'DESC' : 'ASC');
+        } elseif ($sort === 'name') {
+            $query->addOrderBy('c.name', 'ASC');
+        }
+        $query
+            ->addSelect('NATURAL_SORT_KEY(c.number) AS HIDDEN numberKey')
+            ->addOrderBy('s.releasedAt', 'DESC')
+            ->addOrderBy('s.code', 'ASC')
+            ->addOrderBy('numberKey', 'ASC')
+            ->addOrderBy('c.id', 'ASC') // Stable pages when everything else ties
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage);
 
-            return $row;
-        }, $rows);
+        /** @var list<array{id: Uuid}> $rows */
+        $rows = $query->getQuery()->getArrayResult();
+
+        return ['total' => $total, 'ids' => array_column($rows, 'id')];
     }
 
     /**
      * The sets of $game, newest first, and the rarities and artists (A to Z) its cards have, to
      * filter the catalog on.
      *
+     * @param ?CardList $list only those of the cards in this collection or wishlist
+     *
      * @return array{sets: list<array{code: string, name: string}>, rarities: list<string>, artists: list<string>}
      */
-    public function findCatalogFilters(Game $game): array
+    public function findCatalogFilters(Game $game, ?CardList $list = null): array
     {
-        /** @var list<array{code: string, name: string}> $sets */
-        $sets = $this->entityManager->createQueryBuilder()
-            ->select('s.code AS code', 's.name AS name')
-            ->from($game->setClass(), 's')
-            ->orderBy('s.releasedAt', 'DESC')
-            ->addOrderBy('s.code', 'ASC')
-            ->getQuery()
-            ->getArrayResult();
+        if ($list === null) {
+            /** @var list<array{code: string, name: string}> $sets */
+            $sets = $this->entityManager->createQueryBuilder()
+                ->select('s.code AS code', 's.name AS name')
+                ->from($game->setClass(), 's')
+                ->orderBy('s.releasedAt', 'DESC')
+                ->addOrderBy('s.code', 'ASC')
+                ->getQuery()
+                ->getArrayResult();
+        } else {
+            $query = $this->entityManager->createQueryBuilder()
+                ->select('DISTINCT s.code AS code', 's.name AS name', 's.releasedAt AS releasedAt')
+                ->from($game->cardClass(), 'c')
+                ->join('c.set', 's')
+                ->orderBy('s.releasedAt', 'DESC')
+                ->addOrderBy('s.code', 'ASC');
+            self::onlyInList($query, $list);
+            /** @var list<array{code: string, name: string, releasedAt: ?\DateTimeInterface}> $rows */
+            $rows = $query->getQuery()->getArrayResult();
+            $sets = array_map(static fn (array $row): array => ['code' => $row['code'], 'name' => $row['name']], $rows);
+        }
 
-        /** @var list<string> $rarities */
-        $rarities = $this->entityManager->createQueryBuilder()
-            ->select('DISTINCT c.rarity')
-            ->from($game->cardClass(), 'c')
-            ->where('c.rarity IS NOT NULL')
-            ->andWhere("c.rarity <> ''")
-            ->orderBy('c.rarity', 'ASC')
-            ->getQuery()
-            ->getSingleColumnResult();
+        $distinct = function (string $field) use ($game, $list): array {
+            $query = $this->entityManager->createQueryBuilder()
+                ->select("DISTINCT c.$field")
+                ->from($game->cardClass(), 'c')
+                ->where("c.$field IS NOT NULL")
+                ->andWhere("c.$field <> ''")
+                ->orderBy("c.$field", 'ASC');
+            if ($list !== null) {
+                self::onlyInList($query, $list);
+            }
 
-        /** @var list<string> $artists */
-        $artists = $this->entityManager->createQueryBuilder()
-            ->select('DISTINCT c.artist')
-            ->from($game->cardClass(), 'c')
-            ->where('c.artist IS NOT NULL')
-            ->andWhere("c.artist <> ''")
-            ->orderBy('c.artist', 'ASC')
-            ->getQuery()
-            ->getSingleColumnResult();
+            /** @var list<string> */
+            return $query->getQuery()->getSingleColumnResult();
+        };
 
-        return ['sets' => $sets, 'rarities' => $rarities, 'artists' => $artists];
+        return ['sets' => $sets, 'rarities' => $distinct('rarity'), 'artists' => $distinct('artist')];
+    }
+
+    /**
+     * Narrows $query (cards as `c`) to the cards in $list.
+     */
+    private static function onlyInList(QueryBuilder $query, CardList $list): void
+    {
+        $query
+            ->andWhere('EXISTS (SELECT listE.id FROM ' . CardListEntry::class . ' listE WHERE listE.list = :list AND listE.cardId = c.id)')
+            ->setParameter('list', $list->id, 'uuid');
     }
 
     /**

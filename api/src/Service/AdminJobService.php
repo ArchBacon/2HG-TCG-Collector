@@ -85,6 +85,7 @@ final readonly class AdminJobService
      */
     public const array CRON_JOBS = [
         ['schedule' => '30 3 * * *', 'command' => 'api:cleanup', 'does' => 'Deletes expired sync codes and old change ids, daily.', 'action' => 'cleanup'],
+        ['schedule' => '*/5 * * * *', 'command' => 'api:notifications', 'does' => 'Wishlist notifications: builds the day\'s pushes after NOTIFY_BUILD_AT and sends them between NOTIFY_SEND_FROM and NOTIFY_SEND_UNTIL (ADMIN_TIMEZONE). Does nothing otherwise.', 'action' => null],
         ['schedule' => '* * * * *', 'command' => 'api:admin:start-scheduled --due', 'does' => 'Starts scheduled jobs that are due, should their waiter have died (e.g. a restart). Visiting this page does the same.', 'action' => null],
     ];
 
@@ -232,10 +233,11 @@ final readonly class AdminJobService
 
     /**
      * Starts a console command ($command: its name and arguments) detached from this request.
+     * Outside the job queue: also for short things such as sending announcements now.
      *
      * @param list<string> $command
      */
-    private function launch(array $command): void
+    public function launch(array $command): void
     {
         $php = new PhpExecutableFinder()->find() ?: 'php';
         $runner = [$php, $this->projectDir . '/bin/console', ...$command];

@@ -45,7 +45,8 @@ final readonly class UserCardController
      * - `set`: a set code; `rarity`; `artist`
      * - `owned`, `wishlisted`, `inStore`: `1` for only those cards
      * - `search`: part of the name, any case
-     * - `list`: a collection's id, for only the cards in it; `owned` is then the copies in it
+     * - `list`: a collection's or wishlist's id, for only the cards in it; for a collection, `owned`
+     *   is then the copies in it
      * - `sort`: `number` (set order, newest set first, then number; the default), `priceHigh`,
      *   `priceLow` or `name`
      */
@@ -54,94 +55,51 @@ final readonly class UserCardController
     {
         $query = $request->query;
         $page = max(1, $query->getInt('page', 1));
-        $set = $query->getString('set');
-        $rarity = $query->getString('rarity');
-        $artist = $query->getString('artist');
-        $search = trim($query->getString('search'));
-        $inList = $this->findListQuantities($user, $game, $request);
+        $list = $this->findList($user, $request);
+
+        $result = $this->cards->findCatalogPage($game, $user, $list, [
+            'set' => $query->getString('set'),
+            'rarity' => $query->getString('rarity'),
+            'artist' => $query->getString('artist'),
+            'search' => trim($query->getString('search')),
+            'owned' => $query->getBoolean('owned'),
+            'wishlisted' => $query->getBoolean('wishlisted'),
+            'inStore' => $query->getBoolean('inStore'),
+        ], $query->getString('sort', 'number'), $page, self::PER_PAGE);
 
         $storeState = $this->cards->findStoreState($game);
         $quantities = $this->entries->sumQuantitiesByCard($user, $game);
-        $state = static function (array $row) use ($quantities, $inList): array {
-            $state = $quantities[$row['id']->toRfc4122()] ?? [];
-            if ($inList !== null) {
-                $state[CardListType::Collection->value] = $inList[$row['id']->toRfc4122()] ?? 0; // The copies in the list
-            }
+        $inList = $list?->type === CardListType::Collection
+            ? $this->entries->sumQuantitiesByListAndCard($user, CardListType::Collection, $game)[$list->id->toRfc4122()] ?? []
+            : null; // A wishlist's cards keep the copies over all collections
 
-            return $state;
-        };
-
-        $rows = array_values(array_filter(
-            $this->cards->findCatalogRows($game),
-            static fn (array $row): bool => ($inList === null || isset($inList[$row['id']->toRfc4122()]))
-                && ($set === '' || $row['setCode'] === $set)
-                && ($rarity === '' || $row['rarity'] === $rarity)
-                && ($artist === '' || $row['artist'] === $artist)
-                && (!$query->getBoolean('owned') || isset($state($row)[CardListType::Collection->value]))
-                && (!$query->getBoolean('wishlisted') || isset($state($row)[CardListType::Wishlist->value]))
-                && (!$query->getBoolean('inStore') || isset($storeState[$row['id']->toRfc4122()]))
-                && ($search === '' || mb_stripos($row['name'], $search) !== false),
-        ));
-
-        $price = static fn (array $row): float => $storeState[$row['id']->toRfc4122()]['price'] ?? 0;
-        match ($query->getString('sort', 'number')) {
-            'priceHigh' => usort($rows, static fn (array $a, array $b): int => $price($b) <=> $price($a)),
-            'priceLow' => usort($rows, static fn (array $a, array $b): int => $price($a) <=> $price($b)),
-            'name' => usort($rows, static fn (array $a, array $b): int => strnatcasecmp($a['name'], $b['name'])),
-            default => null, // Already in number order
-        };
-
-        $pageRows = array_slice($rows, ($page - 1) * self::PER_PAGE, self::PER_PAGE);
-        $cards = $this->cards->findCards($game, array_column($pageRows, 'id'));
+        $cards = $this->cards->findCards($game, $result['ids']);
         $entries = [];
-        foreach ($pageRows as $row) {
-            $card = $cards[$row['id']->toRfc4122()];
-            $entries[] = $this->cards->normalizeEntry($card, $storeState, $this->userState($state($row)));
+        foreach ($result['ids'] as $id) {
+            $state = $quantities[$id->toRfc4122()] ?? [];
+            if ($inList !== null) {
+                $state[CardListType::Collection->value] = $inList[$id->toRfc4122()] ?? 0; // The copies in the list
+            }
+            $entries[] = $this->cards->normalizeEntry($cards[$id->toRfc4122()], $storeState, $this->userState($state));
         }
 
-        return new JsonResponse(['total' => count($rows), 'page' => $page, 'perPage' => self::PER_PAGE, 'cards' => $entries]);
+        return new JsonResponse(['total' => $result['total'], 'page' => $page, 'perPage' => self::PER_PAGE, 'cards' => $entries]);
     }
 
     /**
      * What the catalog of $game can be filtered on: its sets (newest first), rarities and artists.
-     * With `?list=<id>`, only those of the cards in that collection.
+     * With `?list=<id>`, only those of the cards in that collection or wishlist.
      */
     #[Route('/catalog/{game}/filters', requirements: ['game' => new EnumRequirement(Game::class)], methods: ['GET'])]
     public function catalogFilters(#[CurrentUser] User $user, Game $game, Request $request): JsonResponse
     {
-        $inList = $this->findListQuantities($user, $game, $request);
-        if ($inList === null) {
-            return new JsonResponse($this->cards->findCatalogFilters($game));
-        }
-
-        $sets = $rarities = $artists = [];
-        foreach ($this->cards->findCatalogRows($game) as $row) {
-            if (!isset($inList[$row['id']->toRfc4122()])) {
-                continue;
-            }
-            $sets[$row['setCode']] ??= ['code' => $row['setCode'], 'name' => $row['setName']]; // Rows are newest set first
-            if ($row['rarity'] !== null && $row['rarity'] !== '') {
-                $rarities[$row['rarity']] = true;
-            }
-            if ($row['artist'] !== null && $row['artist'] !== '') {
-                $artists[$row['artist']] = true;
-            }
-        }
-        $rarities = array_map(strval(...), array_keys($rarities));
-        $artists = array_map(strval(...), array_keys($artists));
-        sort($rarities);
-        sort($artists);
-
-        return new JsonResponse(['sets' => array_values($sets), 'rarities' => $rarities, 'artists' => $artists]);
+        return new JsonResponse($this->cards->findCatalogFilters($game, $this->findList($user, $request)));
     }
 
     /**
-     * Copies per card (keyed by id, RFC 4122) in the collection named by `?list=<id>`; null without
-     * one.
-     *
-     * @return ?array<string, int>
+     * The user's collection or wishlist named by `?list=<id>`; null without one.
      */
-    private function findListQuantities(User $user, Game $game, Request $request): ?array
+    private function findList(User $user, Request $request): ?CardList
     {
         $id = $request->query->getString('list');
         if ($id === '') {
@@ -149,11 +107,11 @@ final readonly class UserCardController
         }
 
         $list = Uuid::isValid($id) ? $this->lists->find(Uuid::fromString($id)) : null;
-        if (!$list instanceof CardList || !$list->user->id->equals($user->id) || $list->type !== CardListType::Collection) {
-            throw new NotFoundHttpException("No collection with id $id.");
+        if (!$list instanceof CardList || !$list->user->id->equals($user->id)) {
+            throw new NotFoundHttpException("No list with id $id.");
         }
 
-        return $this->entries->sumQuantitiesByListAndCard($user, CardListType::Collection, $game)[$list->id->toRfc4122()] ?? [];
+        return $list;
     }
 
     /**

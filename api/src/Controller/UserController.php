@@ -32,6 +32,9 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/api/users')]
 final class UserController
 {
+    private const string FIRST_COLLECTION = 'My Collection';
+    private const string FIRST_WISHLIST = 'My Wishlist';
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly CardListEntryRepository $entries,
@@ -42,8 +45,9 @@ final class UserController
     ) {}
 
     /**
-     * Creates a new anonymous user. The token is only ever returned here; the server keeps just a
-     * hash of its secret part, so a device that loses it has to create a new user.
+     * Creates a new anonymous user, with a collection and a wishlist to start with (normal lists,
+     * so they can be renamed and deleted). The token is only ever returned here; the server keeps
+     * just a hash of its secret part, so a device that loses it has to create a new user.
      */
     #[Route('', methods: ['POST'])]
     public function create(): JsonResponse
@@ -52,6 +56,8 @@ final class UserController
         $user = new User(User::hashSecret($secret));
 
         $this->entityManager->persist($user);
+        $this->entityManager->persist(new CardList(Uuid::v7(), $user, CardListType::Collection, self::FIRST_COLLECTION));
+        $this->entityManager->persist(new CardList(Uuid::v7(), $user, CardListType::Wishlist, self::FIRST_WISHLIST));
         $this->entityManager->flush();
 
         return new JsonResponse([

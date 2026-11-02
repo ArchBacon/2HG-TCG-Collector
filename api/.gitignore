@@ -21,3 +21,6 @@ phpstan.neon
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+# Firebase service account key (FIREBASE_CREDENTIALS): a secret, never commit it
+/config/firebase-service-account.json

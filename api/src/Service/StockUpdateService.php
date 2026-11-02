@@ -4,10 +4,12 @@ namespace App\Service;
 
 use App\Entity\CardListing;
 use App\Entity\UnmatchedProduct;
+use App\Enum\Game;
 use App\Enum\Language;
 use App\Repository\CardListingRepository;
 use App\Repository\UnmatchedProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Uid\Uuid;
 use function array_chunk;
 use function array_column;
 use function count;
@@ -35,6 +37,7 @@ final readonly class StockUpdateService
         private UnmatchedProductRepository $unmatched,
         private ProductMatcher $matcher,
         private EntityManagerInterface $entityManager,
+        private WishlistNotifier $notifier,
     ) {}
 
     /**
@@ -48,10 +51,19 @@ final readonly class StockUpdateService
         $lang = is_string($read['language']) ? Language::tryFrom($read['language']) : null;
         $result = ['products' => count($read['products']), 'updated' => 0, 'linked' => 0, 'unmatched' => 0, 'skipped' => $read['skipped']];
 
+        $inStock = [];
         foreach (array_chunk($read['products'], self::CHUNK_SIZE) as $chunk) {
-            $this->applyChunk($chunk, $lang, $result);
+            $this->applyChunk($chunk, $lang, $result, $inStock);
             $this->entityManager->flush();
             $this->entityManager->clear();
+        }
+
+        // After the stock is saved: users with these cards on a wishlist get a notice
+        foreach ($inStock as $game => $cardIds) {
+            $gameCase = Game::tryFrom($game);
+            if ($gameCase !== null) {
+                $this->notifier->recordInStock($gameCase, $cardIds);
+            }
         }
 
         return $result;
@@ -60,8 +72,9 @@ final readonly class StockUpdateService
     /**
      * @param list<ShopProduct> $products
      * @param StockUpdateResult $result
+     * @param array<string, list<Uuid>> $inStock cards that came into stock, per game
      */
-    private function applyChunk(array $products, ?Language $lang, array &$result): void
+    private function applyChunk(array $products, ?Language $lang, array &$result, array &$inStock): void
     {
         $productIds = array_column($products, 'productId');
         $listings = $this->indexByProductId($this->listings->findBy(['productId' => $productIds]));
@@ -72,7 +85,9 @@ final readonly class StockUpdateService
 
             $listing = $listings[$productId] ?? null;
             if ($listing !== null) {
-                $listing->syncConditions($product['conditions']);
+                if ($listing->syncConditions($product['conditions'])) {
+                    $inStock[$listing->game][] = $listing->cardId;
+                }
                 $result['updated']++;
                 continue;
             }
@@ -83,7 +98,9 @@ final readonly class StockUpdateService
                 $taken = $this->listings->findOneBy(['game' => $match->game->value, 'cardId' => $match->cardId, 'finish' => $match->finish]);
                 if ($taken === null) {
                     $listing = new CardListing($match->game->value, $match->cardId, $match->finish, $productId);
-                    $listing->syncConditions($product['conditions']);
+                    if ($listing->syncConditions($product['conditions'])) {
+                        $inStock[$listing->game][] = $listing->cardId;
+                    }
                     $this->entityManager->persist($listing);
                     $this->entityManager->flush(); // So the next product sees this card + finish as taken
                     $listings[$productId] = $listing; // In case the update has it twice

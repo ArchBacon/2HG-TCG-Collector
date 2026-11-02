@@ -76,12 +76,14 @@ class CardListing
 
     /**
      * Makes the conditions what the shop sent: updates the known ones, adds new ones, and removes
-     * the ones the shop no longer has.
+     * the ones the shop no longer has. Returns whether that brought it into stock: none of its
+     * conditions in stock before, and at least one now (for wishlist notifications).
      *
      * @param list<ShopCondition> $conditions
      */
-    public function syncConditions(array $conditions): void
+    public function syncConditions(array $conditions): bool
     {
+        $wasInStock = $this->isInStock();
         $known = [];
         foreach ($this->conditions as $condition) {
             $known[$condition->variantId] = $condition;
@@ -105,5 +107,13 @@ class CardListing
                 $this->conditions->removeElement($condition);
             }
         }
+
+        return !$wasInStock && $this->isInStock();
+    }
+
+    /** Whether any of its conditions is in stock. */
+    public function isInStock(): bool
+    {
+        return $this->conditions->exists(static fn (int $key, CardListingCondition $condition): bool => $condition->stock > 0);
     }
 }

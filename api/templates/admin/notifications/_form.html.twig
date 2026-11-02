@@ -1,0 +1,165 @@
+{# The notification form, new or edit. Expects: action, token, submitLabel, and announcement (null when new). #}
+{% set a = announcement ?? null %}
+{% set forCollectors = a and not a.forEveryone %}
+
+<form method="post" action="{{ action }}" class="grid gap-4" id="notification-form" data-audience-url="{{ path('admin_notifications_audience') }}">
+    <input type="hidden" name="_token" value="{{ token }}">
+
+    <label class="flex flex-col gap-1.5 text-sm">
+        <span class="flex items-baseline justify-between font-medium text-slate-700">
+            Title
+            <span class="font-normal text-slate-400" data-count-for="title"></span>
+        </span>
+        <input type="text" name="title" required maxlength="{{ maxTitle }}" value="{{ a ? a.title }}"
+               placeholder="Pokémon prerelease this Saturday"
+               class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">
+    </label>
+
+    <label class="flex flex-col gap-1.5 text-sm">
+        <span class="flex items-baseline justify-between font-medium text-slate-700">
+            Message
+            <span class="font-normal text-slate-400" data-count-for="body"></span>
+        </span>
+        <textarea name="body" required maxlength="{{ maxBody }}" rows="3"
+                  placeholder="Join us at the shop from 10:00. Sign up at the counter."
+                  class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">{{ a ? a.body }}</textarea>
+    </label>
+
+    <fieldset class="grid gap-3 rounded-xl border border-slate-200 p-3 sm:p-4">
+        <legend class="px-1 text-sm font-medium text-slate-700">Who gets it</legend>
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <label class="inline-flex items-center gap-2">
+                <input type="radio" name="audience" value="everyone" {{ forCollectors ? '' : 'checked' }}>
+                Everyone
+            </label>
+            <label class="inline-flex items-center gap-2">
+                <input type="radio" name="audience" value="collectors" {{ forCollectors ? 'checked' }}>
+                Only collectors of
+            </label>
+        </div>
+
+        <div class="grid gap-3" id="notification-collectors">
+            <div class="flex flex-wrap gap-2">
+                {% for game in games %}
+                    <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm has-[:checked]:border-slate-900 has-[:checked]:bg-slate-900 has-[:checked]:text-white">
+                        <input type="checkbox" name="games[]" value="{{ game.value }}" class="sr-only" {{ a and game.value in a.games ? 'checked' }}>
+                        {{ game.value }}
+                    </label>
+                {% endfor %}
+            </div>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                <span class="text-slate-500">with cards of them in their</span>
+                {% for value, label in lists %}
+                    <label class="inline-flex items-center gap-2">
+                        <input type="checkbox" name="lists[]" value="{{ value }}" {{ not a or value in a.lists ? 'checked' }}>
+                        {{ label }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <p class="text-xs text-slate-500" id="notification-audience" aria-live="polite"></p>
+    </fieldset>
+
+    <div class="grid gap-4 sm:grid-cols-3 sm:items-end">
+        <label class="flex flex-col gap-1.5 text-sm">
+            <span class="font-medium text-slate-700">A tap opens</span>
+            <select name="route" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">
+                {% for value, label in routes %}
+                    <option value="{{ value }}" {{ (a ? (a.route ?? '') : '') == value ? 'selected' }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="flex flex-col gap-1.5 text-sm">
+            <span class="font-medium text-slate-700">When</span>
+            <select name="when" id="notification-when" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">
+                <option value="now" {{ a ? '' : 'selected' }}>Now</option>
+                <option value="scheduled" {{ a ? 'selected' }}>Scheduled</option>
+            </select>
+        </label>
+
+        <div class="grid grid-cols-2 gap-3" id="notification-schedule">
+            {% set sendAt = a ? a.sendAt : defaultSendAt %}
+            <label class="flex flex-col gap-1.5 text-sm">
+                <span class="font-medium text-slate-700">Date</span>
+                <input type="date" name="date" value="{{ sendAt|date('Y-m-d') }}" min="{{ 'now'|date('Y-m-d') }}"
+                       class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">
+            </label>
+            <label class="flex flex-col gap-1.5 text-sm">
+                <span class="font-medium text-slate-700">Time <span class="font-normal text-slate-400">({{ timezone }})</span></span>
+                <input type="time" name="time" value="{{ sendAt|date('H:i') }}"
+                       class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900">
+            </label>
+        </div>
+    </div>
+
+    <div class="flex justify-end">
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700">
+            <span class="inline-flex items-center gap-1.5" data-when="now">
+                {{ ux_icon('lucide:send', { class: 'h-4 w-4' }) }}
+                Send now
+            </span>
+            <span class="inline-flex items-center gap-1.5" data-when="scheduled" hidden>
+                {{ ux_icon('lucide:calendar-clock', { class: 'h-4 w-4' }) }}
+                {{ submitLabel }}
+            </span>
+        </button>
+    </div>
+</form>
+
+<script>
+    (() => {
+        const form = document.getElementById('notification-form');
+
+        // Characters left in the title and message
+        for (const counter of form.querySelectorAll('[data-count-for]')) {
+            const field = form.elements[counter.dataset.countFor];
+            const update = () => counter.textContent = `${field.value.length} / ${field.maxLength}`;
+            field.addEventListener('input', update);
+            update();
+        }
+
+        // The games only apply to "only collectors of"
+        const collectors = document.getElementById('notification-collectors');
+        const updateAudienceFields = () => collectors.hidden = form.elements.audience.value !== 'collectors';
+
+        // How many it reaches now, as the audience changes
+        const audience = document.getElementById('notification-audience');
+        let pending;
+        const updateCount = () => {
+            clearTimeout(pending);
+            pending = setTimeout(async () => {
+                try {
+                    const response = await fetch(form.dataset.audienceUrl, { method: 'POST', body: new FormData(form) });
+                    const data = await response.json();
+                    audience.textContent = data.error
+                        ?? `Reaches ${data.users} ${data.users === 1 ? 'user' : 'users'} on ${data.devices} ${data.devices === 1 ? 'device' : 'devices'} right now (with "News and events" on).`;
+                } catch {
+                    audience.textContent = '';
+                }
+            }, 250);
+        };
+        form.addEventListener('change', (event) => {
+            if (['audience', 'games[]', 'lists[]'].includes(event.target.name)) {
+                updateAudienceFields();
+                updateCount();
+            }
+        });
+        updateAudienceFields();
+        updateCount();
+
+        // The date and time only apply when scheduled; the button says what will happen
+        const when = document.getElementById('notification-when');
+        const schedule = document.getElementById('notification-schedule');
+        const updateWhen = () => {
+            const scheduled = when.value === 'scheduled';
+            schedule.hidden = !scheduled;
+            for (const input of schedule.querySelectorAll('input')) input.required = scheduled;
+            for (const label of form.querySelectorAll('[data-when]')) label.hidden = label.dataset.when !== when.value;
+        };
+        when.addEventListener('change', updateWhen);
+        updateWhen();
+    })();
+</script>

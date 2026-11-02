@@ -1,0 +1,23 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Edit notification · TCG Admin{% endblock %}
+
+{% block content %}
+    <a href="{{ path('admin_notifications') }}" class="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+        {{ ux_icon('lucide:arrow-left', { class: 'h-4 w-4' }) }}
+        Notifications
+    </a>
+
+    <div class="mb-5">
+        <h1 class="text-2xl font-semibold tracking-tight">Edit notification</h1>
+        <p class="mt-1 text-sm text-slate-500">Scheduled for {{ announcement.sendAt|date('j M Y \\a\\t H:i') }}. Change it, or send it now instead.</p>
+    </div>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        {{ include('admin/notifications/_form.html.twig', {
+            action: path('admin_notifications_update', { id: announcement.id }),
+            token: csrf_token('admin-notification-' ~ announcement.id),
+            submitLabel: 'Save',
+        }) }}
+    </section>
+{% endblock %}
