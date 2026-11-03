@@ -40,6 +40,10 @@ class CardDetection {
 /// a unit vector at [angle] degrees (0–180) across the line.
 typedef _Line = ({double nx, double ny, double rho, double angle});
 
+/// A possible card: its corners in order around it, and which side (from that corner to the next)
+/// wasn't seen but placed from a card's proportions, if any.
+typedef _Candidate = ({List<Corner> corners, int? inferred});
+
 /// Finds a trading card in a camera frame: the biggest 4-sided outline with a card's proportions
 /// (63 × 88 mm), whose sides follow real edges in the image. Light enough to run on every frame
 /// on a phone, in plain Dart: no OpenCV.
@@ -73,19 +77,35 @@ class CardDetector {
   static const _maxAreaShare = 0.95;
   static const _minRatio = 1.15; // Proportions, allowing for tilt
   static const _maxRatio = 1.75;
+  static const _ratioSpread = 0.15; // How fast the score drops away from a card's proportions
   static const _minAngle = 55.0; // Degrees, per corner
   static const _maxAngle = 125.0;
   static const _minSideSupport = 0.4; // Of each side, this much runs along edges (fingers cover the rest)...
   static const _minTotalSupport = 0.6; // ...and of all 4 sides together
+  // Fingers break a card's side in a few places; a row of keys or tiles, in every gap
+  static const _maxSideGaps = 3;
+  // With 1 side not seen (fingers along it, in shadow): the other 3 must be clearer. It then
+  // scores like a card with all 4 seen: a 4th side found on whatever is next to the card (fingers,
+  // a can) would otherwise beat it
+  static const _minInferredSideSupport = 0.55;
+  static const _minInferredTotalSupport = 0.7;
+  static const _minInferredEndSupport = 0.4; // Of the sides next to it, near its corners
   // A card's sides run on into its corners; lines that only happen to cross (a glass's sides and
   // a table's edge) mostly stop short of where they meet. A thumb may cover 1 corner.
   static const _minCornersSeen = 3;
   static const _cornerReach = 0.2; // Of a side, the part next to a corner that's checked
   static const _minCornerSupport = 0.5; // Of that part, this much runs along edges
 
+  // Finding edges: thresholds per tile of the frame, [_tilesLong] × [_tilesShort]
+  static const _tilesLong = 6;
+  static const _tilesShort = 4;
+  static const _minEdgeStrength = 48; // Weaker never counts: noise on a plain surface
+  static const _strongestRidges = 30; // About half a side's length in a tile: its strongest edges
+  static const _edgeShare = 0.4; // Of those, how strong an edge must be
+
   // Finding lines
   static const _voteSpread = 5; // Degrees either way of an edge's own direction it votes for
-  static const _maxLines = 24; // The strongest lines kept, to build outlines from
+  static const _maxLines = 40; // The strongest lines kept, to build outlines from
   static const _maxParallel = 30.0; // Degrees between facing sides (perspective tilts them)
 
   /// Looks for a card in a frame's brightness plane: [width] × [height] pixels, rows of
@@ -110,13 +130,17 @@ class CardDetector {
 
     List<Corner>? best;
     var bestScore = 0.0;
-    for (final quad in _quads(lines, w, h, minSeparation: minSide * 0.7)) {
-      final score = _score(quad, thick, w, h);
+    final minSeparation = minSide * 0.7;
+    final pairs = _facingPairs(lines, minSeparation: minSeparation);
+    for (final (:corners, :inferred) in _quads(pairs, w, h).followedBy(_threeSided(pairs, lines, w, h))) {
+      final score = _score(corners, thick, w, h, inferred: inferred);
       if (score > bestScore) {
         bestScore = score;
-        best = quad;
+        best = corners;
       }
     }
+    // Always the same way around (positive area), so the screen can follow it from frame to frame
+    if (best != null && _signedArea(best) < 0) best = best.reversed.toList();
 
     return CardDetection(
       // Back to the frame's pixels: the middle of each scaled-down pixel
@@ -202,11 +226,16 @@ class CardDetector {
       }
     }
 
-    // Thin to the ridge: keep a pixel only where it's the strongest across the edge
+    // Thin to the ridge: keep a pixel only where it's the strongest across the edge. Counted per
+    // tile of the frame, for the thresholds below.
+    final tilesX = w >= h ? _tilesLong : _tilesShort;
+    final tilesY = w >= h ? _tilesShort : _tilesLong;
+    final tileW = w / tilesX;
+    final tileH = h / tilesY;
+    final histograms = [for (var t = 0; t < tilesX * tilesY; t++) Int32List(2048)];
     final thin = Int32List(w * h);
-    final histogram = Int32List(2048);
-    var counted = 0;
     for (var y = 1; y < h - 1; y++) {
+      final int row = math.min(tilesY - 1, y ~/ tileH) * tilesX;
       for (var x = 1; x < w - 1; x++) {
         final i = y * w + x;
         final m = magnitude[i];
@@ -219,26 +248,42 @@ class CardDetector {
         };
         if (m >= a && m >= b) {
           thin[i] = m;
-          histogram[math.min(m, 2047)]++;
-          counted++;
+          final int tile = row + math.min(tilesX - 1, x ~/ tileW);
+          histograms[tile][math.min(m, 2047)]++;
         }
       }
     }
 
-    // Thresholds from this frame: the strongest 15% of the ridges are certain edges (at least a
-    // clear step in brightness), ridges half as strong count where they touch one
-    var high = 2047;
-    var seen = 0;
-    while (high > 0 && seen < counted * 0.15) {
-      seen += histogram[high--];
+    // Thresholds per tile: there, ridges at least [_edgeShare] as strong as its strongest edges
+    // are certain edges, ridges half that count where they touch one. Per tile, not for the whole
+    // frame, so a busy, bright background (a keyboard, a lamp) doesn't push a dimmer card's edges
+    // under the threshold: they're among the strongest where the card is. The strongest edges are
+    // the [_strongestRidges]th strongest ridge, so a single bright speck doesn't set them.
+    final highs = Float64List(tilesX * tilesY);
+    for (var t = 0; t < highs.length; t++) {
+      var strongest = 2047;
+      var seen = 0;
+      while (strongest > 0 && seen < _strongestRidges) {
+        seen += histograms[t][strongest--];
+      }
+      highs[t] = math.max(strongest * _edgeShare, _minEdgeStrength.toDouble());
     }
-    high = math.max(high, 48);
-    final low = high ~/ 2;
+    // Blended between tile centers, so the threshold doesn't jump at a tile's border
+    int highAt(int i) {
+      final fx = ((i % w + 0.5) / tileW - 0.5).clamp(0.0, tilesX - 1.0);
+      final fy = ((i ~/ w + 0.5) / tileH - 0.5).clamp(0.0, tilesY - 1.0);
+      final x0 = fx.floor(), y0 = fy.floor();
+      final x1 = math.min(x0 + 1, tilesX - 1), y1 = math.min(y0 + 1, tilesY - 1);
+      final tx = fx - x0, ty = fy - y0;
+      final top = highs[y0 * tilesX + x0] * (1 - tx) + highs[y0 * tilesX + x1] * tx;
+      final bottom = highs[y1 * tilesX + x0] * (1 - tx) + highs[y1 * tilesX + x1] * tx;
+      return (top * (1 - ty) + bottom * ty).round();
+    }
 
     final edges = Uint8List(w * h);
     final stack = <int>[];
     for (var i = 0; i < w * h; i++) {
-      if (thin[i] < high || edges[i] == 1) continue;
+      if (thin[i] == 0 || edges[i] == 1 || thin[i] < highAt(i)) continue;
       edges[i] = 1;
       stack.add(i);
       while (stack.isNotEmpty) {
@@ -251,7 +296,7 @@ class CardDetector {
             final ny = jy + dy;
             if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
             final n = ny * w + nx;
-            if (edges[n] == 0 && thin[n] >= low) {
+            if (edges[n] == 0 && thin[n] > 0 && thin[n] >= highAt(n) ~/ 2) {
               edges[n] = 1;
               stack.add(n);
             }
@@ -396,10 +441,9 @@ class CardDetector {
     return (nx: nx, ny: ny, rho: mx * nx + my * ny, angle: angle);
   }
 
-  /// The 4-sided outlines that pairs of facing lines make: 2 nearly parallel lines at least
-  /// [minSeparation] apart, crossed by 2 others. Each with its corners inside the frame, in the
-  /// same order around it (positive area), so the screen can follow them from frame to frame.
-  static Iterable<List<Corner>> _quads(List<_Line> lines, int w, int h, {required double minSeparation}) sync* {
+  /// Pairs of facing lines, as a card's opposite sides: nearly parallel, at least
+  /// [minSeparation] apart.
+  static List<(_Line, _Line)> _facingPairs(List<_Line> lines, {required double minSeparation}) {
     final pairs = <(_Line, _Line)>[];
     for (var i = 0; i < lines.length; i++) {
       for (var j = i + 1; j < lines.length; j++) {
@@ -411,7 +455,12 @@ class CardDetector {
         pairs.add((a, b));
       }
     }
+    return pairs;
+  }
 
+  /// The 4-sided outlines that 2 pairs of facing lines make, crossing each other. Each with its
+  /// corners inside the frame; none of its sides is inferred.
+  static Iterable<_Candidate> _quads(List<(_Line, _Line)> pairs, int w, int h) sync* {
     for (var i = 0; i < pairs.length; i++) {
       for (var j = i + 1; j < pairs.length; j++) {
         final (a1, a2) = pairs[i];
@@ -420,13 +469,53 @@ class CardDetector {
         if (_angleBetween(a1, b1) < 40) continue;
 
         final corners = [_cross(a1, b1), _cross(b1, a2), _cross(a2, b2), _cross(b2, a1)];
-        if (corners.any((c) => c == null || c.x < -1 || c.y < -1 || c.x > w || c.y > h)) continue;
+        if (corners.any((c) => c == null || !_inFrame(c, w, h))) continue;
         final quad = corners.cast<Corner>();
         if (!_isConvex(quad)) continue; // A bow tie: one pair's lines cross between the others
-        yield _signedArea(quad) >= 0 ? quad : quad.reversed.toList();
+        yield (corners: quad, inferred: null);
       }
     }
   }
+
+  /// Outlines with 1 side not seen, as when fingers hold the card along it, in shadow: a pair of
+  /// facing lines and a line across them make 3 sides, and the 4th goes where a card's
+  /// proportions put it (either way along the pair, with the base as the short or the long side).
+  /// Ignores perspective, so it's a little off on a card seen at an angle; good enough to show
+  /// where the card is, and it only wins when no 4-sided outline fits.
+  static Iterable<_Candidate> _threeSided(List<(_Line, _Line)> pairs, List<_Line> lines, int w, int h) sync* {
+    for (final (a1, a2) in pairs) {
+      for (final base in lines) {
+        if (identical(base, a1) || identical(base, a2) || _angleBetween(a1, base) < 40) continue;
+        final c1 = _cross(base, a1);
+        final c2 = _cross(base, a2);
+        if (c1 == null || c2 == null || !_inFrame(c1, w, h) || !_inFrame(c2, w, h)) continue;
+
+        final width = _distance(c1, c2);
+        for (final length in [width * cardRatio, width / cardRatio]) {
+          for (final side in const [1.0, -1.0]) {
+            // Along a line of the pair, away from the base, to the same side of it for both
+            Corner along(_Line line, Corner from) {
+              var dx = -line.ny, dy = line.nx;
+              if ((dx * base.nx + dy * base.ny) * side < 0) {
+                dx = -dx;
+                dy = -dy;
+              }
+              return (x: from.x + dx * length, y: from.y + dy * length);
+            }
+
+            final c3 = along(a2, c2);
+            final c4 = along(a1, c1);
+            if (!_inFrame(c3, w, h) || !_inFrame(c4, w, h)) continue;
+            final quad = [c1, c2, c3, c4];
+            if (!_isConvex(quad)) continue;
+            yield (corners: quad, inferred: 2); // From c3 to c4
+          }
+        }
+      }
+    }
+  }
+
+  static bool _inFrame(Corner c, int w, int h) => c.x >= -1 && c.y >= -1 && c.x <= w && c.y <= h;
 
   /// Whether [quad] turns the same way at every corner.
   static bool _isConvex(List<Corner> quad) {
@@ -455,8 +544,9 @@ class CardDetector {
 
   /// How likely [quad] is a card: its area, times how well edges follow its sides (weighed
   /// heavily, so a bigger outline with a side through empty space loses to the card inside it);
-  /// 0 when it doesn't look like one at all.
-  static double _score(List<Corner> quad, Uint8List edges, int w, int h) {
+  /// 0 when it doesn't look like one at all. With an [inferred] side (the one from that corner to
+  /// the next), the other 3 must be clearer.
+  static double _score(List<Corner> quad, Uint8List edges, int w, int h, {int? inferred}) {
     final area = _area(quad);
     final frame = (w * h).toDouble();
     if (area < frame * _minAreaShare || area > frame * _maxAreaShare) return 0;
@@ -472,18 +562,23 @@ class CardDetector {
       if (angle < _minAngle || angle > _maxAngle) return 0;
     }
 
+    final minSide = inferred == null ? _minSideSupport : _minInferredSideSupport;
     var total = 0.0;
     for (var i = 0; i < 4; i++) {
+      if (i == inferred) continue;
       final support = _support(quad[i], quad[(i + 1) % 4], edges, w, h);
-      if (support < _minSideSupport) return 0;
+      if (support < minSide) return 0;
+      if (_gaps(quad[i], quad[(i + 1) % 4], edges, w, h) > _maxSideGaps) return 0;
       total += support;
     }
-    total /= 4;
-    if (total < _minTotalSupport) return 0;
+    total /= inferred == null ? 4 : 3;
+    if (total < (inferred == null ? _minTotalSupport : _minInferredTotalSupport)) return 0;
 
-    // Corners where both sides run on into it
+    // Corners where both sides run on into it. With a side inferred, the 2 corners away from it
+    // must both be seen: they're all there is to go on.
     var cornersSeen = 0;
     for (var i = 0; i < 4; i++) {
+      if (inferred != null && (i == inferred || i == (inferred + 1) % 4)) continue;
       final corner = quad[i];
       final before = quad[(i + 3) % 4];
       final after = quad[(i + 1) % 4];
@@ -492,10 +587,28 @@ class CardDetector {
         cornersSeen++;
       }
     }
-    if (cornersSeen < _minCornersSeen) return 0;
+    if (cornersSeen < (inferred == null ? _minCornersSeen : 2)) return 0;
 
-    // Closer to a card's proportions scores a little higher, among shapes that pass
-    final shape = 1 - (ratio - cardRatio).abs() / cardRatio;
+    // An inferred side must be where the shape ends: the sides next to it run on up to it, and at
+    // least 1 of them stops there (both running on past it is a square or a box, cut short by
+    // the card's proportions; 1 may, along the edge of something behind the card)
+    if (inferred != null) {
+      var runOn = 0;
+      for (final (corner, from) in [
+        (quad[inferred], quad[(inferred + 3) % 4]),
+        (quad[(inferred + 1) % 4], quad[(inferred + 2) % 4]),
+      ]) {
+        if (_support(corner, from, edges, w, h, reach: _cornerReach) < _minInferredEndSupport) return 0;
+        final beyond = (x: corner.x + (corner.x - from.x) * _cornerReach, y: corner.y + (corner.y - from.y) * _cornerReach);
+        if (_support(corner, beyond, edges, w, h) >= _minCornerSupport) runOn++;
+      }
+      if (runOn > 0) return 0;
+    }
+
+    // Closer to a card's proportions scores higher, among shapes that pass: a held card mostly
+    // faces the camera, so a shape much wider or narrower is more likely the card plus something
+    final off = (ratio - cardRatio) / _ratioSpread;
+    final shape = math.exp(-off * off);
     return area * total * total * total * shape;
   }
 
@@ -513,6 +626,26 @@ class CardDetector {
       if (x >= 0 && y >= 0 && x < w && y < h && edges[y * w + x] == 1) hits++;
     }
     return hits / (last - first);
+  }
+
+  /// How many times the edges along a side break off: runs of 2 or more pixels along it that
+  /// aren't on an edge. Every pixel, as the gaps between keys are only a few. The ends are left out.
+  static int _gaps(Corner from, Corner to, Uint8List edges, int w, int h) {
+    final samples = math.max(40, _distance(from, to).ceil());
+    final end = samples - samples ~/ 20;
+    var gaps = 0;
+    var missing = 0;
+    for (var s = samples ~/ 20; s < end; s++) {
+      final t = s / samples;
+      final x = (from.x + (to.x - from.x) * t).round();
+      final y = (from.y + (to.y - from.y) * t).round();
+      if (x >= 0 && y >= 0 && x < w && y < h && edges[y * w + x] == 1) {
+        missing = 0;
+      } else if (++missing == 2) {
+        gaps++;
+      }
+    }
+    return gaps;
   }
 
   static Uint8List _edgeImage(Uint8List edges) {

@@ -1,6 +1,7 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -13,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// The camera with a border around the card it sees (CardDetector, on every frame it can keep up
 /// with). For now a test screen for the detection: nothing is captured or recognised yet. The
@@ -59,6 +61,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   var _showEdges = false;
   ui.Image? _edges;
   Duration? _took;
+
+  /// Debug builds: the next frame is saved, to tune the detector on (see [_saveFrame]).
+  var _saveNext = false;
 
   @override
   void initState() {
@@ -139,6 +144,11 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     _busy = true;
     try {
       final luma = image.planes.first;
+      if (_saveNext) {
+        _saveNext = false;
+        // Copied now: the camera reuses the frame's buffer
+        unawaited(_saveFrame(Uint8List.fromList(luma.bytes), image.width, image.height, luma.bytesPerRow));
+      }
       final detection = await worker.detect(
         luma.bytes,
         image.width,
@@ -190,6 +200,36 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
       _edges?.dispose();
       _edges = edges;
     });
+  }
+
+  /// Saves a frame's brightness plane as a PGM image (the detector's input, padding left out), for
+  /// running the detector on it on a computer and keeping it as a test frame. Named after the time
+  /// and the sensor rotation (the frame isn't turned upright). On Android, in the app's external
+  /// files, so it can be copied off without root:
+  /// `adb pull /sdcard/Android/data/nl.twohg.tcgcollector.dev/files/scanner_frames`
+  Future<void> _saveFrame(Uint8List luma, int width, int height, int rowStride) async {
+    try {
+      final base = Platform.isAndroid ? await getExternalStorageDirectory() : null;
+      final dir = Directory('${(base ?? await getApplicationDocumentsDirectory()).path}/scanner_frames');
+      await dir.create(recursive: true);
+
+      final pixels = Uint8List(width * height);
+      for (var y = 0; y < height; y++) {
+        pixels.setRange(y * width, (y + 1) * width, luma, y * rowStride);
+      }
+      final rotation = _controller?.description.sensorOrientation ?? 0;
+      final stamp = DateTime.now().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
+      final file = File('${dir.path}/frame_${stamp}_r$rotation.pgm');
+      await file.writeAsBytes([...'P5\n$width $height\n255\n'.codeUnits, ...pixels]);
+
+      _log.info('Saved a frame to ${file.path}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Frame saved: ${file.uri.pathSegments.last}')));
+      }
+    } catch (e) {
+      _log.warning('Saving a frame failed', e);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saving the frame failed')));
+    }
   }
 
   /// A frame position (0–1 across and down, as the camera delivers it) on the preview, which shows
@@ -329,6 +369,13 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                           fontSize: 12,
                           fontFeatures: [ui.FontFeature.tabularFigures()],
                         ),
+                      ),
+                    // Debug builds: save the next frame, to tune the detector on
+                    if (kDebugMode)
+                      IconButton(
+                        tooltip: 'Save frame',
+                        onPressed: () => _saveNext = true,
+                        icon: const Icon(LucideIcons.download, color: Colors.white),
                       ),
                     IconButton(
                       tooltip: _showEdges ? 'Hide edges' : 'Show edges',

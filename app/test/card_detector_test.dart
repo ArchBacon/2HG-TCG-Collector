@@ -151,6 +151,25 @@ void main() {
     _expectCorners(result.corners, card);
   });
 
+  test('finds a dim card in a hand next to something bright and busy', () {
+    final frame = _Frame(640, 480, background: 35, seed: 13);
+    // A lit keyboard over the right of the frame: rows of bright keys
+    for (var y = 10.0; y < 470; y += 32) {
+      for (var x = 450.0; x < 630; x += 38) {
+        frame.fill([(x: x, y: y), (x: x + 26, y: y), (x: x + 26, y: y + 20), (x: x, y: y + 20)], 250);
+      }
+    }
+    // The palm behind the card, then the card: dim, only a little brighter than the background
+    frame.fill(const [(x: 120.0, y: 480.0), (x: 160.0, y: 330.0), (x: 330.0, y: 320.0), (x: 380.0, y: 480.0)], 105);
+    final card = _card(250, 230, 170, 3);
+    frame.fill(card, 70);
+    // A thumb over the left side
+    frame.fill(const [(x: 140.0, y: 260.0), (x: 190.0, y: 255.0), (x: 192.0, y: 290.0), (x: 142.0, y: 295.0)], 105);
+
+    final result = detector.detect(frame.pixels, frame.width, frame.height);
+    _expectCorners(result.corners, card);
+  });
+
   test('ignores a square', () {
     final frame = _Frame(640, 480, seed: 6);
     frame.fill(_card(320, 240, 250, 0, ratio: 1), 200);
@@ -166,6 +185,18 @@ void main() {
     frame.fill(const [(x: 265.0, y: bottom - 4), (x: 375.0, y: bottom - 4), (x: 375.0, y: bottom + 4), (x: 265.0, y: bottom + 4)], 200);
     frame.fill(const [(x: left - 4, y: 155.0), (x: left + 4, y: 155.0), (x: left + 4, y: 325.0), (x: left - 4, y: 325.0)], 200);
     frame.fill(const [(x: right - 4, y: 155.0), (x: right + 4, y: 155.0), (x: right + 4, y: 325.0), (x: right - 4, y: 325.0)], 200);
+
+    expect(detector.detect(frame.pixels, frame.width, frame.height).corners, isNull);
+  });
+
+  test('ignores a block of keyboard keys', () {
+    final frame = _Frame(640, 480, background: 35, seed: 14);
+    // 5 × 8 keys, together about a card's proportions
+    for (var y = 100.0; y < 360; y += 32) {
+      for (var x = 220.0; x < 400; x += 38) {
+        frame.fill([(x: x, y: y), (x: x + 26, y: y), (x: x + 26, y: y + 20), (x: x, y: y + 20)], 250);
+      }
+    }
 
     expect(detector.detect(frame.pixels, frame.width, frame.height).corners, isNull);
   });
