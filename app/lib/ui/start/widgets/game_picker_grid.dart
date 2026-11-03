@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// A tile per game, each with its card count, value and wishlist cards new in store. Tapping one
+/// A tile per game, each with its card count, wishlisted count, value and wishlist cards new in
+/// store. Tapping one
 /// opens that game. Always in the same order (not sorted by collection), so tiles don't move around
 /// as the collection changes.
 class GamePickerGrid extends StatelessWidget {
@@ -32,6 +33,7 @@ class GamePickerGrid extends StatelessWidget {
             game: game,
             stats: [
               (LucideIcons.layers, '${viewModel.collectionFor(game)?.collected ?? 0}'),
+              (LucideIcons.heart, '${viewModel.collectionFor(game)?.wishlisted ?? 0}'),
               (LucideIcons.euro, (viewModel.collectionFor(game)?.value ?? 0).toStringAsFixed(0)/*.replaceAll('.', ',')*/),
             ],
             newCount: viewModel.newInStoreFor(game),

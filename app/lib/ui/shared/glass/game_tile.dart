@@ -9,7 +9,7 @@ import 'package:app/ui/shared/glass/layout.dart';
 import 'package:flutter/material.dart';
 
 /// Compact game tile, for picking a game: the game's color glowing in the corner, its cardback
-/// peeking in, the name and two small stats.
+/// peeking in, the name and a few small stats.
 class GameTile extends StatelessWidget {
   final Tcg game;
   final List<(IconData icon, String label)> stats;

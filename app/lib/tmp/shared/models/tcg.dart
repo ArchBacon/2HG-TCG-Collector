@@ -6,15 +6,18 @@ import 'package:json_annotation/json_annotation.dart';
 /// image file names in assets/tcgs/.
 @JsonEnum(valueField: 'slug')
 enum Tcg {
-  pokemon('Pokémon TCG', 'pokemon'),
-  mtg('Magic: The Gathering', 'mtg'),
-  onePiece('One Piece Card Game', 'onepiece'),
-  lorcana('Disney Lorcana', 'lorcana'),
-  dragonBallFusion('Dragon Ball Super Fusion World', 'dragonballfusion');
+  pokemon('Pokémon TCG', 'Pokémon', 'pokemon'),
+  mtg('Magic: The Gathering', 'Magic', 'mtg'),
+  onePiece('One Piece Card Game', 'One Piece', 'onepiece'),
+  lorcana('Disney Lorcana', 'Lorcana', 'lorcana'),
+  dragonBallFusion('Dragon Ball Super Fusion World', 'Fusion World', 'dragonballfusion');
 
-  const Tcg(this.displayName, this.slug);
+  const Tcg(this.displayName, this.shortName, this.slug);
 
   final String displayName;
+
+  /// For in a sentence, e.g. "Scan a Magic card".
+  final String shortName;
   final String slug;
 
   String get imageAsset => 'assets/tcgs/$slug.webp';

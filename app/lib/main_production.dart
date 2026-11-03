@@ -3,6 +3,7 @@
 import 'package:app/data/services/local/app_preferences.dart';
 import 'package:app/data/services/remote/push_notifications.dart';
 import 'package:app/data/services/remote/user_token.dart';
+import 'package:app/ui/offline/offline_app.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +27,19 @@ Future<void> main() async {
   await AppPreferences.load(); // Before the first screen: it depends on the saved game
   final info = await PackageInfo.fromPlatform();
   appVersion = info.version;
+  await _start();
+}
+
+/// Connects to the API and starts the app; when the API can't be reached, shows the offline
+/// screen instead, whose button runs this again.
+Future<void> _start() async {
   // Ensure the anonymous user exists, for the API calls
-  UserToken.current.value = await UserToken.loadOrCreate();
+  final token = await UserToken.loadOrCreate();
+  if (token == null) {
+    runApp(const OfflineApp(onRetry: _start));
+    return;
+  }
+  UserToken.current.value = token;
   // Registers this device for wishlist notifications, as that user
   await PushNotifications.start();
 

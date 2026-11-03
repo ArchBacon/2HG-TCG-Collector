@@ -6,6 +6,7 @@ import 'package:app/ui/cart/widgets/cart_screen_container.dart';
 import 'package:app/ui/catalog/widgets/catalog_screen_container.dart';
 import 'package:app/ui/collection/widgets/collection_screen_container.dart';
 import 'package:app/ui/notifications/widgets/notifications_screen.dart';
+import 'package:app/ui/scan/widgets/scan_screen.dart';
 import 'package:app/ui/settings/widgets/settings_screen.dart';
 import 'package:app/ui/shared/app_state.dart';
 import 'package:app/ui/shell/app_shell.dart';
@@ -77,6 +78,7 @@ GoRouter router() => GoRouter(
     // header; card details from any card; settings from the start screen.
     GoRoute(path: Routes.cart, builder: (context, state) => const CartScreenContainer()),
     GoRoute(path: Routes.card, builder: (context, state) => CardScreenContainer(cardId: state.pathParameters['id']!)),
+    GoRoute(path: Routes.scan, builder: (context, state) => const ScanScreen()),
     GoRoute(
       path: Routes.appSettings,
       builder: (context, state) => const SettingsScreen(),

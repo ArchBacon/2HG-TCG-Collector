@@ -20,6 +20,7 @@ abstract final class Routes {
   static const cart = '/cart';
   static const card = '/card/:id';
   static const appSettings = '/app-settings'; // The settings, opened from the start screen
+  static const scan = '/scan'; // The camera, to scan a card
 
   /// The received notifications, under either settings page: '/settings/notifications' or
   /// '/app-settings/notifications'.

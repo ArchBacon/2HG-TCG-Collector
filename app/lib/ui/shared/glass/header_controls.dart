@@ -219,7 +219,7 @@ class _CatalogShortcut extends StatelessWidget {
   }
 }
 
-/// Square glass button for scanning a card with the camera (not built yet).
+/// Square glass button for scanning a card with the camera: opens the scan screen.
 class ScanButton extends StatelessWidget {
   const ScanButton({super.key});
 
@@ -232,9 +232,7 @@ class ScanButton extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         borderRadius: radius,
-        onTap: () => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Scanning isn\'t built yet'))),
+        onTap: () => context.push(Routes.scan),
         child: Ink(
           width: GameSwitcherButton.height,
           height: GameSwitcherButton.height,

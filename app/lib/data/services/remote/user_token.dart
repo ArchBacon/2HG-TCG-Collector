@@ -31,8 +31,9 @@ abstract final class UserToken {
     current.value = token;
   }
 
-  /// The saved token if the API still accepts it, otherwise a newly created one. Null when there
-  /// is none and the API can't be reached to create one. Call before runApp.
+  /// The saved token if the API still accepts it, otherwise a newly created one. Null when the API
+  /// can't be reached (offline, timeout, server error): the app then shows the offline screen
+  /// instead of starting. Call before runApp.
   static Future<String?> loadOrCreate() async {
     final stored = await _read();
 
@@ -45,12 +46,17 @@ abstract final class UserToken {
             )
             .timeout(const Duration(seconds: 5));
 
-        // Only a 401 means the token is bad; any other failure (offline, server error) keeps it
+        // A 401 means the token is bad (a new one is created below); a server error means the API
+        // can't be used right now, but the token is kept for the next try
+        if (response.statusCode >= 500) {
+          _log.warning('Validating the token failed with status ${response.statusCode}');
+          return null;
+        }
         if (response.statusCode != 401) return stored;
         await _storage.delete(key: _tokenKey);
       } catch (error) {
-        _log.warning('Validating the token failed, keeping the stored one', error);
-        return stored;
+        _log.warning('Validating the token failed, the API can\'t be reached', error);
+        return null;
       }
     }
 
