@@ -17,6 +17,7 @@ use App\Service\LanguageService;
 use App\Service\ProgressReporter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
@@ -50,6 +51,7 @@ class TCGDexImportService implements ImportServiceInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly LanguageService $language,
         private readonly TCGDexDataTransformer $transformer,
+        private readonly LoggerInterface $logger,
     ) {}
 
     /**
@@ -181,7 +183,20 @@ class TCGDexImportService implements ImportServiceInterface
 
         $briefs = $setData['cards'];
         foreach ($briefs as $brief) {
-            $result = $this->http->json(self::URL . '/' . $set->lang->value . '/cards/' . $brief['id']);
+            // Encoded: some ids have odd characters, and TCGdex even stores Unown "?" as "exu-%3F"
+            try {
+                $result = $this->http->json(self::URL . '/' . $set->lang->value . '/cards/' . rawurlencode($brief['id']));
+            } catch (HttpResponseException $e) {
+                // A card in the set's list that TCGdex can't find: skip it (logged, so it shows in
+                // the sync console) rather than ending the whole sync. Other failures still end it.
+                if (!str_starts_with($e->getMessage(), 'Resource not found')) {
+                    throw $e;
+                }
+                $this->logger->warning(sprintf('Skipped card "%s" of set "%s": %s', $brief['id'], $set->code, $e->getMessage()));
+                $progress->advance();
+                $progress->report($onProgress);
+                continue;
+            }
             $result['lang'] = $set->lang->value;
             $data = $this->transformer->transformCard($result);
             $card = $this->serializer->denormalize($data, Card::class, 'json', [
