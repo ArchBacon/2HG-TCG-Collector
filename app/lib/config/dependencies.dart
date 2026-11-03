@@ -15,6 +15,9 @@ import 'package:app/data/repositories/market/market_repository_remote.dart';
 import 'package:app/data/repositories/notifications/notifications_repository.dart';
 import 'package:app/data/repositories/notifications/notifications_repository_local.dart';
 import 'package:app/data/repositories/notifications/notifications_repository_remote.dart';
+import 'package:app/data/repositories/scan/scan_repository.dart';
+import 'package:app/data/repositories/scan/scan_repository_local.dart';
+import 'package:app/data/repositories/scan/scan_repository_remote.dart';
 import 'package:app/data/repositories/sync/sync_repository.dart';
 import 'package:app/data/repositories/sync/sync_repository_local.dart';
 import 'package:app/data/repositories/sync/sync_repository_remote.dart';
@@ -60,6 +63,7 @@ List<SingleChildWidget> get providersLocal {
             SyncRepositoryLocal(localDataService: context.read())
               as SyncRepository,
     ),
+    Provider(create: (context) => ScanRepositoryLocal() as ScanRepository),
     // ChangeNotifierProvider: the cart notifies when its lines change (e.g. for the cart button)
     ChangeNotifierProvider(
         create: (context) =>
@@ -102,6 +106,11 @@ List<SingleChildWidget> providersRemote({required String? token}) {
         create: (context) =>
             SyncRepositoryRemote(remoteDataService: context.read())
               as SyncRepository,
+    ),
+    Provider(
+        create: (context) =>
+            ScanRepositoryRemote(remoteDataService: context.read())
+              as ScanRepository,
     ),
     // App-only: the cart isn't stored on the server
     ChangeNotifierProvider(create: (context) => CartRepositoryRemote() as CartRepository),

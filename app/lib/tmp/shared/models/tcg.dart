@@ -21,4 +21,7 @@ enum Tcg {
   final String slug;
 
   String get imageAsset => 'assets/tcgs/$slug.webp';
+
+  /// Whether its cards can be scanned: Magic Sorter, which recognizes them, doesn't do Fusion World.
+  bool get canScan => this != dragonBallFusion;
 }

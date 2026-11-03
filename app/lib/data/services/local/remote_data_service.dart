@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:app/config/api.dart';
 import 'package:app/domain/models/card/market_info.dart';
@@ -12,6 +13,7 @@ import 'package:app/domain/models/collection/collection_overview.dart';
 import 'package:app/domain/models/collection/collection_summary.dart';
 import 'package:app/domain/models/collection/list_kind.dart';
 import 'package:app/domain/models/notification/received_notification.dart';
+import 'package:app/domain/models/scan/scan_match.dart';
 import 'package:app/domain/models/user/sync_code.dart';
 import 'package:app/tmp/shared/models/tcg.dart';
 import 'package:http/http.dart' as http;
@@ -182,6 +184,34 @@ class RemoteDataService {
     };
     if (failure != null) throw RedeemSyncCodeException(failure);
     return (jsonDecode(response.body) as Map<String, dynamic>)['token'] as String;
+  }
+
+  /// Sends a scanned card ([jpeg], cut out upright) to be recognized as a card of [game]. Throws a
+  /// [ScanException] when it isn't one in the catalog, an [HttpException] for other errors.
+  Future<ScanMatch> scanCard(Tcg game, Uint8List jpeg) async {
+    final uri = Uri.parse('${Api.baseUrl}/api/scan/${game.slug}');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(_headers)
+      ..files.add(http.MultipartFile.fromBytes('image', jpeg, filename: 'scan.jpg'));
+    // Magic Sorter itself may take up to 15 seconds
+    final response = await http.Response.fromStream(await request.send().timeout(const Duration(seconds: 25)));
+    final json = response.body.isEmpty ? const <String, dynamic>{} : jsonDecode(response.body) as Map<String, dynamic>;
+
+    switch (response.statusCode) {
+      case 200:
+        final card = json['card'] as Map<String, dynamic>;
+        return ScanMatch(cardId: card['id'] as String, name: card['name'] as String);
+      case 404:
+        final seen = json['recognized'] as Map<String, dynamic>?;
+        if (seen == null) throw const ScanException(ScanFailure.notRecognized);
+        final number = seen['number'] as String? ?? '';
+        final where = [seen['set'], if (number.isNotEmpty) '#$number'].join(' ');
+        throw ScanException(ScanFailure.notInCatalog, recognized: '${seen['title']} ($where)');
+      case 422:
+        throw const ScanException(ScanFailure.unsupported);
+      default:
+        throw HttpException('POST ${uri.path} failed with status ${response.statusCode}', uri: uri);
+    }
   }
 
   /// A card entry from the API: `{card: {...}, price, inStore, isNew}` plus the user's state for

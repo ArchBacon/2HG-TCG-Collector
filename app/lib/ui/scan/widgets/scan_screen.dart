@@ -2,23 +2,35 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:app/data/repositories/scan/scan_repository.dart';
+import 'package:app/data/services/scanner/card_cropper.dart';
 import 'package:app/data/services/scanner/card_detector.dart';
 import 'package:app/data/services/scanner/card_detector_worker.dart';
+import 'package:app/domain/models/scan/scan_match.dart';
+import 'package:app/routing/routes.dart';
 import 'package:app/themes/game_palette.dart';
 import 'package:app/ui/shared/app_state.dart';
+import 'package:app/utils/result.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 /// The camera with a border around the card it sees (CardDetector, on every frame it can keep up
-/// with). For now a test screen for the detection: nothing is captured or recognised yet. The
-/// edges button shows what the detector sees, and the time it takes per frame.
+/// with). Once the card is held still, it's cut out of that frame (CardCropper) and sent to be
+/// recognized (ScanRepository); the card it is then opens. After a scan, the next one waits until
+/// the card is out of view, so coming back from the card doesn't scan it again.
+///
+/// The edges button shows what the detector sees, and the time it takes per frame.
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
 
@@ -39,6 +51,11 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   /// A border further than this from the last one (share of the screen, per corner) is a new
   /// card, not the same one moved: it jumps instead of gliding.
   static const _jumpDistance = 0.08;
+
+  /// Frames in a row with the border shown and hardly moving (under [_steadyDistance] per corner)
+  /// before the card is captured: still enough for a sharp picture.
+  static const _steadyToCapture = 3;
+  static const _steadyDistance = 0.02;
 
   /// The game being scanned: the one picked when the scanner opened. Its cards are the ones to
   /// look for, also once scans go to Magic Sorter.
@@ -61,6 +78,19 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   var _showEdges = false;
   ui.Image? _edges;
   Duration? _took;
+
+  var _phase = _Phase.looking;
+  String? _failure; // What went wrong with the last scan, while [_phase] is failed
+
+  /// Frames in a row the shown border has hardly moved, up to [_steadyToCapture].
+  var _steady = 0;
+
+  /// After a scan: none until the card is out of view (or the user asks to try again).
+  var _waitForClear = false;
+
+  /// The next frame is kept in full (copied, with its colour) to cut the card out of, as it's
+  /// about to be steady long enough.
+  var _keepNextFrame = false;
 
   /// Debug builds: the next frame is saved, to tune the detector on (see [_saveFrame]).
   var _saveNext = false;
@@ -109,7 +139,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
       );
       final controller = CameraController(
         camera,
-        ResolutionPreset.medium, // Plenty for finding the card; the detector scales it down anyway
+        // Sharp enough for the card cut out of a frame to be recognized; the detector scales it
+        // down anyway
+        ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.yuv420, // The first plane is brightness on both platforms
       );
@@ -140,7 +172,8 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
   Future<void> _onFrame(CameraImage image) async {
     final worker = _worker;
-    if (_busy || worker == null) return; // Still on the last frame: skip this one
+    // Still on the last frame: skip this one. Or recognizing a card, or showing one.
+    if (_busy || worker == null || _phase == _Phase.identifying || _phase == _Phase.away) return;
     _busy = true;
     try {
       final luma = image.planes.first;
@@ -149,6 +182,8 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         // Copied now: the camera reuses the frame's buffer
         unawaited(_saveFrame(Uint8List.fromList(luma.bytes), image.width, image.height, luma.bytesPerRow));
       }
+      // Copied now too, for the same reason
+      final kept = _keepNextFrame ? _copyFrame(image) : null;
       final detection = await worker.detect(
         luma.bytes,
         image.width,
@@ -156,7 +191,7 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
         rowStride: luma.bytesPerRow,
         withEdges: _showEdges,
       );
-      if (mounted) await _apply(detection);
+      if (mounted) await _apply(detection, kept);
     } catch (e) {
       _log.warning('Detecting a card failed', e);
     } finally {
@@ -164,7 +199,29 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _apply(CardDetection detection) async {
+  /// The whole frame, colour too, copied out of the camera's buffers. Android has 3 planes (Y, U,
+  /// V); iOS 2 (Y, then U and V interleaved).
+  static YuvFrame _copyFrame(CameraImage image) {
+    final [y, ...colour] = image.planes;
+    final interleaved = colour.length == 1;
+    final u = Uint8List.fromList(colour[0].bytes);
+    return YuvFrame(
+      width: image.width,
+      height: image.height,
+      y: Uint8List.fromList(y.bytes),
+      yRowStride: y.bytesPerRow,
+      u: u,
+      v: interleaved ? u : Uint8List.fromList(colour[1].bytes),
+      uvRowStride: colour[0].bytesPerRow,
+      uvPixelStride: colour[0].bytesPerPixel ?? (interleaved ? 2 : 1),
+      vOffset: interleaved ? 1 : 0,
+    );
+  }
+
+  /// Whether a card in view may be captured now.
+  bool get _mayCapture => _game.canScan && _phase == _Phase.looking && !_waitForClear;
+
+  Future<void> _apply(CardDetection detection, YuvFrame? kept) async {
     final rotation = _controller?.description.sensorOrientation ?? 90;
     final found = detection.corners
         ?.map((c) => _toPreview(c.x / detection.width, c.y / detection.height, rotation))
@@ -179,11 +236,22 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     setState(() {
       _took = detection.took;
       if (found == null) {
-        if (++_misses > _missesToLose) _corners = null;
+        if (++_misses > _missesToLose) {
+          // No card in view (any more): ready for the next one
+          _corners = null;
+          _waitForClear = false;
+          if (_phase == _Phase.failed) {
+            _phase = _Phase.looking;
+            _failure = null;
+          }
+        }
         _candidate = null;
         _hits = 0;
+        _steady = 0;
       } else if (_corners != null) {
         _misses = 0;
+        final moved = _match(_corners!, found).distance;
+        _steady = moved <= _steadyDistance ? _steady + 1 : 0;
         _corners = _follow(_corners, found);
       } else {
         // Not showing one yet: wait until the same card is found a few frames in a row
@@ -199,6 +267,85 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
       }
       _edges?.dispose();
       _edges = edges;
+      _keepNextFrame = _mayCapture && _steady >= _steadyToCapture - 1;
+    });
+
+    // Held still long enough, and this frame kept: cut the card out of it and recognize it
+    final corners = detection.corners;
+    if (kept != null && corners != null && _mayCapture && _steady >= _steadyToCapture) {
+      final rotation = _controller?.description.sensorOrientation ?? 90;
+      unawaited(_identify(kept, corners, rotation));
+    }
+  }
+
+  Future<void> _identify(YuvFrame frame, List<Corner> corners, int rotation) async {
+    setState(() {
+      _phase = _Phase.identifying;
+      _keepNextFrame = false;
+      _steady = 0;
+    });
+    unawaited(HapticFeedback.selectionClick());
+    final scans = context.read<ScanRepository>();
+
+    final Result<ScanMatch> result;
+    try {
+      final jpeg = await _cutOut(frame, corners, rotation);
+      result = await scans.scan(_game, jpeg);
+    } catch (e) {
+      _log.warning('Cutting out the card failed', e);
+      if (mounted) _fail('Something went wrong with this scan. Tap to try again.');
+      return;
+    }
+    if (!mounted) return;
+
+    switch (result) {
+      case Ok(:final value):
+        // Paused while the card is shown; the next scan waits until this card is out of view
+        setState(() {
+          _phase = _Phase.away;
+          _waitForClear = true;
+        });
+        unawaited(HapticFeedback.mediumImpact());
+        await context.push(Routes.card.replaceFirst(':id', value.cardId));
+        if (!mounted) return;
+        setState(() {
+          _phase = _Phase.looking;
+          _corners = null; // Found again first, so it doesn't count as still in view from before
+          _misses = 0;
+        });
+      case Error(:final error):
+        _log.info('Scan failed: $error');
+        final failure = error is ScanException ? error : const ScanException(ScanFailure.unavailable);
+        _fail(switch (failure.failure) {
+          ScanFailure.notRecognized => 'Couldn\'t recognize this card. Hold it flat and still, then tap to try again.',
+          ScanFailure.notInCatalog => 'Recognized ${failure.recognized ?? 'the card'}, but it isn\'t in the catalog.',
+          ScanFailure.unsupported => 'Scanning isn\'t available for ${_game.displayName} yet.',
+          ScanFailure.unavailable => 'Couldn\'t reach the scanner. Check your connection, then tap to try again.',
+        });
+    }
+  }
+
+  /// The card cut out of [frame], in an isolate. Static, so the isolate's closure holds only the
+  /// frame, not this screen (which can't be sent to another isolate).
+  static Future<Uint8List> _cutOut(YuvFrame frame, List<Corner> corners, int rotation) =>
+      Isolate.run(() => CardCropper.crop(frame, corners, rotation));
+
+  void _fail(String message) {
+    setState(() {
+      _phase = _Phase.failed;
+      _failure = message;
+      _waitForClear = true; // Not the same card over and over: a new one, or a tap
+    });
+    unawaited(HapticFeedback.heavyImpact());
+  }
+
+  /// After a failed scan: try the card in view again.
+  void _retry() {
+    setState(() {
+      _phase = _Phase.looking;
+      _failure = null;
+      _waitForClear = false;
+      _steady = 0;
     });
   }
 
@@ -388,29 +535,82 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
             ),
           ),
 
-          // Bottom: what to do
+          // Bottom: what to do, or what's happening
           if (controller != null)
             SafeArea(
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: found ? accent.withValues(alpha: 0.9) : Colors.black54,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      found ? 'Card found' : 'Hold a card in view, on a plain surface',
-                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  child: _StatusPill(
+                    text: switch (_phase) {
+                      _ when !_game.canScan => 'Scanning isn\'t available for ${_game.displayName} yet',
+                      _Phase.identifying => 'Identifying…',
+                      _Phase.failed => _failure ?? 'Tap to try again',
+                      _Phase.away => 'Card found',
+                      _Phase.looking when !found => 'Hold a card in view',
+                      _Phase.looking when _waitForClear => 'Show the next card',
+                      _Phase.looking => 'Hold still…',
+                    },
+                    color: switch (_phase) {
+                      _Phase.failed => const Color(0xE6B3261E),
+                      _Phase.identifying || _Phase.away => accent.withValues(alpha: 0.9),
+                      _Phase.looking when found && !_waitForClear => accent.withValues(alpha: 0.9),
+                      _Phase.looking => Colors.black54,
+                    },
+                    busy: _phase == _Phase.identifying,
+                    onTap: _phase == _Phase.failed ? _retry : null,
                   ),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Where a scan is.
+enum _Phase {
+  looking, // For a card held still
+  identifying, // Sent to be recognized
+  away, // Showing the card it was (the card page is open over the scanner)
+  failed, // Not recognized, or no connection: tap to try again
+}
+
+/// The message at the bottom: what to do, or what's happening, with a spinner while [busy].
+class _StatusPill extends StatelessWidget {
+  final String text;
+  final Color color;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  const _StatusPill({required this.text, required this.color, this.busy = false, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (busy) ...[
+              const SizedBox.square(dimension: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+              const SizedBox(width: 10),
+            ],
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
