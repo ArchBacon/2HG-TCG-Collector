@@ -59,4 +59,24 @@ class OPTCGAPIDataTransformer implements ImportDataTransformer
 
         return null;
     }
+
+    /**
+     * A card's market price from the API: TCGplayer's, in USD, scraped daily (`date_scraped`).
+     * One Piece cards have the one finish.
+     *
+     * @param array<string, mixed> $raw
+     *
+     * @return list<array{source: string, finish: string, currency: string, price: float, updatedAt: ?\DateTimeImmutable}>
+     */
+    public function transformPrices(array $raw): array
+    {
+        $value = $raw['market_price'] ?? null;
+        if (!is_numeric($value)) {
+            return [];
+        }
+        $scraped = $raw['date_scraped'] ?? null;
+        $updatedAt = is_string($scraped) ? (\DateTimeImmutable::createFromFormat('!Y-m-d', $scraped) ?: null) : null;
+
+        return [['source' => 'tcgplayer', 'finish' => 'normal', 'currency' => 'USD', 'price' => (float) $value, 'updatedAt' => $updatedAt]];
+    }
 }

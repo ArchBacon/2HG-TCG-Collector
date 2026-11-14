@@ -8,12 +8,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class PageController extends AbstractController
 {
-    #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function home(): Response
-    {
-        return $this->render('pages/home.html.twig');
-    }
-
     #[Route('/search', name: 'app_search', methods: ['GET'])]
     public function search(): Response
     {

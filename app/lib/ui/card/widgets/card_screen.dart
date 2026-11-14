@@ -128,7 +128,7 @@ class CardScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     ListingsSection(listings: market.listings, onAdd: (listing) => _addToCart(context, card, listing)),
                     const SizedBox(height: 14),
-                    PriceCard(price: card.price, market: market, accent: accent),
+                    PriceCard(market: market, finish: viewModel.finish, finishLabel: viewModel.finishLabel),
                     const SizedBox(height: 24),
                     CardDetailsList(card: card),
                   ],

@@ -11,7 +11,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 final class AdminSecurityController extends AbstractController
 {
     /** Renders the form; the POST is handled by the admin firewall's form_login. */
-    #[Route('/admin/login', name: 'admin_login', methods: ['GET', 'POST'])]
+    #[Route('/', name: 'admin_login', methods: ['GET', 'POST'])]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if ($this->getUser() !== null) {

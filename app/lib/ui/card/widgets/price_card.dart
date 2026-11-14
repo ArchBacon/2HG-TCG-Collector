@@ -1,120 +1,97 @@
 // Copyright 2026 Christian Delicaat. All rights reserved.
 
-import 'dart:math';
-
 import 'package:app/domain/models/card/market_info.dart';
 import 'package:app/themes/glass_theme.dart';
 import 'package:app/tmp/core/utils/format.dart';
 import 'package:app/ui/shared/glass/glass_card.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Market price, its change over 7 days, and a 30-day price line.
+/// The card's market prices for the selected [finish]: one row per source (Cardmarket, TCGplayer),
+/// in the source's own currency, with when the source last updated it. Says so when there's none.
 class PriceCard extends StatelessWidget {
-  final double price;
   final MarketInfo market;
-  final Color accent; // Line color
+  final String finish; // The API's id of the selected finish
+  final String finishLabel; // As the screens show it, e.g. "Foil"
 
-  const PriceCard({super.key, required this.price, required this.market, required this.accent});
+  const PriceCard({super.key, required this.market, required this.finish, required this.finishLabel});
 
   @override
   Widget build(BuildContext context) {
     final glass = context.glass;
-    final up = market.change7d >= 0;
+    final prices = market.pricesFor(finish);
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Market price', style: TextStyle(color: glass.textSecondary, fontSize: 13)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(
-                formatEuro(price),
-                style: TextStyle(
-                  color: glass.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-              const SizedBox(width: 10),
-              GlassChip(
-                icon: up ? LucideIcons.trendingUp : LucideIcons.trendingDown,
-                label: '${up ? '+' : ''}${market.change7d.toStringAsFixed(1)}% · 7d',
-                color: up ? glass.positive : glass.negative,
-                filled: true,
-              ),
+          const SizedBox(height: 8),
+          if (prices.isEmpty)
+            Text(
+              market.prices.isEmpty ? 'No market price for this card' : 'No market price for the $finishLabel finish',
+              style: TextStyle(color: glass.textTertiary, fontSize: 14),
+            )
+          else
+            for (final (i, price) in prices.indexed) ...[
+              if (i > 0) Divider(height: 20, color: glass.divider),
+              _PriceRow(price: price),
             ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 64,
-            width: double.infinity,
-            child: CustomPaint(painter: _Sparkline(market.history, accent)),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Text('30 days ago', style: TextStyle(color: glass.textTertiary, fontSize: 11)),
-              const Spacer(),
-              Text('Today', style: TextStyle(color: glass.textTertiary, fontSize: 11)),
-            ],
-          ),
         ],
       ),
     );
   }
 }
 
-/// Price line with a soft fill under it and a dot on today's price.
-class _Sparkline extends CustomPainter {
-  final List<double> values;
-  final Color color;
+/// One source's price: its name and which price it is on the left, the amount on the right.
+class _PriceRow extends StatelessWidget {
+  final MarketPrice price;
 
-  _Sparkline(this.values, this.color);
+  const _PriceRow({required this.price});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final low = values.reduce(min);
-    final high = values.reduce(max);
-    final range = high - low == 0 ? 1 : high - low;
+  Widget build(BuildContext context) {
+    final glass = context.glass;
 
-    Offset point(int i) => Offset(
-      size.width * i / (values.length - 1),
-      size.height - (values[i] - low) / range * (size.height - 4) - 2,
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                price.source.label,
+                style: TextStyle(color: glass.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${price.source.kind} · ${_updated(price.updatedAt)}',
+                style: TextStyle(color: glass.textTertiary, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          formatMoney(price.price, price.currency),
+          style: TextStyle(
+            color: glass.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
     );
-
-    final line = Path()..moveTo(point(0).dx, point(0).dy);
-    for (var i = 1; i < values.length; i++) {
-      line.lineTo(point(i).dx, point(i).dy);
-    }
-    final fill = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(
-      fill,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: 0.3), color.withValues(alpha: 0)],
-        ).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      line,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeJoin = StrokeJoin.round,
-    );
-    canvas.drawCircle(point(values.length - 1), 3.5, Paint()..color = color);
   }
 
-  @override
-  bool shouldRepaint(_Sparkline oldDelegate) => oldDelegate.values != values || oldDelegate.color != color;
+  /// "updated today", "updated yesterday", "updated 29 Aug".
+  static String _updated(DateTime at) {
+    final local = at.toLocal();
+    final today = DateUtils.dateOnly(DateTime.now());
+    final days = today.difference(DateUtils.dateOnly(local)).inDays;
+    if (days <= 0) return 'updated today';
+    if (days == 1) return 'updated yesterday';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final year = local.year == today.year ? '' : ' ${local.year}';
+    return 'updated ${local.day} ${months[local.month - 1]}$year';
+  }
 }

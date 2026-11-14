@@ -24,4 +24,7 @@ enum Tcg {
 
   /// Whether its cards can be scanned: Magic Sorter, which recognizes them, doesn't do Fusion World.
   bool get canScan => this != dragonBallFusion;
+
+  /// Whether its card data has market prices: Lorcana's and Fusion World's has none.
+  bool get hasMarketPrices => this != lorcana && this != dragonBallFusion;
 }

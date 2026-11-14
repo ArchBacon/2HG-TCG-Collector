@@ -100,7 +100,7 @@ final readonly class HttpService
         }
 
         if ($response->getStatusCode() !== 200) {
-            throw new HttpResponseException("Could not connect to {$response->getInfo()['url']}.");
+            throw new HttpResponseException("Could not connect to {$response->getInfo()['url']} (status {$response->getStatusCode()}).");
         }
     }
 }

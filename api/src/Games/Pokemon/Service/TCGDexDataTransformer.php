@@ -93,4 +93,72 @@ class TCGDexDataTransformer implements ImportDataTransformer
 
         return $finishes;
     }
+
+    /**
+     * A card's market prices from TCGdex's `pricing`, per our finish:
+     * - Cardmarket, EUR: its trend (else its average). Cardmarket has one product per card, with
+     *   a price and a "-holo" price: the card's own finish (normal, or holo for a holo rare) and
+     *   its reverse holo.
+     * - TCGplayer, USD: its market price (else the mid) per its finish.
+     *
+     * @param array<string, mixed> $raw a TCGdex card
+     *
+     * @return list<array{source: string, finish: string, currency: string, price: float, updatedAt: ?\DateTimeImmutable}>
+     */
+    public function transformPrices(array $raw): array
+    {
+        $finishes = $this->getFinishes($raw['variants'] ?? []);
+        $pricing = $raw['pricing'] ?? [];
+        $prices = [];
+
+        $cardmarket = $pricing['cardmarket'] ?? null;
+        if (is_array($cardmarket)) {
+            $updatedAt = self::date($cardmarket['updated'] ?? null);
+            $own = in_array('normal', $finishes, true) || !in_array('holo', $finishes, true) ? 'normal' : 'holo';
+            foreach ([$own => '', 'reverse' => '-holo'] as $finish => $suffix) {
+                if ($suffix !== '' && !in_array('reverse', $finishes, true)) {
+                    continue; // Its "-holo" price is for a reverse holo it doesn't come in
+                }
+                $value = $cardmarket['trend' . $suffix] ?? $cardmarket['avg' . $suffix] ?? null;
+                if (is_numeric($value)) {
+                    $prices[] = ['source' => 'cardmarket', 'finish' => $finish, 'currency' => (string) ($cardmarket['unit'] ?? 'EUR'), 'price' => (float) $value, 'updatedAt' => $updatedAt];
+                }
+            }
+        }
+
+        $tcgplayer = $pricing['tcgplayer'] ?? null;
+        if (is_array($tcgplayer)) {
+            $updatedAt = self::date($tcgplayer['updated'] ?? null);
+            foreach ($tcgplayer as $variant => $values) {
+                if (!is_array($values)) {
+                    continue; // `unit`, `updated`
+                }
+                $finish = match (true) {
+                    str_contains($variant, 'reverse') => 'reverse',
+                    str_starts_with($variant, '1st') => 'firstEdition',
+                    $variant === 'holofoil' => 'holo',
+                    $variant === 'normal' => 'normal',
+                    default => null,
+                };
+                $value = $values['marketPrice'] ?? $values['midPrice'] ?? null;
+                if ($finish !== null && is_numeric($value)) {
+                    $prices[] = ['source' => 'tcgplayer', 'finish' => $finish, 'currency' => (string) ($tcgplayer['unit'] ?? 'USD'), 'price' => (float) $value, 'updatedAt' => $updatedAt];
+                }
+            }
+        }
+
+        return $prices;
+    }
+
+    private static function date(mixed $value): ?\DateTimeImmutable
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+        try {
+            return new \DateTimeImmutable($value);
+        } catch (\Exception) {
+            return null;
+        }
+    }
 }
