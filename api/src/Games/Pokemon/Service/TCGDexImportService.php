@@ -12,6 +12,7 @@ use App\Games\Pokemon\Entity\Set;
 use App\Games\Pokemon\Repository\CardRepository;
 use App\Games\Pokemon\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\CardPriceStore;
 use App\Service\HttpService;
 use App\Service\LanguageService;
 use App\Service\ProgressReporter;
@@ -40,6 +41,10 @@ class TCGDexImportService implements ImportServiceInterface
     private int $totalSets = 0;
     private int $totalCards = 0;
 
+    /** Card fetches that failed (not a missing card) one after the other, over all sets. */
+    private int $failuresInARow = 0;
+    private const int MAX_FAILURES_IN_A_ROW = 25;
+
     public function __construct(
         #[Autowire('%public_dir%')]
         private readonly string $publicDir,
@@ -52,6 +57,7 @@ class TCGDexImportService implements ImportServiceInterface
         private readonly LanguageService $language,
         private readonly TCGDexDataTransformer $transformer,
         private readonly LoggerInterface $logger,
+        private readonly CardPriceStore $prices,
     ) {}
 
     /**
@@ -186,10 +192,14 @@ class TCGDexImportService implements ImportServiceInterface
             // Encoded: some ids have odd characters, and TCGdex even stores Unown "?" as "exu-%3F"
             try {
                 $result = $this->http->json(self::URL . '/' . $set->lang->value . '/cards/' . rawurlencode($brief['id']));
-            } catch (HttpResponseException $e) {
-                // A card in the set's list that TCGdex can't find: skip it (logged, so it shows in
-                // the sync console) rather than ending the whole sync. Other failures still end it.
-                if (!str_starts_with($e->getMessage(), 'Resource not found')) {
+                $this->failuresInARow = 0;
+            } catch (HttpResponseException|TransportExceptionInterface $e) {
+                // A card TCGdex can't find, or still fails on after the HTTP client's retries:
+                // skip it (logged, so it shows in the sync console) rather than ending a sync of
+                // tens of minutes; the next sync tries it again. Failing card after card is
+                // TCGdex being down, though: that ends it.
+                $notFound = $e instanceof HttpResponseException && str_starts_with($e->getMessage(), 'Resource not found');
+                if (!$notFound && ++$this->failuresInARow >= self::MAX_FAILURES_IN_A_ROW) {
                     throw $e;
                 }
                 $this->logger->warning(sprintf('Skipped card "%s" of set "%s": %s', $brief['id'], $set->code, $e->getMessage()));
@@ -206,6 +216,7 @@ class TCGDexImportService implements ImportServiceInterface
                 ]]
             ]);
             $this->entityManager->persist($card);
+            $this->prices->add(self::GAME, $card->id, $this->transformer->transformPrices($result));
             $cardImageUris[$card->id->toRfc4122()] = $data['image_uri'];
             $progress->advance();
             $progress->report($onProgress);
@@ -213,6 +224,7 @@ class TCGDexImportService implements ImportServiceInterface
 
         $this->entityManager->flush();
         $this->entityManager->clear();
+        $this->prices->flush();
 
         // Queue image jobs for downloading images
         if ($importType !== ImageImportType::SkipAll) {

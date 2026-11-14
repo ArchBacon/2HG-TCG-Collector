@@ -11,6 +11,7 @@ use App\Games\MTG\Entity\Set;
 use App\Games\MTG\Repository\CardRepository;
 use App\Games\MTG\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\CardPriceStore;
 use App\Service\HttpService;
 use App\Service\LanguageService;
 use App\Service\ProgressReporter;
@@ -49,6 +50,7 @@ final class ScryfallImportService implements ImportServiceInterface
         private readonly LanguageService $language,
         private readonly ImageJobQueueRepository $imageJobs,
         private readonly ScryfallCardFaceExtractor $faceExtractor,
+        private readonly CardPriceStore $prices,
     ) {}
 
     public function prepare(): void {}
@@ -143,6 +145,7 @@ final class ScryfallImportService implements ImportServiceInterface
                 if ($progress->count() % 200 === 0) {
                     $this->entityManager->flush();
                     $this->entityManager->clear();
+                    $this->prices->flush();
                     $this->enqueueImages($importType, $cardImageUris);
                     $cardImageUris = [];
                     gc_collect_cycles();
@@ -152,6 +155,7 @@ final class ScryfallImportService implements ImportServiceInterface
             // flush any remaining persisted cards
             $this->entityManager->flush();
             $this->entityManager->clear();
+            $this->prices->flush();
             $this->enqueueImages($importType, $cardImageUris);
         } finally {
             fclose($resource);
@@ -209,12 +213,42 @@ final class ScryfallImportService implements ImportServiceInterface
         }
 
         $cardIds = array_column($cardFaces, 'id');
+        $prices = self::prices(is_array($item['prices'] ?? null) ? $item['prices'] : []);
         foreach ($cardFaces as $face) {
             $face->faces = $cardIds;
             $this->entityManager->persist($face);
+            // The printing's prices, on each of its faces: either can be opened
+            $this->prices->add(self::GAME, $face->id, $prices);
         }
 
         $this->linkReciprocalCards($relatedTargets, $variantTargets, $cardIds);
+    }
+
+    /**
+     * Scryfall's prices for a printing: EUR from Cardmarket, USD from TCGplayer, per finish
+     * (updated daily; strings, or null when there is none).
+     *
+     * @param array<mixed> $prices Scryfall's `prices`
+     *
+     * @return list<array{source: string, finish: string, currency: string, price: float}>
+     */
+    private static function prices(array $prices): array
+    {
+        $found = [];
+        foreach ([
+            'eur' => ['cardmarket', 'nonfoil', 'EUR'],
+            'eur_foil' => ['cardmarket', 'foil', 'EUR'],
+            'usd' => ['tcgplayer', 'nonfoil', 'USD'],
+            'usd_foil' => ['tcgplayer', 'foil', 'USD'],
+            'usd_etched' => ['tcgplayer', 'etched', 'USD'],
+        ] as $key => [$source, $finish, $currency]) {
+            $value = $prices[$key] ?? null;
+            if (is_numeric($value)) {
+                $found[] = ['source' => $source, 'finish' => $finish, 'currency' => $currency, 'price' => (float) $value];
+            }
+        }
+
+        return $found;
     }
 
     /**

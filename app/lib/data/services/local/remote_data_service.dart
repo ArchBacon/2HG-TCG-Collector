@@ -145,8 +145,18 @@ class RemoteDataService {
     final json = await _get('/api/users/cards/${card.id}/market');
     return MarketInfo(
       finishes: [for (final finish in (json['finishes'] as List).cast<String>()) CardFinish(finish, _finishLabel(finish))],
-      change7d: (json['change7d'] as num).toDouble(),
-      history: [for (final price in json['history'] as List) (price as num).toDouble()],
+      prices: [
+        for (final price in (json['prices'] as List).cast<Map<String, dynamic>>())
+          // A source the app doesn't know (yet) is left out
+          if (PriceSource.values.where((s) => s.name == price['source']).firstOrNull case final source?)
+            MarketPrice(
+              source: source,
+              finish: price['finish'] as String,
+              currency: price['currency'] as String,
+              price: (price['price'] as num).toDouble(),
+              updatedAt: DateTime.parse(price['updatedAt'] as String),
+            ),
+      ],
       have: json['have'] as int,
       want: json['want'] as int,
       listings: [

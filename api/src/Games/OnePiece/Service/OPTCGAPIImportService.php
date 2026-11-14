@@ -11,6 +11,7 @@ use App\Games\OnePiece\Entity\Set;
 use App\Games\OnePiece\Repository\CardRepository;
 use App\Games\OnePiece\Repository\SetRepository;
 use App\Repository\ImageJobQueueRepository;
+use App\Service\CardPriceStore;
 use App\Service\HttpService;
 use App\Service\ProgressReporter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +42,7 @@ class OPTCGAPIImportService implements ImportServiceInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageJobQueueRepository $imageJobQueue,
         private readonly OPTCGAPIDataTransformer $transformer,
+        private readonly CardPriceStore $prices,
     ) {}
 
     public function prepare(): void {}
@@ -110,6 +112,7 @@ class OPTCGAPIImportService implements ImportServiceInterface
                     ]],
                 ]);
                 $this->entityManager->persist($card);
+                $this->prices->add(self::GAME, $card->id, $this->transformer->transformPrices($item));
                 $cardImageUris[$card->id->toRfc4122()] = $data['image_uri'];
                 $progress->advance();
                 $progress->report($onProgress);
@@ -117,6 +120,7 @@ class OPTCGAPIImportService implements ImportServiceInterface
 
             $this->entityManager->flush();
             $this->entityManager->clear();
+            $this->prices->flush();
 
             if ($importType !== ImageImportType::SkipAll) {
                 $this->imageJobQueue->enqueueBatch(self::GAME->value, $cardImageUris, $importType === ImageImportType::NewOnly);

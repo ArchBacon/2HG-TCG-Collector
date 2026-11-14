@@ -19,9 +19,9 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
-        # Back-office pages: session + login form, separate from the stateless app API below.
+        # Back-office pages (login form on /): session + login form, separate from the stateless app API below.
         admin:
-            pattern: ^/admin
+            pattern: ^/($|admin)
             lazy: true
             provider: admin_users
             form_login:
@@ -47,7 +47,7 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 

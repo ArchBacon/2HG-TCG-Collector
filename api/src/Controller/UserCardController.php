@@ -10,6 +10,7 @@ use App\Enum\CardListType;
 use App\Enum\Game;
 use App\Repository\CardListEntryRepository;
 use App\Repository\CardListRepository;
+use App\Service\CardPriceStore;
 use App\Service\UserCardService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,6 +36,7 @@ final readonly class UserCardController
         private CardListEntryRepository $entries,
         private CardListRepository $lists,
         private UserCardService $cards,
+        private CardPriceStore $prices,
     ) {}
 
     /**
@@ -143,11 +145,11 @@ final readonly class UserCardController
     }
 
     /**
-     * Market data for a card: the finishes it comes in, how many users have / want it, and its
-     * store listings in stock, cheapest first: one per finish and condition.
-     *
-     * There's no price history yet: `history` is today's price for each of the last 30 days, and
-     * `change7d` 0.
+     * Market data for a card: the finishes it comes in, its market prices from the card data
+     * (`prices`: per finish, `{source, finish, currency, price, updatedAt}`, in the source's own
+     * currency: Cardmarket in EUR, TCGplayer in USD; none for games whose data has no prices), how
+     * many users have / want it, and its store listings in stock, cheapest first: one per finish
+     * and condition.
      */
     #[Route('/cards/{id}/market', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
     public function market(string $id): JsonResponse
@@ -155,12 +157,10 @@ final readonly class UserCardController
         $card = $this->findCard($id);
         $listings = $this->cards->findListings($card);
         $users = $this->entries->countUsersByType($card->tcg, $card->id);
-        $price = $listings === [] ? 0 : $listings[0]->price;
 
         return new JsonResponse([
             'finishes' => $this->cards->findFinishes($card, $listings),
-            'change7d' => 0,
-            'history' => array_fill(0, 30, $price),
+            'prices' => $this->prices->find($card->id),
             'have' => $users[CardListType::Collection->value] ?? 0,
             'want' => $users[CardListType::Wishlist->value] ?? 0,
             'listings' => array_map(static fn (CardListingCondition $k): array => [
