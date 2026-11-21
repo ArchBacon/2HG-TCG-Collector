@@ -50,19 +50,20 @@ class TCGDexDataTransformer implements ImportDataTransformer
     private function getPokemonDetails(array $raw): array
     {
         return [
-            'dex_ids' => $raw['dexId'] ?? null,
-            'hp' => $raw['hp'] ?? null,
+            // TCGdex sometimes sends a dex number as a float (25.0)
+            'dex_ids' => isset($raw['dexId']) ? array_map(intval(...), (array) $raw['dexId']) : null,
+            'hp' => isset($raw['hp']) ? (int) $raw['hp'] : null,
             'colors' => $raw['types'] ?? [],
             'stage' => $raw['stage'] ?? null,
             'evolve_from' => $raw['evolveFrom'] ?? null,
-            'level' => $raw['level'] ?? null,
+            'level' => isset($raw['level']) ? (string)$raw['level'] : null,
             'suffix' => $raw['suffix'] ?? null,
             'item' => $raw['item'] ?? null,
             'abilities' => $raw['abilities'] ?? [],
             'attacks' => $raw['attacks'] ?? [],
             'weaknesses' => $raw['weaknesses'] ?? [],
             'resistances' => $raw['resistances'] ?? [],
-            'retreat' => $raw['retreat'] ?? null,
+            'retreat' => isset($raw['retreat']) ? (int) $raw['retreat'] : null,
         ];
     }
 
