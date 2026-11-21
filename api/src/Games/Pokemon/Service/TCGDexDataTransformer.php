@@ -26,7 +26,7 @@ class TCGDexDataTransformer implements ImportDataTransformer
             'name' => $raw['name'],
             'lang' => $raw['lang'],
             'number' => $raw['localId'],
-            'rarity' => $raw['rarity'],
+            'rarity' => $raw['rarity'] ?? null,
             'artist' => $raw['illustrator'] ?? null,
             'type_line' => $raw['category'],
             'oracle_text' => null,
